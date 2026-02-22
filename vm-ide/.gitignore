@@ -12,3 +12,17 @@ out/
 
 # misc
 .DS_Store
+# dependencies
+node_modules/
+**/node_modules/
+
+# Next.js
+.next/
+out/
+
+# env
+.env
+.env.*
+
+# misc
+.DS_Store
