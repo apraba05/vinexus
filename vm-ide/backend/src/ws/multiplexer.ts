@@ -1,0 +1,225 @@
+import { WebSocketServer, WebSocket } from "ws";
+import { IncomingMessage, Server } from "http";
+import { parse as parseUrl } from "url";
+import { parse as parseQs } from "querystring";
+import { getSession, Session } from "../sessionStore";
+import { WSMessage } from "../types";
+import { TerminalChannel } from "./terminalChannel";
+import { ExecChannel } from "./execChannel";
+import { LogsChannel } from "./logsChannel";
+import { DeployChannel } from "./deployChannel";
+import { ClientChannel } from "ssh2";
+
+/**
+ * Sets up the multiplexed WebSocket server on /ws/session?sessionId=X
+ * and keeps the legacy /ws/terminal endpoint for backward compatibility.
+ */
+export function setupWebSockets(server: Server): void {
+  const multiplexWss = new WebSocketServer({ noServer: true });
+  const legacyWss = new WebSocketServer({ noServer: true });
+
+  server.on("upgrade", (req: IncomingMessage, socket, head) => {
+    const { pathname, query } = parseUrl(req.url || "");
+    const params = parseQs(query || "");
+    const sessionId = params.sessionId as string;
+
+    if (pathname === "/ws/session") {
+      // ─── Multiplexed endpoint ───
+      if (!sessionId) {
+        socket.write("HTTP/1.1 400 Bad Request\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
+      const session = getSession(sessionId);
+      if (!session) {
+        socket.write("HTTP/1.1 404 Session Not Found\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
+      multiplexWss.handleUpgrade(req, socket, head, (ws) => {
+        multiplexWss.emit("connection", ws, req, session);
+      });
+    } else if (pathname === "/ws/terminal") {
+      // ─── Legacy terminal endpoint (backward compat) ───
+      if (!sessionId) {
+        socket.write("HTTP/1.1 400 Bad Request\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
+      const session = getSession(sessionId);
+      if (!session) {
+        socket.write("HTTP/1.1 404 Session Not Found\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
+      legacyWss.handleUpgrade(req, socket, head, (ws) => {
+        legacyWss.emit("connection", ws, req, session);
+      });
+    } else {
+      socket.destroy();
+    }
+  });
+
+  // ─── Multiplexed connection handler ───
+  multiplexWss.on(
+    "connection",
+    (ws: WebSocket, _req: IncomingMessage, session: any) => {
+      const sendMessage = (msg: WSMessage) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(msg));
+        }
+      };
+
+      // Initialize channel handlers
+      const terminalChannel = new TerminalChannel(ws, session, sendMessage);
+      const execChannel = new ExecChannel(ws, session, sendMessage);
+      const logsChannel = new LogsChannel(ws, session, sendMessage);
+      const deployChannel = new DeployChannel(ws, session, sendMessage);
+
+      // Start terminal automatically
+      terminalChannel.start();
+
+      // Heartbeat
+      const pingInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.ping();
+        }
+      }, 30_000);
+
+      ws.on("message", (raw: Buffer | string) => {
+        let msg: WSMessage;
+        try {
+          msg = JSON.parse(raw.toString());
+        } catch {
+          // Invalid message — ignore
+          return;
+        }
+
+        if (!msg.channel || !msg.type) return;
+
+        switch (msg.channel) {
+          case "terminal":
+            terminalChannel.handleMessage(msg);
+            break;
+          case "exec":
+            execChannel.handleMessage(msg);
+            break;
+          case "logs":
+            logsChannel.handleMessage(msg);
+            break;
+          case "deploy":
+            deployChannel.handleMessage(msg);
+            break;
+          default:
+            sendMessage({
+              channel: "system",
+              type: "error",
+              payload: { message: `Unknown channel: ${msg.channel}` },
+            });
+        }
+      });
+
+      ws.on("close", () => {
+        clearInterval(pingInterval);
+        terminalChannel.destroy();
+        execChannel.destroy();
+        logsChannel.destroy();
+        deployChannel.destroy();
+      });
+
+      ws.on("error", (err) => {
+        console.error("[ws/multiplexer] WebSocket error:", err.message);
+        clearInterval(pingInterval);
+        terminalChannel.destroy();
+        execChannel.destroy();
+        logsChannel.destroy();
+        deployChannel.destroy();
+      });
+
+      // Confirm connection
+      sendMessage({
+        channel: "system",
+        type: "connected",
+        payload: { sessionId: session.id, host: session.host },
+      });
+    }
+  );
+
+  // ─── Legacy terminal connection handler (unchanged from original) ───
+  legacyWss.on(
+    "connection",
+    (ws: WebSocket, _req: IncomingMessage, session: any) => {
+      let shellChannel: ClientChannel | null = null;
+
+      session.conn.shell(
+        { term: "xterm-256color", cols: 80, rows: 24 },
+        (err: Error | undefined, channel: ClientChannel) => {
+          if (err) {
+            ws.send(
+              JSON.stringify({
+                type: "error",
+                message: "Failed to open shell: " + err.message,
+              })
+            );
+            ws.close();
+            return;
+          }
+
+          shellChannel = channel;
+
+          channel.on("data", (data: Buffer) => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(data);
+            }
+          });
+
+          channel.stderr.on("data", (data: Buffer) => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(data);
+            }
+          });
+
+          channel.on("close", () => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.close();
+            }
+          });
+        }
+      );
+
+      ws.on("message", (msg: Buffer | string) => {
+        if (!shellChannel) return;
+
+        if (
+          typeof msg === "string" ||
+          (Buffer.isBuffer(msg) && msg[0] === 0x7b)
+        ) {
+          try {
+            const parsed = JSON.parse(msg.toString());
+            if (parsed.type === "resize" && parsed.cols && parsed.rows) {
+              shellChannel.setWindow(parsed.rows, parsed.cols, 0, 0);
+              return;
+            }
+          } catch {
+            // Not JSON
+          }
+        }
+
+        shellChannel.write(msg);
+      });
+
+      ws.on("close", () => {
+        if (shellChannel) shellChannel.close();
+      });
+
+      ws.on("error", (err) => {
+        console.error("[terminal] WebSocket error:", err.message);
+        if (shellChannel) shellChannel.close();
+      });
+    }
+  );
+}
