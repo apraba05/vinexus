@@ -223,6 +223,9 @@ export function setupWebSockets(server: Server): void {
               channel.write(" clear\r");
               setTimeout(() => {
                 setupDone = true;
+                // Send empty Enter to trigger a fresh prompt
+                // so the user sees [user@host ~]$ on connect
+                channel.write("\r");
               }, 150);
             }, 150);
           }, 300);
