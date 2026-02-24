@@ -235,46 +235,35 @@ function SecuritySection() {
 
         <h3 style={S.h3}>Your VM Credentials</h3>
         <ul style={S.list}>
-            <li>SSH credentials (passwords and private keys) are <strong>never stored on disk</strong></li>
-            <li>Credentials are held in server memory <strong>only during your active session</strong></li>
-            <li>Sessions automatically expire after <strong>30 minutes of inactivity</strong></li>
-            <li>When you disconnect, all credential data is immediately cleared</li>
+            <li>Your SSH passwords and private keys are <strong>never saved</strong> anywhere</li>
+            <li>Credentials exist <strong>only while you&apos;re actively connected</strong> and are wiped the moment you disconnect</li>
+            <li>Sessions automatically expire after <strong>30 minutes of inactivity</strong> — your credentials are cleared even if you forget to disconnect</li>
         </ul>
 
-        <h3 style={S.h3}>Connection Security</h3>
+        <h3 style={S.h3}>Your Data</h3>
         <ul style={S.list}>
-            <li>All traffic between your browser and InfraNexus is encrypted with <strong>HTTPS (TLS 1.3)</strong></li>
-            <li>SSH connections to your VM use <strong>industry-standard SSH protocol</strong> encryption</li>
-            <li>WebSocket connections (terminal, deploy) are <strong>origin-validated</strong> to prevent hijacking</li>
-            <li>We enforce <strong>HSTS</strong> (HTTP Strict Transport Security) to prevent downgrade attacks</li>
+            <li>Your files <strong>stay on your VM</strong> — InfraNexus never copies or stores them on our servers</li>
+            <li>We <strong>don&apos;t log</strong> your file contents, code, or terminal commands</li>
+            <li>When you use AI features, your file is sent for analysis but <strong>nothing is kept</strong> afterward</li>
+            <li>The only things we store are your <strong>account details</strong> (email, name) and <strong>subscription status</strong></li>
         </ul>
 
-        <h3 style={S.h3}>Data Privacy</h3>
+        <h3 style={S.h3}>Encryption</h3>
         <ul style={S.list}>
-            <li>InfraNexus <strong>does not store your files</strong> — all files live on your VM only</li>
-            <li>We <strong>do not log file contents</strong> or terminal commands</li>
-            <li>AI features send config file contents to the AI provider for analysis, but <strong>nothing is stored</strong> after processing</li>
-            <li>We only store your account info (email, name) and subscription status</li>
-        </ul>
-
-        <h3 style={S.h3}>Infrastructure Security</h3>
-        <ul style={S.list}>
-            <li><strong>Rate limiting</strong> on all API endpoints to prevent abuse</li>
-            <li><strong>Input validation</strong> on all file paths, commands, and parameters</li>
-            <li><strong>Dangerous command protection</strong> — destructive system commands are blocked</li>
-            <li>Passwords are hashed with <strong>bcrypt</strong> (12 rounds) — we never store plaintext passwords</li>
-            <li>Authentication uses <strong>encrypted JWT tokens</strong> with automatic expiry</li>
+            <li>All traffic between your browser and InfraNexus is <strong>fully encrypted</strong></li>
+            <li>Connections to your VM use <strong>SSH encryption</strong> — the same security used by professional server administrators worldwide</li>
+            <li>Your account password is <strong>securely hashed</strong> — even we can&apos;t see it</li>
         </ul>
 
         <h3 style={S.h3}>What We Don&apos;t Have Access To</h3>
         <ul style={S.list}>
-            <li>Your VM&apos;s files, data, or databases</li>
-            <li>Your SSH password or private key (after session ends)</li>
+            <li>Your VM&apos;s files, databases, or application data</li>
+            <li>Your SSH password or private key after your session ends</li>
             <li>Commands you run in the terminal</li>
-            <li>Any data stored on your virtual machine</li>
+            <li>Anything stored on your virtual machine</li>
         </ul>
 
-        <Callout type="tip">For maximum security, we recommend using <strong>SSH key authentication</strong> instead of passwords, and creating a <strong>dedicated SSH user</strong> with limited permissions for InfraNexus access.</Callout>
+        <Callout type="tip">For maximum security, we recommend using <strong>SSH key authentication</strong> instead of passwords when connecting to your VM.</Callout>
     </>);
 }
 
@@ -283,12 +272,11 @@ function FAQSection() {
         { q: "What is InfraNexus?", a: "InfraNexus is a browser-based IDE for managing remote virtual machines. Connect to any server via SSH and get a full editor, terminal, file manager, deploy tools, and AI-powered assistance — all without installing anything." },
         { q: "Do I need to install anything?", a: "No. InfraNexus runs entirely in your browser. Just sign up, connect your VM, and start working." },
         { q: "What VMs does it work with?", a: "Any server you can SSH into — AWS EC2, DigitalOcean Droplets, Google Cloud VMs, Linode, Vultr, Hetzner, self-hosted servers, Raspberry Pi, and more." },
-        { q: "Is my SSH connection secure?", a: "Yes. Your credentials are only held in memory during your session and cleared immediately on disconnect. All traffic is encrypted with TLS, and SSH connections use standard SSH protocol encryption." },
-        { q: "Does InfraNexus store my files?", a: "No. Your files live only on your VM. InfraNexus reads and writes files directly to your server via SSH. We never copy or store your data on our servers." },
-        { q: "What happens if I Cancel my Pro subscription?", a: "You keep Pro features until the end of your billing period. After that, you're automatically moved to the Free plan. All your account data stays intact — you just lose access to deploy, server commands, and AI features." },
+        { q: "Is my data safe?", a: "Yes. Your files stay on your VM — we never copy or store them. SSH credentials only exist while you're connected and are wiped on disconnect. All traffic is encrypted." },
+        { q: "Does InfraNexus store my files?", a: "No. Your files live only on your VM. InfraNexus reads and writes files directly to your server. We never copy or store your data." },
+        { q: "What happens if I cancel my Pro subscription?", a: "You keep Pro features until the end of your billing period. After that, you're automatically moved to the Free plan. All your account data stays intact — you just lose access to deploy, server commands, and AI features." },
         { q: "Can I connect to multiple VMs?", a: "You connect to one VM per session. To switch VMs, disconnect from the current one and connect to a new one." },
         { q: "What happens after 30 minutes of inactivity?", a: "Your session automatically expires for security. You'll need to reconnect by entering your credentials again. This prevents unauthorized access if you leave your computer unattended." },
-        { q: "What AI model powers the insights?", a: "InfraNexus uses Claude by Anthropic for AI-powered explain, diagnose, and validate features. File contents are sent for analysis but are not stored after processing." },
     ];
 
     return (
