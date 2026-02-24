@@ -59,7 +59,12 @@ router.get("/list", (req: Request, res: Response) => {
   const session = requireSession(req, res);
   if (!session) return;
 
-  const dirPath = (req.query.path as string) || "/";
+  let dirPath = (req.query.path as string) || "/";
+  // Normalize: strip trailing slash (except root "/")
+  if (dirPath.length > 1 && dirPath.endsWith("/")) {
+    dirPath = dirPath.replace(/\/+$/, "");
+  }
+  dirPath = dirPath.replace(/\/+/g, "/"); // collapse multiple slashes
   const pathErr = validatePath(dirPath);
   if (pathErr) { res.status(400).json({ error: pathErr }); return; }
 

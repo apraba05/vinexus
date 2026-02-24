@@ -37,6 +37,7 @@ import {
   ValidationReport,
   clearAuthToken,
 } from "@/lib/api";
+import { normalizePath, joinPath } from "@/lib/pathUtils";
 
 const TerminalPanel = dynamic(() => import("@/components/Terminal"), {
   ssr: false,
@@ -200,7 +201,7 @@ export default function Home() {
   );
 
   const handleSelectDir = useCallback((path: string) => {
-    setSelectedDir(path);
+    setSelectedDir(normalizePath(path));
   }, []);
 
   const handleContentChange = useCallback((path: string, content: string) => {
@@ -312,7 +313,7 @@ export default function Home() {
   const handleCreateItem = useCallback(
     async (parentPath: string, name: string, type: "file" | "directory") => {
       if (!sessionId) return;
-      const fullPath = parentPath === "/" ? "/" + name : parentPath + "/" + name;
+      const fullPath = joinPath(parentPath, name);
       try {
         if (type === "file") {
           await writeFile(sessionId, fullPath, "");
@@ -501,6 +502,15 @@ export default function Home() {
     setSoftRefreshKey((k) => k + 1);
   }, []);
 
+  // When the terminal detects a CWD change (via PROMPT_COMMAND),
+  // update the explorer root to match.
+  const handleTerminalCwdChange = useCallback((path: string) => {
+    const normalized = normalizePath(path);
+    setSelectedDir(normalized);
+    // Also trigger a soft refresh so the file tree updates
+    setSoftRefreshKey((k) => k + 1);
+  }, []);
+
   const hasDirtyFiles = openFiles.some((f) => f.dirty && f.path === activeFile);
   const dirtyFileCount = openFiles.filter((f) => f.dirty).length;
   const hasService =
@@ -623,6 +633,7 @@ export default function Home() {
             onRenameComplete={handleRenameComplete}
             onDeleteItem={handleDeleteFromTree}
             onRootPathChange={setTerminalCdPath}
+            externalRootPath={selectedDir}
           />
         </div>
 
@@ -634,16 +645,16 @@ export default function Home() {
           {/* Editor */}
           <div style={styles.editorArea}>
             <ErrorBoundary fallbackLabel="Editor">
-            <Editor
-              openFiles={openFiles}
-              activeFile={activeFile}
-              onSetActive={setActiveFile}
-              onContentChange={handleContentChange}
-              onSave={handleSaveWithPreview}
-              onCloseFile={handleCloseFile}
-              onExplain={handleExplain}
-              aiLoading={aiLoading}
-            />
+              <Editor
+                openFiles={openFiles}
+                activeFile={activeFile}
+                onSetActive={setActiveFile}
+                onContentChange={handleContentChange}
+                onSave={handleSaveWithPreview}
+                onCloseFile={handleCloseFile}
+                onExplain={handleExplain}
+                aiLoading={aiLoading}
+              />
             </ErrorBoundary>
           </div>
 
@@ -669,12 +680,13 @@ export default function Home() {
               }}
             >
               <ErrorBoundary fallbackLabel="Terminal">
-              <TerminalPanel
-                sessionId={sessionId}
-                onError={handleError}
-                onActivity={handleTerminalActivity}
-                cdPath={terminalCdPath}
-              />
+                <TerminalPanel
+                  sessionId={sessionId}
+                  onError={handleError}
+                  onActivity={handleTerminalActivity}
+                  cdPath={terminalCdPath}
+                  onCwdChange={handleTerminalCwdChange}
+                />
               </ErrorBoundary>
             </div>
 
@@ -705,17 +717,17 @@ export default function Home() {
               }}
             >
               <ErrorBoundary fallbackLabel="Deploy">
-              <DeployPanel
-                status={deployment.status}
-                loading={deployment.loading}
-                error={deployment.error}
-                onDeploy={handleDeploy}
-                onCancel={deployment.cancel}
-                onRollback={deployment.rollback}
-                onReset={deployment.reset}
-                onViewLogs={handleViewLogs}
-                hasService={hasService}
-              />
+                <DeployPanel
+                  status={deployment.status}
+                  loading={deployment.loading}
+                  error={deployment.error}
+                  onDeploy={handleDeploy}
+                  onCancel={deployment.cancel}
+                  onRollback={deployment.rollback}
+                  onReset={deployment.reset}
+                  onViewLogs={handleViewLogs}
+                  hasService={hasService}
+                />
               </ErrorBoundary>
             </div>
           </div>

@@ -172,11 +172,19 @@ export function setupWebSockets(server: Server): void {
     }
   );
 
-  // ─── Legacy terminal connection handler (unchanged from original) ───
+  // ─── Legacy terminal connection handler ───
+  // CWD detection: We inject a PROMPT_COMMAND that emits an OSC escape sequence
+  // containing the current directory after each command. The handler scans for
+  // this pattern and sends CWD changes as JSON messages to the frontend.
+  const CWD_MARKER_START = "\x1b]7;CWD:";
+  const CWD_MARKER_END = "\x07";
+  const CWD_REGEX = /\x1b\]7;CWD:([^\x07]+)\x07/g;
+
   legacyWss.on(
     "connection",
     (ws: WebSocket, _req: IncomingMessage, session: any) => {
       let shellChannel: ClientChannel | null = null;
+      let lastCwd: string | null = null;
 
       session.conn.shell(
         { term: "xterm-256color", cols: 80, rows: 24 },
@@ -194,9 +202,34 @@ export function setupWebSockets(server: Server): void {
 
           shellChannel = channel;
 
+          // Inject PROMPT_COMMAND to emit CWD after every command.
+          // We use a unique marker that won't collide with normal output.
+          // The \r at the end submits the command; the initial clear hides it.
+          const promptCmd =
+            `PROMPT_COMMAND='echo -ne "\\033]7;CWD:\${PWD}\\007"'\r`;
+          channel.write(promptCmd);
+
           channel.on("data", (data: Buffer) => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(data);
+            if (ws.readyState !== WebSocket.OPEN) return;
+
+            const str = data.toString("utf-8");
+
+            // Extract CWD from OSC sequence if present
+            let match: RegExpExecArray | null;
+            CWD_REGEX.lastIndex = 0;
+            while ((match = CWD_REGEX.exec(str)) !== null) {
+              const cwd = match[1];
+              if (cwd && cwd !== lastCwd) {
+                lastCwd = cwd;
+                ws.send(JSON.stringify({ type: "cwd", path: cwd }));
+              }
+            }
+
+            // Strip the OSC CWD sequences from the data before forwarding
+            // so they don't appear as visual artifacts in the terminal
+            const cleaned = str.replace(CWD_REGEX, "");
+            if (cleaned.length > 0) {
+              ws.send(Buffer.from(cleaned, "utf-8"));
             }
           });
 

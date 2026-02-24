@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { listDir, FileEntry, renameItem, deleteItem } from "@/lib/api";
+import { normalizePath } from "@/lib/pathUtils";
 
 interface CreatingItem {
   parentPath: string;
@@ -24,6 +25,7 @@ interface Props {
   onRenameComplete?: () => void;
   onDeleteItem?: (path: string) => void;
   onRootPathChange?: (path: string) => void;
+  externalRootPath?: string;
 }
 
 interface TreeNode {
@@ -129,9 +131,11 @@ export default function FileTree({
   onRenameComplete,
   onDeleteItem,
   onRootPathChange,
+  externalRootPath,
 }: Props) {
   const [roots, setRoots] = useState<TreeNode[]>([]);
   const [rootPath, setRootPath] = useState("/home");
+  const [inputValue, setInputValue] = useState("/home");
   const [dragSource, setDragSource] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [internalRenamingPath, setInternalRenamingPath] = useState<string | null>(null);
@@ -173,6 +177,16 @@ export default function FileTree({
       setRoots([]);
     }
   }, [sessionId, rootPath, loadDir, refreshKey]);
+
+  // Sync with external root path changes (e.g. from terminal cd)
+  useEffect(() => {
+    if (!externalRootPath) return;
+    const normalized = normalizePath(externalRootPath);
+    if (normalized !== rootPath) {
+      setRootPath(normalized);
+      setInputValue(normalized);
+    }
+  }, [externalRootPath]);
 
   // Smart polling for real-time updates
   useEffect(() => {
@@ -301,8 +315,9 @@ export default function FileTree({
 
   const handleRootPathChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      const newPath = (e.target as HTMLInputElement).value;
+      const newPath = normalizePath((e.target as HTMLInputElement).value);
       setRootPath(newPath);
+      setInputValue(newPath);
       onRootPathChange?.(newPath);
     }
   };
@@ -476,7 +491,8 @@ export default function FileTree({
       </div>
       <div style={styles.rootInput}>
         <input
-          defaultValue={rootPath}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleRootPathChange}
           placeholder="Root path (Enter to load)"
           style={styles.pathInput}
@@ -526,7 +542,7 @@ export default function FileTree({
           />
         )}
         {/* Inline creation at root level */}
-        {creatingItem && creatingItem.parentPath === rootPath && onCreateItem && onCancelCreate && (
+        {creatingItem && normalizePath(creatingItem.parentPath) === normalizePath(rootPath) && onCreateItem && onCancelCreate && (
           <InlineCreateInput
             depth={0}
             type={creatingItem.type}
@@ -667,13 +683,13 @@ function TreeItem({
           background: isDropTarget
             ? "rgba(6, 182, 212, 0.15)"
             : isSelected
-            ? "var(--bg-active)"
-            : undefined,
+              ? "var(--bg-active)"
+              : undefined,
           borderLeft: isDropTarget
             ? "2px solid var(--accent)"
             : isSelected
-            ? "2px solid var(--accent)"
-            : "2px solid transparent",
+              ? "2px solid var(--accent)"
+              : "2px solid transparent",
           outline: isDropTarget ? "1px dashed var(--accent)" : undefined,
           outlineOffset: "-1px",
           opacity: isDragSource ? 0.4 : 1,

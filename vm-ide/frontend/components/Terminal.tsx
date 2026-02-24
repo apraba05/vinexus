@@ -7,9 +7,10 @@ interface Props {
   onError: (msg: string) => void;
   onActivity?: () => void;
   cdPath?: string | null;
+  onCwdChange?: (path: string) => void;
 }
 
-export default function TerminalPanel({ sessionId, onError, onActivity, cdPath }: Props) {
+export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, onCwdChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -69,6 +70,18 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath }
       };
 
       ws.onmessage = (event) => {
+        // Check for JSON messages (CWD changes from PROMPT_COMMAND)
+        if (typeof event.data === "string") {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === "cwd" && msg.path) {
+              onCwdChange?.(msg.path);
+              return; // Don't write CWD messages to terminal
+            }
+          } catch {
+            // Not JSON, treat as terminal data
+          }
+        }
         const data = event.data instanceof ArrayBuffer
           ? new Uint8Array(event.data)
           : event.data;
