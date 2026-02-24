@@ -11,6 +11,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
     depends_on:
       - frontend
       - backend
@@ -100,4 +102,5 @@ volumes:
   pgdata:
   caddy_data:
   caddy_config:
+
 
