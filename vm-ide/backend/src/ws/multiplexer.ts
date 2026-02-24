@@ -141,7 +141,7 @@ export function setupWebSockets(server: Server): void {
             sendMessage({
               channel: "system",
               type: "error",
-              payload: { message: `Unknown channel: ${msg.channel}` },
+              payload: { message: "Unknown channel: " + msg.channel },
             });
         }
       });
@@ -176,15 +176,21 @@ export function setupWebSockets(server: Server): void {
   // CWD detection: We inject a PROMPT_COMMAND that emits an OSC escape sequence
   // containing the current directory after each command. The handler scans for
   // this pattern and sends CWD changes as JSON messages to the frontend.
-  const CWD_MARKER_START = "\x1b]7;CWD:";
-  const CWD_MARKER_END = "\x07";
+  // The injection is completely hidden from the user via a setup phase.
   const CWD_REGEX = /\x1b\]7;CWD:([^\x07]+)\x07/g;
+  // Build PROMPT_COMMAND string with concatenation to prevent TS from
+  // interpreting the shell variable ${PWD} as a template expression.
+  const PROMPT_CMD_SETUP =
+    " export PROMPT_COMMAND='echo -ne \"\\033]7;CWD:" +
+    "${PWD}" +
+    "\\007\"'\r";
 
   legacyWss.on(
     "connection",
     (ws: WebSocket, _req: IncomingMessage, session: any) => {
       let shellChannel: ClientChannel | null = null;
       let lastCwd: string | null = null;
+      let setupDone = false;
 
       session.conn.shell(
         { term: "xterm-256color", cols: 80, rows: 24 },
@@ -202,19 +208,31 @@ export function setupWebSockets(server: Server): void {
 
           shellChannel = channel;
 
-          // Inject PROMPT_COMMAND to emit CWD after every command.
-          // We use a unique marker that won't collide with normal output.
-          // The \r at the end submits the command; the initial clear hides it.
-          const promptCmd =
-            `PROMPT_COMMAND='echo -ne "\\033]7;CWD:\${PWD}\\007"'\r`;
-          channel.write(promptCmd);
+          // ─── Silent setup phase ───
+          // During setup, all output is suppressed so the user
+          // doesn't see the PROMPT_COMMAND injection.
+          // 1. Wait for shell to initialize (.bashrc, motd, etc.)
+          // 2. Inject PROMPT_COMMAND (leading space = no bash history)
+          // 3. Clear screen to hide all setup artifacts
+          // 4. Start forwarding output — user sees a clean terminal
+          setTimeout(() => {
+            channel.write(PROMPT_CMD_SETUP);
+            // After PROMPT_COMMAND is set, clear the screen and
+            // trigger it once so the initial CWD is reported
+            setTimeout(() => {
+              channel.write(" clear\r");
+              setTimeout(() => {
+                setupDone = true;
+              }, 150);
+            }, 150);
+          }, 300);
 
           channel.on("data", (data: Buffer) => {
             if (ws.readyState !== WebSocket.OPEN) return;
 
             const str = data.toString("utf-8");
 
-            // Extract CWD from OSC sequence if present
+            // Always extract CWD from OSC sequences (even during setup)
             let match: RegExpExecArray | null;
             CWD_REGEX.lastIndex = 0;
             while ((match = CWD_REGEX.exec(str)) !== null) {
@@ -225,8 +243,10 @@ export function setupWebSockets(server: Server): void {
               }
             }
 
+            // During setup phase, suppress all terminal output
+            if (!setupDone) return;
+
             // Strip the OSC CWD sequences from the data before forwarding
-            // so they don't appear as visual artifacts in the terminal
             const cleaned = str.replace(CWD_REGEX, "");
             if (cleaned.length > 0) {
               ws.send(Buffer.from(cleaned, "utf-8"));
