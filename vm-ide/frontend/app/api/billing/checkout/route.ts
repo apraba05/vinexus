@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-01-28.clover",
-});
+export const dynamic = "force-dynamic";
 
 export async function POST() {
   try {
@@ -21,6 +18,11 @@ export async function POST() {
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-01-28.clover",
+    });
 
     // Create or reuse Stripe customer
     let customerId = user.stripeCustomerId;

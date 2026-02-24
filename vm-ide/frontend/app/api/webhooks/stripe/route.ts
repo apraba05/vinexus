@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+export const dynamic = "force-dynamic";
 
 function getSubscriptionPeriod(sub: any): { start: Date | null; end: Date | null } {
-  // Handle both old (current_period_start) and new API shapes
   const startTs = sub.current_period_start;
   const endTs = sub.current_period_end;
   return {
@@ -22,7 +16,13 @@ export async function POST(request: Request) {
   const body = await request.text();
   const signature = request.headers.get("stripe-signature")!;
 
-  let event: Stripe.Event;
+  const Stripe = (await import("stripe")).default;
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2026-01-28.clover",
+  });
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
+  let event: any;
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: any) {
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object;
         const userId = session.metadata?.userId;
         if (!userId || !session.subscription) break;
 
@@ -67,7 +67,6 @@ export async function POST(request: Request) {
           },
         });
 
-        // Ensure Stripe customer ID is stored
         if (session.customer) {
           await prisma.user.update({
             where: { id: userId },
@@ -78,7 +77,7 @@ export async function POST(request: Request) {
       }
 
       case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object;
         const existing = await prisma.subscription.findUnique({
           where: { stripeSubscriptionId: subscription.id },
         });
@@ -99,7 +98,7 @@ export async function POST(request: Request) {
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object;
         const existing = await prisma.subscription.findUnique({
           where: { stripeSubscriptionId: subscription.id },
         });
@@ -116,7 +115,7 @@ export async function POST(request: Request) {
       }
 
       case "invoice.payment_failed": {
-        const invoice = event.data.object as Stripe.Invoice;
+        const invoice = event.data.object;
         const subId = (invoice as any).subscription as string;
         if (!subId) break;
 
