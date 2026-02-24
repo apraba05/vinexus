@@ -149,8 +149,8 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
   const prevCdPath = useRef<string | null>(null);
   useEffect(() => {
     if (!cdPath || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    // Only send cd if path actually changed (skip initial mount)
-    if (prevCdPath.current !== null && cdPath !== prevCdPath.current) {
+    // Send cd if path actually changed
+    if (cdPath !== prevCdPath.current) {
       wsRef.current.send(`cd ${cdPath}\r`);
     }
     prevCdPath.current = cdPath;
