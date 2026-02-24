@@ -134,7 +134,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   badge: {
     padding: "1px 5px",
-    background: "rgba(108, 92, 231, 0.2)",
+    background: "rgba(6, 182, 212, 0.2)",
     color: "var(--accent)",
     borderRadius: 8,
     fontSize: 9,

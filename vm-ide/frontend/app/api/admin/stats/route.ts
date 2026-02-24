@@ -16,37 +16,38 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [activeSubscriptions, canceledSubscriptions, activeSubs, recentActivity] =
-    await Promise.all([
-      prisma.subscription.count({
-        where: { status: { in: ["active", "trialing"] } },
-      }),
-      prisma.subscription.count({
-        where: { status: "canceled" },
-      }),
-      prisma.subscription.findMany({
-        where: { status: { in: ["active", "trialing"] } },
-        include: { plan: true },
-      }),
-      prisma.subscription.findMany({
-        orderBy: { updatedAt: "desc" },
-        take: 10,
-        include: {
-          user: { select: { id: true, email: true, name: true } },
-          plan: { select: { name: true, displayName: true, price: true } },
-        },
-      }),
-    ]);
+  const activeSubscriptions = await prisma.subscription.count({
+    where: { status: { in: ["active", "trialing"] } },
+  });
+  const canceledSubscriptions = await prisma.subscription.count({
+    where: { status: "canceled" },
+  });
+  const activeSubs = await prisma.subscription.findMany({
+    where: { status: { in: ["active", "trialing"] } },
+    include: { plan: true },
+  });
+  const recentActivity = await prisma.subscription.findMany({
+    orderBy: { updatedAt: "desc" },
+    take: 10,
+    include: {
+      user: { select: { id: true, email: true, name: true } },
+      plan: { select: { name: true, displayName: true, price: true } },
+    },
+  });
 
-  const mrr = activeSubs.reduce((sum, sub) => sum + (sub.plan?.price ?? 0), 0);
-  const totalRevenue = mrr; // Approximation based on current active subs
+  let mrr = 0;
+  for (const sub of activeSubs) {
+    mrr += sub.plan?.price ?? 0;
+  }
+  const totalRevenue = mrr;
 
   return NextResponse.json({
     activeSubscriptions,
     canceledSubscriptions,
     mrr,
     totalRevenue,
-    recentActivity: recentActivity.map((sub) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recentActivity: recentActivity.map((sub: any) => ({
       id: sub.id,
       userName: sub.user.name || sub.user.email,
       userEmail: sub.user.email,

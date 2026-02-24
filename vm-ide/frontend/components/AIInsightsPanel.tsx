@@ -9,6 +9,8 @@ interface Props {
   diagnosis: AIAnalysis | null;
   filePath: string | null;
   onClose: () => void;
+  usageCount?: number;
+  usageLimit?: number;
 }
 
 export default function AIInsightsPanel({
@@ -18,6 +20,8 @@ export default function AIInsightsPanel({
   diagnosis,
   filePath,
   onClose,
+  usageCount = 0,
+  usageLimit = 15,
 }: Props) {
   if (!visible) return null;
 
@@ -39,12 +43,15 @@ export default function AIInsightsPanel({
               </span>
             )}
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <UsageBadge count={usageCount} limit={usageLimit} />
+            <button style={styles.closeBtn} onClick={onClose}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -199,6 +206,24 @@ export default function AIInsightsPanel({
         </div>
       </div>
     </div>
+  );
+}
+
+function UsageBadge({ count, limit }: { count: number; limit: number }) {
+  const atLimit = count >= limit;
+  return (
+    <span style={{
+      padding: "2px 8px",
+      borderRadius: 4,
+      fontSize: 10,
+      fontWeight: 600,
+      fontFamily: "monospace",
+      background: atLimit ? "rgba(239, 68, 68, 0.1)" : "rgba(6, 182, 212, 0.1)",
+      color: atLimit ? "#ef4444" : "#06b6d4",
+      border: atLimit ? "1px solid rgba(239, 68, 68, 0.2)" : "1px solid rgba(6, 182, 212, 0.2)",
+    }}>
+      {count}/{limit} today
+    </span>
   );
 }
 
@@ -386,7 +411,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     borderRadius: "50%",
-    background: "rgba(108, 92, 231, 0.15)",
+    background: "rgba(6, 182, 212, 0.15)",
     color: "var(--accent)",
     fontSize: 10,
     fontWeight: 700,

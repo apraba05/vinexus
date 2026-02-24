@@ -3,14 +3,15 @@ import type { NextAuthConfig } from "next-auth";
 export const authConfig: NextAuthConfig = {
   pages: {
     signIn: "/login",
-    newUser: "/app",
+    newUser: "/dashboard",
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isProtected =
         nextUrl.pathname.startsWith("/app") ||
-        nextUrl.pathname.startsWith("/account");
+        nextUrl.pathname.startsWith("/account") ||
+        nextUrl.pathname.startsWith("/dashboard");
       const isAuthPage =
         nextUrl.pathname === "/login" || nextUrl.pathname === "/signup";
 
@@ -19,7 +20,7 @@ export const authConfig: NextAuthConfig = {
       }
 
       if (isAuthPage && isLoggedIn) {
-        return Response.redirect(new URL("/app", nextUrl));
+        return Response.redirect(new URL("/dashboard", nextUrl));
       }
 
       return true;

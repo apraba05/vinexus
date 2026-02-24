@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import { LogEntry } from "@/lib/api";
+import { usePlan } from "@/contexts/PlanContext";
 
 interface Props {
   entries: LogEntry[];
@@ -48,6 +49,7 @@ export default function LogsPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
+  const { features } = usePlan();
 
   // Auto-scroll to bottom when new entries arrive
   useEffect(() => {
@@ -143,16 +145,17 @@ export default function LogsPanel({
               style={{
                 ...styles.diagnoseBtn,
                 ...(diagnosing ? { opacity: 0.6 } : {}),
+                ...(!features.ai ? { opacity: 0.5 } : {}),
               }}
-              onClick={() => {
+              onClick={features.ai ? () => {
                 const logText = entries
                   .slice(-50)
                   .map((e) => `${e.timestamp} [${e.priority}] ${e.message}`)
                   .join("\n");
                 onDiagnose(service, logText);
-              }}
-              disabled={diagnosing}
-              title="Analyze logs with AI"
+              } : undefined}
+              disabled={diagnosing || !features.ai}
+              title={features.ai ? "Analyze logs with AI" : "Pro feature — upgrade to unlock"}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -160,6 +163,12 @@ export default function LogsPanel({
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
               {diagnosing ? "Analyzing..." : "Why?"}
+              {!features.ai && (
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              )}
             </button>
           )}
           <button style={styles.toolBtn} onClick={onClear} title="Clear">
@@ -248,9 +257,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   fetchBtn: {
     padding: "6px 14px",
-    background: "rgba(108, 92, 231, 0.1)",
+    background: "rgba(6, 182, 212, 0.1)",
     color: "var(--accent)",
-    border: "1px solid rgba(108, 92, 231, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.2)",
     borderRadius: 5,
     fontSize: 12,
     cursor: "pointer",
@@ -310,18 +319,18 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
   },
   toolBtnActive: {
-    background: "rgba(108, 92, 231, 0.15)",
+    background: "rgba(6, 182, 212, 0.15)",
     color: "var(--accent)",
-    border: "1px solid rgba(108, 92, 231, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.2)",
   },
   diagnoseBtn: {
     display: "flex",
     alignItems: "center",
     gap: 4,
     padding: "3px 8px",
-    background: "rgba(108, 92, 231, 0.1)",
+    background: "rgba(6, 182, 212, 0.1)",
     color: "var(--accent)",
-    border: "1px solid rgba(108, 92, 231, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.2)",
     borderRadius: 3,
     cursor: "pointer",
     fontSize: 10,

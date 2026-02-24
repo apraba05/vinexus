@@ -77,7 +77,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   badgeLoading: {
     color: "var(--accent)",
-    borderColor: "rgba(108, 92, 231, 0.3)",
+    borderColor: "rgba(6, 182, 212, 0.3)",
   },
   badgeValid: {
     color: "var(--success)",

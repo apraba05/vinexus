@@ -103,9 +103,9 @@ const styles: Record<string, React.CSSProperties> = {
   retryBtn: {
     marginTop: 4,
     padding: "5px 14px",
-    background: "rgba(108, 92, 231, 0.1)",
+    background: "rgba(6, 182, 212, 0.1)",
     color: "var(--accent)",
-    border: "1px solid rgba(108, 92, 231, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.2)",
     borderRadius: 4,
     fontSize: 11,
     cursor: "pointer",

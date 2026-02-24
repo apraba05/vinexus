@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { usePlan } from "@/contexts/PlanContext";
 
 interface Props {
   sessionId: string | null;
@@ -41,6 +43,7 @@ export default function Toolbar({
   const disabled = !sessionId;
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const newMenuRef = useRef<HTMLDivElement>(null);
+  const { features } = usePlan();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -57,6 +60,25 @@ export default function Toolbar({
   return (
     <div style={styles.bar}>
       <div style={styles.group}>
+        {/* Dashboard */}
+        <Link
+          href="/dashboard"
+          style={{
+            ...styles.btn,
+            textDecoration: "none",
+            color: "var(--text-secondary)",
+          }}
+          title="Back to Dashboard"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span>Dashboard</span>
+        </Link>
+
+        <div style={styles.sep} />
+
         {/* Save */}
         <button
           style={{
@@ -121,10 +143,11 @@ export default function Toolbar({
             <button
               style={{
                 ...styles.btn,
-                ...(showCommands ? { color: "var(--accent)", background: "rgba(108, 92, 231, 0.08)" } : {}),
+                ...(showCommands ? { color: "var(--accent)", background: "rgba(6, 182, 212, 0.08)" } : {}),
+                ...(!features.commands ? { opacity: 0.5 } : {}),
               }}
-              onClick={onToggleCommands}
-              title="Toggle server commands"
+              onClick={features.commands ? onToggleCommands : undefined}
+              title={features.commands ? "Toggle server commands" : "Pro feature — upgrade to unlock"}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
@@ -133,6 +156,12 @@ export default function Toolbar({
                 <line x1="6" y1="18" x2="6.01" y2="18" />
               </svg>
               <span>Server</span>
+              {!features.commands && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              )}
             </button>
           </>
         )}
@@ -194,13 +223,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   btnAccent: {
     color: "var(--accent-hover)",
-    background: "rgba(108, 92, 231, 0.1)",
-    border: "1px solid rgba(108, 92, 231, 0.2)",
+    background: "rgba(6, 182, 212, 0.1)",
+    border: "1px solid rgba(6, 182, 212, 0.2)",
   },
   deployBtn: {
     color: "#fff",
-    background: "linear-gradient(135deg, #6c5ce7, #a855f7)",
-    border: "1px solid rgba(108, 92, 231, 0.4)",
+    background: "linear-gradient(135deg, #06b6d4, #0891b2)",
+    border: "1px solid rgba(6, 182, 212, 0.4)",
     fontWeight: 600,
   },
   sep: {

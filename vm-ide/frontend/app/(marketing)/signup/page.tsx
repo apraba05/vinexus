@@ -2,6 +2,10 @@
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const Squares = dynamic(() => import("@/components/reactbits/Squares"), { ssr: false });
+const GradientText = dynamic(() => import("@/components/reactbits/GradientText"), { ssr: false });
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -30,7 +34,6 @@ export default function SignupPage() {
         return;
       }
 
-      // Auto sign in after signup
       const result = await signIn("credentials", {
         email,
         password,
@@ -41,7 +44,7 @@ export default function SignupPage() {
         setError("Account created but sign-in failed. Please log in.");
         setLoading(false);
       } else {
-        window.location.href = "/app";
+        window.location.href = "/dashboard";
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -50,19 +53,40 @@ export default function SignupPage() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.logo}>
-          <span style={styles.logoIcon}>&#9670;</span>
-          <span style={styles.logoText}>InfraNexus</span>
-        </div>
-        <h1 style={styles.title}>Create your account</h1>
-        <p style={styles.subtitle}>Start managing your infrastructure</p>
+    <div style={{ position: "relative", minHeight: "calc(100vh - 72px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflow: "hidden" }}>
+      <div className="hero-bg" style={{ opacity: 0.4 }}>
+        <Squares
+          direction="diagonal"
+          speed={0.2}
+          borderColor="rgba(6, 182, 212, 0.05)"
+          squareSize={50}
+          hoverFillColor="rgba(6, 182, 212, 0.02)"
+        />
+      </div>
 
-        <div style={styles.oauthRow}>
+      <div className="auth-card" style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 420 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, justifyContent: "center" }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
+          </svg>
+          <GradientText colors={["#06b6d4", "#22d3ee", "#67e8f9"]} animationSpeed={6}>
+            <span style={{ fontSize: 20, fontWeight: 700 }}>InfraNexus</span>
+          </GradientText>
+        </div>
+
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--text-bright)", textAlign: "center", marginBottom: 4 }}>
+          Create your account
+        </h1>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center", marginBottom: 28 }}>
+          Start managing your infrastructure
+        </p>
+
+        <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
           <button
-            style={styles.oauthBtn}
-            onClick={() => signIn("google", { callbackUrl: "/app" })}
+            className="oauth-btn"
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
             type="button"
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
@@ -74,8 +98,8 @@ export default function SignupPage() {
             Google
           </button>
           <button
-            style={styles.oauthBtn}
-            onClick={() => signIn("github", { callbackUrl: "/app" })}
+            className="oauth-btn"
+            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
             type="button"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -85,46 +109,66 @@ export default function SignupPage() {
           </button>
         </div>
 
-        <div style={styles.divider}>
-          <span style={styles.dividerLine} />
-          <span style={styles.dividerText}>or</span>
-          <span style={styles.dividerLine} />
+        <div className="divider" style={{ marginBottom: 24 }}>
+          <span className="divider-line" />
+          <span className="divider-text">or continue with email</span>
+          <span className="divider-line" />
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {error && <div style={styles.error}>{error}</div>}
-          <input
-            style={styles.input}
-            type="text"
-            placeholder="Full name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            style={styles.input}
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="Password (min 8 characters)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={8}
-          />
-          <button style={styles.submitBtn} type="submit" disabled={loading}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {error && (
+            <div style={{
+              padding: "10px 14px",
+              background: "rgba(239, 68, 68, 0.06)",
+              color: "var(--danger)",
+              border: "1px solid rgba(239, 68, 68, 0.12)",
+              borderRadius: "var(--radius-md)",
+              fontSize: 13,
+            }}>
+              {error}
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)" }}>Full Name</label>
+            <input
+              className="auth-input"
+              type="text"
+              placeholder="John Doe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)" }}>Email</label>
+            <input
+              className="auth-input"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={{ fontSize: 13, fontWeight: 500, color: "var(--text-secondary)" }}>Password</label>
+            <input
+              className="auth-input"
+              type="password"
+              placeholder="Min 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+            />
+          </div>
+          <button className="btn btn-primary" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} type="submit" disabled={loading}>
             {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 
-        <p style={styles.footer}>
+        <p style={{ textAlign: "center", fontSize: 14, color: "var(--text-secondary)", marginTop: 24 }}>
           Already have an account?{" "}
-          <Link href="/login" style={styles.link}>
+          <Link href="/login" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>
             Sign in
           </Link>
         </p>
@@ -132,132 +176,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "var(--bg-primary)",
-    padding: 20,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 400,
-    background: "var(--bg-secondary)",
-    border: "1px solid var(--border)",
-    borderRadius: 12,
-    padding: 32,
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 24,
-    justifyContent: "center",
-  },
-  logoIcon: {
-    fontSize: 24,
-    background: "linear-gradient(135deg, #6c5ce7, #a855f7)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-  },
-  logoText: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: "var(--text-bright)",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 700,
-    color: "var(--text-bright)",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "var(--text-secondary)",
-    textAlign: "center",
-    marginBottom: 24,
-  },
-  oauthRow: {
-    display: "flex",
-    gap: 12,
-    marginBottom: 20,
-  },
-  oauthBtn: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    padding: "10px 16px",
-    background: "var(--bg-tertiary)",
-    color: "var(--text-primary)",
-    border: "1px solid var(--border)",
-    borderRadius: 8,
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: "pointer",
-  },
-  divider: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    background: "var(--border)",
-  },
-  dividerText: {
-    fontSize: 12,
-    color: "var(--text-secondary)",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  },
-  input: {
-    padding: "10px 14px",
-    background: "var(--bg-tertiary)",
-    color: "var(--text-primary)",
-    border: "1px solid var(--border)",
-    borderRadius: 8,
-    fontSize: 14,
-    outline: "none",
-  },
-  submitBtn: {
-    padding: "10px 16px",
-    background: "linear-gradient(135deg, #6c5ce7, #a855f7)",
-    color: "#fff",
-    border: "none",
-    borderRadius: 8,
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
-    marginTop: 4,
-  },
-  error: {
-    padding: "8px 12px",
-    background: "rgba(255, 107, 107, 0.1)",
-    color: "var(--danger)",
-    border: "1px solid rgba(255, 107, 107, 0.2)",
-    borderRadius: 6,
-    fontSize: 13,
-  },
-  footer: {
-    textAlign: "center",
-    fontSize: 13,
-    color: "var(--text-secondary)",
-    marginTop: 20,
-  },
-  link: {
-    color: "var(--accent)",
-    textDecoration: "none",
-    fontWeight: 500,
-  },
-};

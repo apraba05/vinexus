@@ -184,6 +184,16 @@ router.post("/write", async (req: Request, res: Response) => {
         // Write to temp file
         await sftpWriteFile(session.sftp, tmpPath, buf);
 
+        // Remove existing file before rename (SFTP rename can't overwrite)
+        if (fileExists) {
+          try {
+            const { sftpUnlink } = await import("../types");
+            await sftpUnlink(session.sftp, filePath);
+          } catch {
+            // Ignore — file might not exist or already gone
+          }
+        }
+
         // Atomic rename temp -> target
         await sftpRename(session.sftp, tmpPath, filePath);
       } catch (writeErr: any) {

@@ -1,5 +1,27 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
+// ─── Token management ────────────────────────────────────────────
+const TOKEN_KEY = "vm-ide-token";
+
+export function setAuthToken(token: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+}
+
+export function getAuthToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+  return null;
+}
+
+export function clearAuthToken() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
 export interface FileEntry {
   name: string;
   path: string;
@@ -9,12 +31,23 @@ export interface FileEntry {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const token = getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers,
+    credentials: "include",
   });
   const data = await res.json();
   if (!res.ok) {
+    if (res.status === 402 && data.upgradeUrl) {
+      throw new Error("Pro subscription required");
+    }
     throw new Error(data.error || `Request failed: ${res.status}`);
   }
   return data;
@@ -27,18 +60,25 @@ export async function connectSession(params: {
   authMethod: "password" | "key";
   password?: string;
   privateKey?: string;
-}): Promise<{ sessionId: string }> {
-  return request("/api/session/connect", {
+}): Promise<{ sessionId: string; token: string }> {
+  const res = await request<{ sessionId: string; token: string }>("/api/session/connect", {
     method: "POST",
     body: JSON.stringify(params),
   });
+  // Store the JWT token for subsequent authenticated requests
+  if (res.token) {
+    setAuthToken(res.token);
+  }
+  return res;
 }
 
 export async function disconnectSession(sessionId: string): Promise<void> {
-  return request("/api/session/disconnect", {
+  const result = request<void>("/api/session/disconnect", {
     method: "POST",
     body: JSON.stringify({ sessionId }),
   });
+  clearAuthToken();
+  return result;
 }
 
 export async function listDir(
@@ -417,4 +457,28 @@ export async function getProjectConfig(
   const params = new URLSearchParams({ sessionId });
   if (rootPath) params.set("rootPath", rootPath);
   return request(`/api/config?${params.toString()}`);
+}
+
+// ─── Billing ─────────────────────────────────────────────
+
+export async function createCheckoutSession(): Promise<{ url: string }> {
+  const res = await fetch("/api/billing/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to create checkout session");
+  return data;
+}
+
+export async function createPortalSession(): Promise<{ url: string }> {
+  const res = await fetch("/api/billing/portal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to create portal session");
+  return data;
 }

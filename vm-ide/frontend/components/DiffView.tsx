@@ -244,7 +244,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   confirmBtn: {
     padding: "6px 16px",
-    background: "linear-gradient(135deg, #6c5ce7, #a855f7)",
+    background: "linear-gradient(135deg, #06b6d4, #0891b2)",
     color: "#fff",
     border: "none",
     borderRadius: 6,

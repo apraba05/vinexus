@@ -253,7 +253,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   deployBtn: {
     padding: "8px 20px",
-    background: "linear-gradient(135deg, #6c5ce7, #a855f7)",
+    background: "linear-gradient(135deg, #06b6d4, #0891b2)",
     color: "#fff",
     border: "none",
     borderRadius: 6,
@@ -263,9 +263,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   actionBtn: {
     padding: "4px 10px",
-    background: "rgba(108, 92, 231, 0.1)",
+    background: "rgba(6, 182, 212, 0.1)",
     color: "var(--accent)",
-    border: "1px solid rgba(108, 92, 231, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.2)",
     borderRadius: 4,
     fontSize: 11,
     cursor: "pointer",

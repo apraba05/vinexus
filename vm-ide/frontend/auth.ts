@@ -4,7 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
-import { prisma } from "../lib/prisma";
+import { prisma } from "./lib/prisma";
 import { authConfig } from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -29,8 +29,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const email = (credentials.email as string).trim().toLowerCase();
+        if (!email || typeof credentials.password !== "string") return null;
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
 
         if (!user || !user.passwordHash) return null;
@@ -63,6 +66,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token?.id) {
         session.user.id = token.id as string;
 
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+        });
+
+        (session as any).role = dbUser?.role || "user";
+        (session as any).emailVerified = dbUser?.emailVerified || null;
+
         // Fetch subscription info
         const subscription = await prisma.subscription.findFirst({
           where: {
@@ -78,7 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ide: true,
           terminal: true,
           files: true,
-          deploy: true,
+          deploy: false,
           commands: false,
           ai: false,
         };

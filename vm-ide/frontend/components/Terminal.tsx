@@ -6,9 +6,10 @@ interface Props {
   sessionId: string | null;
   onError: (msg: string) => void;
   onActivity?: () => void;
+  cdPath?: string | null;
 }
 
-export default function TerminalPanel({ sessionId, onError, onActivity }: Props) {
+export default function TerminalPanel({ sessionId, onError, onActivity, cdPath }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -130,6 +131,17 @@ export default function TerminalPanel({ sessionId, onError, onActivity }: Props)
       }
     };
   }, [sessionId, onError]);
+
+  // Auto cd when explorer path changes
+  const prevCdPath = useRef<string | null>(null);
+  useEffect(() => {
+    if (!cdPath || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    // Only send cd if path actually changed (skip initial mount)
+    if (prevCdPath.current !== null && cdPath !== prevCdPath.current) {
+      wsRef.current.send(`cd ${cdPath}\r`);
+    }
+    prevCdPath.current = cdPath;
+  }, [cdPath]);
 
   // Re-fit on visibility
   useEffect(() => {

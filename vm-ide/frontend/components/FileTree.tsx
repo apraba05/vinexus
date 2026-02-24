@@ -23,6 +23,7 @@ interface Props {
   renamingPath?: string | null;
   onRenameComplete?: () => void;
   onDeleteItem?: (path: string) => void;
+  onRootPathChange?: (path: string) => void;
 }
 
 interface TreeNode {
@@ -43,7 +44,7 @@ const fileIcons: Record<string, string> = {
 const fileColors: Record<string, string> = {
   js: "#f7df1e", jsx: "#61dafb", ts: "#3178c6", tsx: "#3178c6",
   py: "#3776ab", rb: "#cc342d", go: "#00add8", rs: "#dea584",
-  java: "#ed8b00", json: "#a855f7", html: "#e34f26", css: "#1572b6",
+  java: "#ed8b00", json: "#0891b2", html: "#e34f26", css: "#1572b6",
   md: "#083fa1", sh: "#4ec9b0",
 };
 
@@ -127,6 +128,7 @@ export default function FileTree({
   renamingPath: externalRenamingPath,
   onRenameComplete,
   onDeleteItem,
+  onRootPathChange,
 }: Props) {
   const [roots, setRoots] = useState<TreeNode[]>([]);
   const [rootPath, setRootPath] = useState("/home");
@@ -299,7 +301,9 @@ export default function FileTree({
 
   const handleRootPathChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      setRootPath((e.target as HTMLInputElement).value);
+      const newPath = (e.target as HTMLInputElement).value;
+      setRootPath(newPath);
+      onRootPathChange?.(newPath);
     }
   };
 
@@ -661,7 +665,7 @@ function TreeItem({
           ...styles.item,
           paddingLeft: 12 + depth * 16,
           background: isDropTarget
-            ? "rgba(108, 92, 231, 0.15)"
+            ? "rgba(6, 182, 212, 0.15)"
             : isSelected
             ? "var(--bg-active)"
             : undefined,
@@ -814,7 +818,7 @@ function InlineCreateInput({
       style={{
         ...styles.item,
         paddingLeft: 12 + depth * 16,
-        background: "rgba(108, 92, 231, 0.08)",
+        background: "rgba(6, 182, 212, 0.08)",
       }}
     >
       <span style={{ width: 14, flexShrink: 0 }} />
