@@ -26,7 +26,7 @@ We also automatically collect: device and browser information, IP addresses, usa
 • Stripe — for payment processing and subscription management
 • Resend — for transactional email delivery
 • AWS Bedrock — for AI-powered features (file analysis, log diagnosis)
-• Authentication providers (Google, GitHub) — for OAuth sign-in
+• Authentication providers (GitHub) — for OAuth sign-in
 
 Each third-party service has its own privacy policy governing their use of your data.`,
   },
