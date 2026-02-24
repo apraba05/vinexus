@@ -5,14 +5,15 @@ import GradientText from "@/components/reactbits/GradientText";
 
 // ─── Section data ──────────────────────────────────────────────
 const sections = [
-    { id: "quickstart", title: "Quickstart", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-    { id: "onboarding", title: "Onboarding", icon: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z" },
-    { id: "workflows", title: "Core Workflows", icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6" },
-    { id: "integrations", title: "Integrations", icon: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" },
-    { id: "permissions", title: "Permissions & Roles", icon: "M12 1a3 3 0 0 0-3 3v4a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z" },
-    { id: "troubleshooting", title: "Troubleshooting", icon: "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" },
+    { id: "getting-started", title: "Getting Started", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+    { id: "connecting", title: "Connecting Your VM", icon: "M22 11.08V12a10 10 0 1 1-5.93-9.14" },
+    { id: "editor", title: "Code Editor", icon: "M16 18l6-6-6-6M8 6l-6 6 6 6" },
+    { id: "terminal", title: "Terminal", icon: "M4 17l6-6-6-6M12 19h8" },
+    { id: "deploy", title: "Deploy & Commands", icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6" },
+    { id: "ai", title: "AI Insights", icon: "M12 2a4.5 4.5 0 0 0-4.5 4.5c0 1.657.894 3.106 2.227 3.89L9 12l3 2 3-2-.727-1.61A4.5 4.5 0 0 0 12 2z" },
+    { id: "plans", title: "Plans & Billing", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+    { id: "security", title: "Security & Privacy", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" },
     { id: "faq", title: "FAQ", icon: "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01" },
-    { id: "security", title: "Security Best Practices", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" },
 ] as const;
 
 function DocIcon({ d }: { d: string }) {
@@ -23,38 +24,11 @@ function DocIcon({ d }: { d: string }) {
     );
 }
 
-function CodeBlock({ children, title }: { children: string; title?: string }) {
-    return (
-        <div style={{ marginBottom: 16 }}>
-            {title && (
-                <div style={{
-                    fontSize: 11, fontWeight: 600, color: "var(--text-muted)",
-                    textTransform: "uppercase", letterSpacing: "0.06em",
-                    padding: "8px 16px", background: "rgba(255,255,255,0.02)",
-                    borderRadius: "var(--radius-md) var(--radius-md) 0 0",
-                    border: "1px solid var(--border)", borderBottom: "none",
-                }}>
-                    {title}
-                </div>
-            )}
-            <pre style={{
-                background: "rgba(0,0,0,0.3)", padding: "16px",
-                borderRadius: title ? "0 0 var(--radius-md) var(--radius-md)" : "var(--radius-md)",
-                border: "1px solid var(--border)", overflowX: "auto",
-                fontSize: 13, lineHeight: 1.7, fontFamily: "var(--font-mono)",
-                color: "var(--text-primary)", margin: 0,
-            }}>
-                <code>{children}</code>
-            </pre>
-        </div>
-    );
-}
-
 function Callout({ type, children }: { type: "info" | "warning" | "tip"; children: React.ReactNode }) {
     const colors = {
-        info: { bg: "rgba(59, 130, 246, 0.06)", border: "rgba(59, 130, 246, 0.15)", text: "#3b82f6", label: "Info" },
-        warning: { bg: "rgba(234, 179, 8, 0.06)", border: "rgba(234, 179, 8, 0.15)", text: "#eab308", label: "Warning" },
-        tip: { bg: "rgba(34, 197, 94, 0.06)", border: "rgba(34, 197, 94, 0.15)", text: "#22c55e", label: "Tip" },
+        info: { bg: "rgba(59, 130, 246, 0.06)", border: "rgba(59, 130, 246, 0.15)", text: "#3b82f6", label: "ℹ️" },
+        warning: { bg: "rgba(234, 179, 8, 0.06)", border: "rgba(234, 179, 8, 0.15)", text: "#eab308", label: "⚠️" },
+        tip: { bg: "rgba(34, 197, 94, 0.06)", border: "rgba(34, 197, 94, 0.15)", text: "#22c55e", label: "💡" },
     };
     const c = colors[type];
     return (
@@ -63,268 +37,267 @@ function Callout({ type, children }: { type: "info" | "warning" | "tip"; childre
             borderRadius: "var(--radius-md)", marginBottom: 20,
             display: "flex", gap: 12, alignItems: "flex-start",
         }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: c.text, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap", paddingTop: 2 }}>
-                {c.label}
-            </span>
+            <span style={{ fontSize: 16, flexShrink: 0, paddingTop: 1 }}>{c.label}</span>
             <span style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.6 }}>{children}</span>
         </div>
     );
 }
 
+function KeyboardShortcut({ keys }: { keys: string }) {
+    return (
+        <span style={{ display: "inline-flex", gap: 4 }}>
+            {keys.split("+").map((k, i) => (
+                <React.Fragment key={i}>
+                    {i > 0 && <span style={{ color: "var(--text-muted)", fontSize: 11 }}>+</span>}
+                    <kbd style={{
+                        padding: "2px 6px", borderRadius: 4, fontSize: 11, fontFamily: "var(--font-mono)",
+                        background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+                        color: "var(--text-bright)",
+                    }}>{k}</kbd>
+                </React.Fragment>
+            ))}
+        </span>
+    );
+}
+
 // ─── Section Components ──────────────────────────────────────────
 
-function QuickstartSection() {
+function GettingStartedSection() {
     return (<>
-        <p style={S.para}>Get InfraNexus running on your machine in under 5 minutes.</p>
+        <p style={S.para}>Welcome to InfraNexus — your browser-based IDE for managing virtual machines. No software to install, no setup required. Just sign in and connect.</p>
 
-        <h3 style={S.h3}>1. Prerequisites</h3>
-        <ul style={S.list}>
-            <li>Node.js 20+ and npm</li>
-            <li>PostgreSQL 16+ (or use Docker Compose)</li>
-            <li>A remote VM or server accessible via SSH</li>
-        </ul>
+        <h3 style={S.h3}>1. Create Your Account</h3>
+        <p style={S.para}>Click <strong>Get Started</strong> on the homepage or go to the <strong>Sign Up</strong> page. You can create an account with your email or sign in instantly with GitHub.</p>
 
-        <h3 style={S.h3}>2. Clone & Install</h3>
-        <CodeBlock title="Terminal">{`git clone https://github.com/your-org/infranexus.git
-cd infranexus
+        <h3 style={S.h3}>2. Open the IDE</h3>
+        <p style={S.para}>From your <strong>Dashboard</strong>, click <strong>Open IDE</strong> to launch the editor. This is where you&apos;ll connect to your VM and start working.</p>
 
-# Install root dependencies (Prisma)
-npm install
+        <h3 style={S.h3}>3. Connect Your VM</h3>
+        <p style={S.para}>Enter your VM&apos;s IP address, username, and authentication credentials. InfraNexus supports both <strong>password</strong> and <strong>SSH key</strong> authentication. Once connected, your VM&apos;s file system and terminal are instantly accessible in the browser.</p>
 
-# Install frontend
-cd frontend && npm install && cd ..
-
-# Install backend
-cd backend && npm install && cd ..`}</CodeBlock>
-
-        <h3 style={S.h3}>3. Configure Environment</h3>
-        <CodeBlock title="Terminal">{`# Copy example env files
-cp frontend/.env.example frontend/.env.local
-cp backend/.env.example backend/.env
-
-# Generate a secure NextAuth secret
-openssl rand -base64 32
-# Paste the output as NEXTAUTH_SECRET in both .env files`}</CodeBlock>
-        <Callout type="warning">Never commit real secrets. The <code>.gitignore</code> excludes <code>.env</code> and <code>.env.local</code> by default.</Callout>
-
-        <h3 style={S.h3}>4. Database Setup</h3>
-        <CodeBlock title="Terminal">{`# Push the Prisma schema to your database
-npm run db:push
-
-# Seed initial data (plans, admin user)
-npm run db:seed`}</CodeBlock>
-
-        <h3 style={S.h3}>5. Start Development</h3>
-        <CodeBlock title="Terminal">{`# Terminal 1: Start the backend
-cd backend && npm run dev
-
-# Terminal 2: Start the frontend
-cd frontend && npm run dev`}</CodeBlock>
-        <p style={S.para}>Open <strong>http://localhost:3000</strong> in your browser. Sign up, connect to your VM, and you&apos;re ready to go!</p>
+        <h3 style={S.h3}>4. Start Working</h3>
+        <p style={S.para}>Browse your files, edit code, run commands in the terminal, and manage your server — all from a single browser tab.</p>
     </>);
 }
 
-function OnboardingSection() {
+function ConnectingSection() {
     return (<>
-        <p style={S.para}>After signing up, here&apos;s how to get productive with InfraNexus quickly.</p>
+        <p style={S.para}>InfraNexus connects to your VM securely via SSH. Here&apos;s how to set it up.</p>
 
-        <h3 style={S.h3}>Create Your Account</h3>
-        <p style={S.para}>Navigate to <strong>/signup</strong> and create an account with your email. You&apos;ll receive a verification email — click the link to activate your account. GitHub OAuth is also available for one-click signup.</p>
-
-        <h3 style={S.h3}>Connect to a VM</h3>
-        <ol style={S.list}>
-            <li>Click <strong>Open IDE</strong> from the Dashboard</li>
-            <li>Fill in your VM&apos;s hostname/IP, username, and select an auth method (password or SSH key)</li>
-            <li>Click <strong>Connect</strong> — InfraNexus establishes an SSH session and opens your file tree</li>
-        </ol>
-        <Callout type="tip">For SSH key auth, paste your private key content directly into the form. Keys are only held in memory during your session and never stored on disk.</Callout>
-
-        <h3 style={S.h3}>Explore the IDE</h3>
-        <p style={S.para}>The IDE provides several panels:</p>
+        <h3 style={S.h3}>What You Need</h3>
         <ul style={S.list}>
-            <li><strong>File Tree</strong> (left) — Browse, create, rename, and delete files/folders</li>
-            <li><strong>Editor</strong> (center) — Monaco-powered code editor with syntax highlighting</li>
-            <li><strong>Terminal</strong> (bottom) — Full terminal access to your VM</li>
-            <li><strong>Toolbar</strong> (top) — Save, create new files, deploy, and run server commands</li>
+            <li><strong>IP Address or Hostname</strong> — Your VM&apos;s public IP (e.g., <code>54.210.123.45</code>) or domain name</li>
+            <li><strong>Username</strong> — The SSH user on your VM (e.g., <code>ubuntu</code>, <code>root</code>, <code>ec2-user</code>)</li>
+            <li><strong>Password or SSH Key</strong> — Your login credentials</li>
+        </ul>
+
+        <h3 style={S.h3}>Authentication Methods</h3>
+        <p style={S.para}><strong>Password Authentication:</strong> Enter your SSH password directly. Simple and works with most VMs.</p>
+        <p style={S.para}><strong>SSH Key Authentication (recommended):</strong> Paste your private key content into the key field. This is more secure and is the standard for cloud VMs (AWS, DigitalOcean, GCP, etc.).</p>
+
+        <Callout type="info">Your SSH credentials are <strong>never stored on our servers</strong>. They are held in memory only during your active session and automatically cleared when you disconnect or your session times out (30 minutes of inactivity).</Callout>
+
+        <h3 style={S.h3}>Troubleshooting Connection Issues</h3>
+        <ul style={S.list}>
+            <li><strong>Connection refused</strong> — Make sure SSH (port 22) is open in your VM&apos;s firewall or security group</li>
+            <li><strong>Authentication failed</strong> — Double-check your username and password/key. For key auth, make sure you&apos;re pasting the full private key including the <code>-----BEGIN</code> and <code>-----END</code> lines</li>
+            <li><strong>Timeout</strong> — Verify the IP address is correct and the VM is running</li>
         </ul>
     </>);
 }
 
-function WorkflowsSection() {
+function EditorSection() {
     return (<>
-        <p style={S.para}>InfraNexus supports several core workflows for managing your infrastructure.</p>
+        <p style={S.para}>InfraNexus features a full Monaco editor (the same engine that powers VS Code) directly in your browser.</p>
 
-        <h3 style={S.h3}>Editing Files</h3>
-        <p style={S.para}>Click any file in the tree to open it in the Monaco editor. Changes are tracked with a dot indicator. Press <code>Ctrl+S</code> (or click <strong>Save</strong>) to write changes back to your VM. InfraNexus uses safe-write (temp file + atomic rename) and auto-creates backups of modified files.</p>
+        <h3 style={S.h3}>File Tree</h3>
+        <p style={S.para}>The left sidebar shows your VM&apos;s file system. Click any file to open it in the editor. You can also:</p>
+        <ul style={S.list}>
+            <li><strong>Create files and folders</strong> — Right-click in the file tree or use the toolbar buttons</li>
+            <li><strong>Rename</strong> — Right-click a file → Rename</li>
+            <li><strong>Delete</strong> — Right-click a file → Delete (with confirmation)</li>
+            <li><strong>Navigate</strong> — Click folders to expand/collapse them</li>
+        </ul>
+
+        <h3 style={S.h3}>Editing</h3>
+        <p style={S.para}>Edit files with full syntax highlighting for 50+ languages. Modified files show a dot indicator so you always know what&apos;s unsaved.</p>
+        <ul style={S.list}>
+            <li><strong>Save</strong> — <KeyboardShortcut keys="Ctrl+S" /> (or <KeyboardShortcut keys="Cmd+S" /> on Mac)</li>
+            <li><strong>Find</strong> — <KeyboardShortcut keys="Ctrl+F" /></li>
+            <li><strong>Find &amp; Replace</strong> — <KeyboardShortcut keys="Ctrl+H" /></li>
+            <li><strong>Command Palette</strong> — <KeyboardShortcut keys="F1" /></li>
+        </ul>
+
+        <Callout type="tip">When you save a file, InfraNexus automatically creates a backup of the previous version on your VM. You can restore backups if you need to undo changes.</Callout>
+
+        <h3 style={S.h3}>Diff View</h3>
+        <p style={S.para}>Before saving, you can preview exactly what changed with the built-in diff viewer. This shows a side-by-side comparison of the original file on your VM versus your edits.</p>
+    </>);
+}
+
+function TerminalSection() {
+    return (<>
+        <p style={S.para}>The integrated terminal gives you full command-line access to your VM, directly in the browser.</p>
 
         <h3 style={S.h3}>Using the Terminal</h3>
-        <p style={S.para}>The integrated terminal connects directly to your VM via SSH. It supports full xterm.js rendering including colors, cursor movement, and tab completion. Use it for running commands, viewing logs, and managing services.</p>
+        <p style={S.para}>Click the <strong>Terminal</strong> tab at the bottom of the IDE to open it. You can type any command just as you would in a regular SSH session — install packages, restart services, view logs, and more.</p>
 
-        <h3 style={S.h3}>Server Commands (Pro)</h3>
-        <p style={S.para}>Pre-built command templates let you manage systemd services, Docker containers, and nginx — all from a clean UI. Available commands include:</p>
+        <h3 style={S.h3}>Features</h3>
         <ul style={S.list}>
-            <li><strong>systemctl</strong> — start, stop, restart, status, daemon-reload</li>
-            <li><strong>nginx</strong> — test config, reload</li>
-            <li><strong>docker</strong> — list containers, restart</li>
-            <li><strong>journalctl</strong> — fetch service logs</li>
+            <li><strong>Full terminal emulation</strong> — Colors, cursor movement, tab completion all work</li>
+            <li><strong>Copy &amp; paste</strong> — <KeyboardShortcut keys="Ctrl+C" /> / <KeyboardShortcut keys="Ctrl+V" /> (or right-click)</li>
+            <li><strong>Resize</strong> — Drag the terminal panel to make it larger or smaller</li>
+            <li><strong>Scrollback</strong> — Scroll up to see previous output</li>
         </ul>
 
-        <h3 style={S.h3}>One-Click Deploy (Pro)</h3>
-        <p style={S.para}>The deploy pipeline validates your config files, creates backups, pushes changes, and restarts services in a single click. If anything fails, you can rollback to the previous state. Deploy progress is streamed in real-time via WebSocket.</p>
-
-        <h3 style={S.h3}>AI Insights (Pro)</h3>
-        <p style={S.para}>Powered by AWS Bedrock (Claude), AI features include:</p>
-        <ul style={S.list}>
-            <li><strong>Explain</strong> — Get plain-English explanations of config files</li>
-            <li><strong>Diagnose</strong> — Analyze service failure logs and suggest fixes</li>
-            <li><strong>Validate</strong> — Check config file syntax with AI-powered error explanations</li>
-        </ul>
+        <Callout type="info">The terminal runs on your VM, not on InfraNexus servers. Every command executes directly on your machine.</Callout>
     </>);
 }
 
-function IntegrationsSection() {
+function DeploySection() {
     return (<>
-        <p style={S.para}>InfraNexus integrates with several services to provide a complete infrastructure management experience.</p>
+        <p style={S.para}>Pro plan features that make server management effortless.</p>
 
-        <h3 style={S.h3}>GitHub OAuth</h3>
-        <p style={S.para}>Sign in with GitHub for one-click authentication. Configure <code>GITHUB_CLIENT_ID</code> and <code>GITHUB_CLIENT_SECRET</code> in your environment. Create a GitHub OAuth App at <strong>Settings → Developer settings → OAuth Apps</strong> with callback URL set to <code>https://your-domain/api/auth/callback/github</code>.</p>
+        <h3 style={S.h3}>One-Click Deploy</h3>
+        <p style={S.para}>Deploy changes to your server with a single click. The deploy pipeline:</p>
+        <ol style={S.list}>
+            <li>Validates your configuration files for syntax errors</li>
+            <li>Creates backups of existing files</li>
+            <li>Pushes your changes to the server</li>
+            <li>Restarts affected services</li>
+        </ol>
+        <p style={S.para}>If anything goes wrong, you can <strong>rollback</strong> to the previous state instantly. Progress is shown in real-time so you always know what&apos;s happening.</p>
 
-        <h3 style={S.h3}>Stripe Billing</h3>
-        <p style={S.para}>Stripe handles subscription billing for the Pro plan. Required env vars:</p>
+        <h3 style={S.h3}>Server Commands</h3>
+        <p style={S.para}>Pre-built command templates let you manage your server without memorizing complex commands:</p>
         <ul style={S.list}>
-            <li><code>STRIPE_SECRET_KEY</code> — Your Stripe secret key</li>
-            <li><code>STRIPE_WEBHOOK_SECRET</code> — Webhook signing secret</li>
-            <li><code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> — Client-side publishable key</li>
-            <li><code>STRIPE_PRO_PRICE_ID</code> — Price ID for the Pro plan</li>
+            <li><strong>Services</strong> — Start, stop, restart, check status of systemd services</li>
+            <li><strong>Nginx</strong> — Test configuration, reload without downtime</li>
+            <li><strong>Docker</strong> — List containers, restart containers</li>
+            <li><strong>Logs</strong> — Fetch recent logs for any service</li>
         </ul>
-        <Callout type="info">Set up a webhook endpoint in Stripe Dashboard pointing to <code>https://your-domain/api/webhooks/stripe</code> with events: <code>checkout.session.completed</code>, <code>customer.subscription.updated</code>, <code>customer.subscription.deleted</code>, <code>invoice.payment_failed</code>.</Callout>
 
-        <h3 style={S.h3}>AWS Bedrock (AI)</h3>
-        <p style={S.para}>AI features use AWS Bedrock with Claude. Configure <code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code>, and <code>AWS_REGION</code> in the backend environment. The IAM user needs <code>bedrock:InvokeModel</code> permission.</p>
-
-        <h3 style={S.h3}>Resend (Email)</h3>
-        <p style={S.para}>Email verification and password reset emails are sent via Resend. Set <code>RESEND_API_KEY</code> and <code>RESEND_FROM_EMAIL</code> in your frontend environment.</p>
-
-        <h3 style={S.h3}>Caddy (Reverse Proxy)</h3>
-        <p style={S.para}>In production, Caddy handles HTTPS with automatic Let&apos;s Encrypt certificates, reverse proxying, and security headers. Configure the <code>DOMAIN</code> env var in <code>docker-compose.prod.yml</code>.</p>
+        <Callout type="warning">Server commands execute on your VM with the permissions of the connected SSH user. Use caution with destructive operations.</Callout>
     </>);
 }
 
-function PermissionsSection() {
+function AISection() {
     return (<>
-        <p style={S.para}>InfraNexus uses a role-based access control system combined with subscription-based feature gating.</p>
+        <p style={S.para}>AI-powered features help you understand, diagnose, and validate your server configuration. Available on the Pro plan.</p>
 
-        <h3 style={S.h3}>Roles</h3>
-        <div style={{ overflowX: "auto", marginBottom: 20 }}>
-            <table style={S.table}>
-                <thead>
-                    <tr>
-                        <th style={S.th}>Role</th>
-                        <th style={S.th}>Description</th>
-                        <th style={S.th}>Access</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td style={S.td}><code>user</code></td><td style={S.td}>Default role for all signups</td><td style={S.td}>Dashboard, IDE, Account</td></tr>
-                    <tr><td style={S.td}><code>admin</code></td><td style={S.td}>Administrative access</td><td style={S.td}>All user access + Admin panel</td></tr>
-                </tbody>
-            </table>
-        </div>
+        <h3 style={S.h3}>Explain</h3>
+        <p style={S.para}>Select any config file and click <strong>Explain</strong> to get a plain-English breakdown of what each section does. Perfect for understanding complex nginx, Docker, or systemd configurations you didn&apos;t write.</p>
 
-        <h3 style={S.h3}>Subscription Plans</h3>
-        <div style={{ overflowX: "auto", marginBottom: 20 }}>
-            <table style={S.table}>
-                <thead>
-                    <tr>
-                        <th style={S.th}>Feature</th>
-                        <th style={S.th}>Free</th>
-                        <th style={S.th}>Pro ($10/mo)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td style={S.td}>Monaco Editor</td><td style={S.td}>✅</td><td style={S.td}>✅</td></tr>
-                    <tr><td style={S.td}>Integrated Terminal</td><td style={S.td}>✅</td><td style={S.td}>✅</td></tr>
-                    <tr><td style={S.td}>File Management</td><td style={S.td}>✅</td><td style={S.td}>✅</td></tr>
-                    <tr><td style={S.td}>One-Click Deploy</td><td style={S.td}>❌</td><td style={S.td}>✅</td></tr>
-                    <tr><td style={S.td}>Server Commands</td><td style={S.td}>❌</td><td style={S.td}>✅</td></tr>
-                    <tr><td style={S.td}>AI Insights</td><td style={S.td}>❌</td><td style={S.td}>✅</td></tr>
-                </tbody>
-            </table>
-        </div>
+        <h3 style={S.h3}>Diagnose</h3>
+        <p style={S.para}>When a service fails, click <strong>Diagnose</strong> to analyze error logs and get AI-suggested fixes. The AI reads the actual error output and provides actionable steps to resolve the issue.</p>
 
-        <h3 style={S.h3}>API Authentication</h3>
-        <p style={S.para}>The backend uses two authentication layers:</p>
-        <ul style={S.list}>
-            <li><strong>NextAuth JWE cookies</strong> — Verified by <code>requireUser</code> middleware for Pro feature access</li>
-            <li><strong>Session JWT</strong> — Generated on SSH connect, used for file/terminal/deploy operations</li>
-        </ul>
+        <h3 style={S.h3}>Validate</h3>
+        <p style={S.para}>Before deploying, use <strong>Validate</strong> to check your config files for syntax errors, security issues, and best practice violations. The AI highlights problems and explains how to fix them.</p>
     </>);
 }
 
-function TroubleshootingSection() {
+function PlansSection() {
     return (<>
-        <h3 style={S.h3}>Connection Issues</h3>
-        <p style={S.para}><strong>Can&apos;t connect to VM:</strong></p>
+        <h3 style={S.h3}>Free Plan</h3>
+        <p style={S.para}>Everything you need to get started:</p>
         <ul style={S.list}>
-            <li>Verify the hostname/IP is correct and reachable (<code>ping your-vm-ip</code>)</li>
-            <li>Ensure SSH is running on port 22 (or your custom port)</li>
-            <li>Check firewall rules allow inbound SSH from the InfraNexus server</li>
-            <li>For key-based auth, ensure the key format is correct (OpenSSH or PEM)</li>
+            <li>✅ Full code editor with syntax highlighting</li>
+            <li>✅ Integrated terminal</li>
+            <li>✅ File management (create, edit, rename, delete)</li>
+            <li>✅ SSH key &amp; password authentication</li>
         </ul>
 
-        <h3 style={S.h3}>Build Errors</h3>
-        <p style={S.para}><strong>Prisma generate fails:</strong></p>
-        <CodeBlock>{`# Ensure the schema is accessible
-npx prisma generate --schema=prisma/schema.prisma
-
-# If database URL is wrong
-npx prisma db push --accept-data-loss`}</CodeBlock>
-
-        <h3 style={S.h3}>Docker Deployment</h3>
-        <p style={S.para}><strong>Container crashes on startup:</strong></p>
+        <h3 style={S.h3}>Pro Plan — $10/month</h3>
+        <p style={S.para}>Unlock the full power of InfraNexus:</p>
         <ul style={S.list}>
-            <li>Check logs: <code>docker compose -f docker-compose.prod.yml logs frontend</code></li>
-            <li>Ensure <code>DATABASE_URL</code> uses the Docker service name (<code>db</code>) not <code>localhost</code></li>
-            <li>Verify all required env vars are set in <code>.env.production</code></li>
+            <li>⚡ Everything in Free</li>
+            <li>⚡ One-click deploy with rollback</li>
+            <li>⚡ Server command templates (systemd, nginx, Docker)</li>
+            <li>⚡ AI Insights (explain, diagnose, validate)</li>
+            <li>⚡ Priority support</li>
         </ul>
 
-        <h3 style={S.h3}>Auth Problems</h3>
-        <p style={S.para}><strong>Login fails silently:</strong></p>
+        <h3 style={S.h3}>Managing Your Subscription</h3>
+        <p style={S.para}>You can upgrade, downgrade, or cancel your subscription at any time from your <strong>Account</strong> page. Click <strong>Manage Billing</strong> to open the billing portal where you can:</p>
         <ul style={S.list}>
-            <li>Ensure <code>NEXTAUTH_SECRET</code> matches between frontend and backend</li>
-            <li>Check that <code>NEXTAUTH_URL</code> matches your actual deployment URL</li>
-            <li>For HTTPS, add <code>AUTH_TRUST_HOST=true</code> to the frontend env</li>
+            <li>Update your payment method</li>
+            <li>View invoices and payment history</li>
+            <li>Cancel your subscription</li>
         </ul>
 
-        <h3 style={S.h3}>File Operations</h3>
-        <p style={S.para}><strong>Save fails or times out:</strong></p>
+        <Callout type="info">If you cancel, you keep Pro features until the end of your current billing period. After that, your account automatically switches to the Free plan. No data is lost — you just lose access to Pro features.</Callout>
+    </>);
+}
+
+function SecuritySection() {
+    return (<>
+        <p style={S.para}>We take the security of your data and your VM seriously. Here&apos;s how InfraNexus protects you.</p>
+
+        <h3 style={S.h3}>Your VM Credentials</h3>
         <ul style={S.list}>
-            <li>File may exceed the 2MB size limit (configurable via <code>MAX_FILE_SIZE</code>)</li>
-            <li>Check disk space on the remote VM</li>
-            <li>Verify SFTP permissions for the connected user</li>
+            <li>SSH credentials (passwords and private keys) are <strong>never stored on disk</strong></li>
+            <li>Credentials are held in server memory <strong>only during your active session</strong></li>
+            <li>Sessions automatically expire after <strong>30 minutes of inactivity</strong></li>
+            <li>When you disconnect, all credential data is immediately cleared</li>
         </ul>
+
+        <h3 style={S.h3}>Connection Security</h3>
+        <ul style={S.list}>
+            <li>All traffic between your browser and InfraNexus is encrypted with <strong>HTTPS (TLS 1.3)</strong></li>
+            <li>SSH connections to your VM use <strong>industry-standard SSH protocol</strong> encryption</li>
+            <li>WebSocket connections (terminal, deploy) are <strong>origin-validated</strong> to prevent hijacking</li>
+            <li>We enforce <strong>HSTS</strong> (HTTP Strict Transport Security) to prevent downgrade attacks</li>
+        </ul>
+
+        <h3 style={S.h3}>Data Privacy</h3>
+        <ul style={S.list}>
+            <li>InfraNexus <strong>does not store your files</strong> — all files live on your VM only</li>
+            <li>We <strong>do not log file contents</strong> or terminal commands</li>
+            <li>AI features send config file contents to the AI provider for analysis, but <strong>nothing is stored</strong> after processing</li>
+            <li>We only store your account info (email, name) and subscription status</li>
+        </ul>
+
+        <h3 style={S.h3}>Infrastructure Security</h3>
+        <ul style={S.list}>
+            <li><strong>Rate limiting</strong> on all API endpoints to prevent abuse</li>
+            <li><strong>Input validation</strong> on all file paths, commands, and parameters</li>
+            <li><strong>Dangerous command protection</strong> — destructive system commands are blocked</li>
+            <li>Passwords are hashed with <strong>bcrypt</strong> (12 rounds) — we never store plaintext passwords</li>
+            <li>Authentication uses <strong>encrypted JWT tokens</strong> with automatic expiry</li>
+        </ul>
+
+        <h3 style={S.h3}>What We Don&apos;t Have Access To</h3>
+        <ul style={S.list}>
+            <li>Your VM&apos;s files, data, or databases</li>
+            <li>Your SSH password or private key (after session ends)</li>
+            <li>Commands you run in the terminal</li>
+            <li>Any data stored on your virtual machine</li>
+        </ul>
+
+        <Callout type="tip">For maximum security, we recommend using <strong>SSH key authentication</strong> instead of passwords, and creating a <strong>dedicated SSH user</strong> with limited permissions for InfraNexus access.</Callout>
     </>);
 }
 
 function FAQSection() {
     const faqs = [
-        { q: "What is InfraNexus?", a: "InfraNexus is a browser-based IDE for managing remote servers. It provides a Monaco editor, integrated terminal, file management, deploy pipeline, and AI-powered insights — all through your browser." },
-        { q: "Is my SSH connection secure?", a: "Yes. SSH connections are established server-side and never exposed to the browser directly. Credentials are held in memory only during the session and cleared on disconnect or timeout (30 minutes default)." },
-        { q: "Can I use InfraNexus with any server?", a: "Yes, any server accessible via SSH (Linux, macOS, cloud VMs, etc.) works with InfraNexus. You just need the hostname, username, and either a password or SSH key." },
-        { q: "What's the difference between Free and Pro?", a: "Free includes the editor, terminal, and file management. Pro adds one-click deploy, server commands (systemctl, docker, nginx), and AI-powered insights (explain, diagnose, validate)." },
-        { q: "How do I deploy to production?", a: "Use the Docker Compose production config: copy .env.production, fill in your secrets, and run `docker compose -f docker-compose.prod.yml up -d`. Caddy handles HTTPS automatically." },
-        { q: "Can I self-host InfraNexus?", a: "Absolutely. InfraNexus is designed for self-hosting. The Docker Compose setup includes everything: Caddy, PostgreSQL, Next.js frontend, and Express backend." },
-        { q: "How are backups handled?", a: "When you save a file, InfraNexus automatically creates a backup of the previous version on the remote VM. You can list and restore backups from the API." },
-        { q: "What AI model is used?", a: "InfraNexus uses AWS Bedrock with Claude (Anthropic) for AI features. You can customize the model ID via the BEDROCK_MODEL_ID environment variable." },
+        { q: "What is InfraNexus?", a: "InfraNexus is a browser-based IDE for managing remote virtual machines. Connect to any server via SSH and get a full editor, terminal, file manager, deploy tools, and AI-powered assistance — all without installing anything." },
+        { q: "Do I need to install anything?", a: "No. InfraNexus runs entirely in your browser. Just sign up, connect your VM, and start working." },
+        { q: "What VMs does it work with?", a: "Any server you can SSH into — AWS EC2, DigitalOcean Droplets, Google Cloud VMs, Linode, Vultr, Hetzner, self-hosted servers, Raspberry Pi, and more." },
+        { q: "Is my SSH connection secure?", a: "Yes. Your credentials are only held in memory during your session and cleared immediately on disconnect. All traffic is encrypted with TLS, and SSH connections use standard SSH protocol encryption." },
+        { q: "Does InfraNexus store my files?", a: "No. Your files live only on your VM. InfraNexus reads and writes files directly to your server via SSH. We never copy or store your data on our servers." },
+        { q: "What happens if I Cancel my Pro subscription?", a: "You keep Pro features until the end of your billing period. After that, you're automatically moved to the Free plan. All your account data stays intact — you just lose access to deploy, server commands, and AI features." },
+        { q: "Can I connect to multiple VMs?", a: "You connect to one VM per session. To switch VMs, disconnect from the current one and connect to a new one." },
+        { q: "What happens after 30 minutes of inactivity?", a: "Your session automatically expires for security. You'll need to reconnect by entering your credentials again. This prevents unauthorized access if you leave your computer unattended." },
+        { q: "What AI model powers the insights?", a: "InfraNexus uses Claude by Anthropic for AI-powered explain, diagnose, and validate features. File contents are sent for analysis but are not stored after processing." },
     ];
 
-    return (<>
+    return (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {faqs.map((faq, i) => (
                 <FAQItem key={i} question={faq.q} answer={faq.a} />
             ))}
         </div>
-    </>);
+    );
 }
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -346,7 +319,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
             >
                 {question}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                    style={{ transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s ease", flexShrink: 0 }}>
+                    style={{ transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s ease", flexShrink: 0, marginLeft: 12 }}>
                     <path d="M6 9l6 6 6-6" />
                 </svg>
             </button>
@@ -359,72 +332,24 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
     );
 }
 
-function SecuritySection() {
-    return (<>
-        <p style={S.para}>Follow these best practices to keep your InfraNexus deployment secure.</p>
-
-        <h3 style={S.h3}>Environment Variables</h3>
-        <ul style={S.list}>
-            <li>Generate a strong <code>NEXTAUTH_SECRET</code>: <code>openssl rand -base64 32</code></li>
-            <li>Never commit <code>.env</code> files with real secrets — use <code>.env.example</code> templates</li>
-            <li>Use a strong PostgreSQL password (20+ chars with mixed case, numbers, symbols)</li>
-            <li>Rotate AWS credentials and Stripe keys periodically</li>
-        </ul>
-
-        <h3 style={S.h3}>Network Security</h3>
-        <ul style={S.list}>
-            <li>Deploy behind HTTPS (Caddy handles this automatically with Let&apos;s Encrypt)</li>
-            <li>Restrict database access to the Docker network — don&apos;t expose port 5432</li>
-            <li>Use a firewall (AWS Security Groups, UFW, etc.) to restrict ports 80, 443, and SSH only</li>
-            <li>Consider a WAF (AWS WAF, Cloudflare) for production deployments at scale</li>
-        </ul>
-
-        <h3 style={S.h3}>Authentication</h3>
-        <ul style={S.list}>
-            <li>Enable email verification to prevent spam accounts</li>
-            <li>Use strong passwords (8+ chars minimum, enforced by the signup form)</li>
-            <li>Prefer SSH key authentication over password when connecting to VMs</li>
-            <li>Session timeout is 30 minutes by default — configurable via <code>SESSION_TIMEOUT_MINUTES</code></li>
-        </ul>
-
-        <h3 style={S.h3}>Monitoring & Auditing</h3>
-        <ul style={S.list}>
-            <li>Audit logs are written to <code>logs/audit-YYYY-MM-DD.jsonl</code> — review them regularly</li>
-            <li>All API requests are logged with method, path, session ID, IP, status, and duration</li>
-            <li>Set up log aggregation (ELK, CloudWatch, Datadog) for production</li>
-            <li>Monitor rate limit headers (<code>X-RateLimit-*</code>) for abuse patterns</li>
-        </ul>
-
-        <h3 style={S.h3}>Docker Production Hardening</h3>
-        <ul style={S.list}>
-            <li>Containers run as non-root users (<code>nextjs</code> / <code>backend</code>)</li>
-            <li>Resource limits are set in <code>docker-compose.prod.yml</code></li>
-            <li>Use <code>docker compose pull</code> regularly to get base image security patches</li>
-            <li>Pin base images to specific versions (currently <code>node:20-alpine</code>)</li>
-        </ul>
-
-        <Callout type="info">For detailed security architecture and threat model, see the <code>SECURITY.md</code> file in the project root.</Callout>
-    </>);
-}
-
 // ─── Section renderer map ────────────────────────────────────────
 const sectionRenderers: Record<string, () => JSX.Element> = {
-    quickstart: QuickstartSection,
-    onboarding: OnboardingSection,
-    workflows: WorkflowsSection,
-    integrations: IntegrationsSection,
-    permissions: PermissionsSection,
-    troubleshooting: TroubleshootingSection,
-    faq: FAQSection,
+    "getting-started": GettingStartedSection,
+    connecting: ConnectingSection,
+    editor: EditorSection,
+    terminal: TerminalSection,
+    deploy: DeploySection,
+    ai: AISection,
+    plans: PlansSection,
     security: SecuritySection,
+    faq: FAQSection,
 };
 
 // ─── Main Documentation Page ─────────────────────────────────────
 export default function DocsPage() {
-    const [activeSection, setActiveSection] = useState("quickstart");
+    const [activeSection, setActiveSection] = useState("getting-started");
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-    // Update active section based on scroll position
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
@@ -465,7 +390,7 @@ export default function DocsPage() {
                         </GradientText>
                     </h1>
                     <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: 0 }}>
-                        Everything you need to get started, configure, and master InfraNexus.
+                        Learn how to use InfraNexus to manage your virtual machines from the browser.
                     </p>
                 </div>
             </div>
@@ -473,15 +398,14 @@ export default function DocsPage() {
             {/* Mobile nav toggle */}
             <button
                 onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                className="docs-mobile-toggle"
                 style={{
                     display: "none", position: "sticky", top: 0, zIndex: 20,
                     width: "100%", padding: "12px 20px", background: "var(--bg-secondary)",
                     borderBottom: "1px solid var(--border)", border: "none",
                     color: "var(--text-primary)", fontSize: 13, fontWeight: 500,
                     cursor: "pointer", justifyContent: "space-between", alignItems: "center",
-                    // Shown via CSS media query below
                 }}
-                className="docs-mobile-toggle"
             >
                 <span>📑 {sections.find(s => s.id === activeSection)?.title}</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -577,51 +501,16 @@ export default function DocsPage() {
 // ─── Shared styles ───────────────────────────────────────────────
 const S = {
     para: {
-        fontSize: 14,
-        color: "var(--text-primary)",
-        lineHeight: 1.7,
-        marginBottom: 16,
+        fontSize: 14, color: "var(--text-primary)", lineHeight: 1.7, marginBottom: 16,
     } as React.CSSProperties,
     h3: {
-        fontSize: 16,
-        fontWeight: 600,
-        color: "var(--text-bright)",
-        marginTop: 28,
-        marginBottom: 12,
+        fontSize: 16, fontWeight: 600, color: "var(--text-bright)", marginTop: 28, marginBottom: 12,
     } as React.CSSProperties,
     list: {
-        paddingLeft: 20,
-        marginBottom: 16,
-        fontSize: 14,
-        color: "var(--text-primary)",
-        lineHeight: 1.8,
+        paddingLeft: 20, marginBottom: 16, fontSize: 14, color: "var(--text-primary)", lineHeight: 1.8,
     } as React.CSSProperties,
     backLink: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        fontSize: 13,
-        color: "var(--text-secondary)",
-        textDecoration: "none",
-    } as React.CSSProperties,
-    table: {
-        width: "100%",
-        borderCollapse: "collapse" as const,
-        fontSize: 13,
-    } as React.CSSProperties,
-    th: {
-        padding: "10px 14px",
-        textAlign: "left" as const,
-        borderBottom: "1px solid var(--border)",
-        color: "var(--text-secondary)",
-        fontWeight: 600,
-        fontSize: 12,
-        textTransform: "uppercase" as const,
-        letterSpacing: "0.04em",
-    } as React.CSSProperties,
-    td: {
-        padding: "10px 14px",
-        borderBottom: "1px solid rgba(255,255,255,0.03)",
-        color: "var(--text-primary)",
+        display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13,
+        color: "var(--text-secondary)", textDecoration: "none",
     } as React.CSSProperties,
 };
