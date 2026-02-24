@@ -18,6 +18,27 @@ const router = Router();
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || "2097152", 10); // 2MB
 const LARGE_FILE_WARNING = 512 * 1024; // 500KB
 
+// ─── Security: Path validation ──────────────────────────────────
+// Reject null bytes, shell metacharacters in paths, and enforce absolute paths.
+const SHELL_METACHAR_RE = /[`$(){}|;&<>!\\]/;
+
+function validatePath(p: string): string | null {
+  if (!p || typeof p !== "string") return "Path is required";
+  if (p.includes("\0")) return "Path contains null bytes";
+  // Normalize and check for traversal — all paths must be absolute on the remote VM
+  const normalized = path.posix.normalize(p);
+  if (!normalized.startsWith("/")) return "Path must be absolute";
+  return null; // valid
+}
+
+function validatePathStrict(p: string): string | null {
+  const base = validatePath(p);
+  if (base) return base;
+  // For delete/rename operations, also reject shell metacharacters
+  if (SHELL_METACHAR_RE.test(p)) return "Path contains disallowed characters";
+  return null;
+}
+
 function requireSession(req: Request, res: Response): ReturnType<typeof getSession> | null {
   const sessionId = (req.query.sessionId || req.body.sessionId) as string;
   if (!sessionId) {
@@ -39,6 +60,8 @@ router.get("/list", (req: Request, res: Response) => {
   if (!session) return;
 
   const dirPath = (req.query.path as string) || "/";
+  const pathErr = validatePath(dirPath);
+  if (pathErr) { res.status(400).json({ error: pathErr }); return; }
 
   session.sftp.readdir(dirPath, (err, list: FileEntryWithStats[]) => {
     if (err) {
@@ -74,10 +97,9 @@ router.get("/read", (req: Request, res: Response) => {
   if (!session) return;
 
   const filePath = req.query.path as string;
-  if (!filePath) {
-    res.status(400).json({ error: "path is required" });
-    return;
-  }
+  if (!filePath) { res.status(400).json({ error: "path is required" }); return; }
+  const readPathErr = validatePath(filePath);
+  if (readPathErr) { res.status(400).json({ error: readPathErr }); return; }
 
   session.sftp.stat(filePath, (statErr, stats) => {
     if (statErr) {
@@ -132,10 +154,9 @@ router.post("/write", async (req: Request, res: Response) => {
     createBackup = true,
   } = req.body;
 
-  if (!filePath) {
-    res.status(400).json({ error: "path is required" });
-    return;
-  }
+  if (!filePath) { res.status(400).json({ error: "path is required" }); return; }
+  const writePathErr = validatePath(filePath);
+  if (writePathErr) { res.status(400).json({ error: writePathErr }); return; }
   if (typeof content !== "string") {
     res.status(400).json({ error: "content must be a string" });
     return;
@@ -230,10 +251,9 @@ router.post("/diff", async (req: Request, res: Response) => {
   if (!session) return;
 
   const { path: filePath, newContent } = req.body;
-  if (!filePath) {
-    res.status(400).json({ error: "path is required" });
-    return;
-  }
+  if (!filePath) { res.status(400).json({ error: "path is required" }); return; }
+  const diffPathErr = validatePath(filePath);
+  if (diffPathErr) { res.status(400).json({ error: diffPathErr }); return; }
   if (typeof newContent !== "string") {
     res.status(400).json({ error: "newContent must be a string" });
     return;
@@ -291,10 +311,9 @@ router.get("/backups", async (req: Request, res: Response) => {
   if (!session) return;
 
   const filePath = req.query.path as string;
-  if (!filePath) {
-    res.status(400).json({ error: "path is required" });
-    return;
-  }
+  if (!filePath) { res.status(400).json({ error: "path is required" }); return; }
+  const backupsPathErr = validatePath(filePath);
+  if (backupsPathErr) { res.status(400).json({ error: backupsPathErr }); return; }
 
   try {
     const backups = await backupManager.listBackups(session.id, filePath);
@@ -315,6 +334,8 @@ router.post("/restore", async (req: Request, res: Response) => {
     res.status(400).json({ error: "backupPath and targetPath are required" });
     return;
   }
+  const restorePathErr = validatePath(backupPath) || validatePath(targetPath);
+  if (restorePathErr) { res.status(400).json({ error: restorePathErr }); return; }
 
   try {
     await backupManager.restoreBackup(session.id, backupPath, targetPath);
@@ -331,10 +352,9 @@ router.post("/mkdir", (req: Request, res: Response) => {
   if (!session) return;
 
   const { path: dirPath } = req.body;
-  if (!dirPath) {
-    res.status(400).json({ error: "path is required" });
-    return;
-  }
+  if (!dirPath) { res.status(400).json({ error: "path is required" }); return; }
+  const mkdirPathErr = validatePathStrict(dirPath);
+  if (mkdirPathErr) { res.status(400).json({ error: mkdirPathErr }); return; }
 
   session.sftp.mkdir(dirPath, (err) => {
     if (err) {
@@ -356,6 +376,8 @@ router.post("/rename", (req: Request, res: Response) => {
     res.status(400).json({ error: "oldPath and newPath are required" });
     return;
   }
+  const renamePathErr = validatePathStrict(oldPath) || validatePathStrict(newPath);
+  if (renamePathErr) { res.status(400).json({ error: renamePathErr }); return; }
 
   session.sftp.rename(oldPath, newPath, (err) => {
     if (err) {
@@ -373,13 +395,23 @@ router.post("/delete", (req: Request, res: Response) => {
   if (!session) return;
 
   const { path: targetPath, recursive = false } = req.body;
-  if (!targetPath) {
-    res.status(400).json({ error: "path is required" });
+  if (!targetPath) { res.status(400).json({ error: "path is required" }); return; }
+  const deletePathErr = validatePathStrict(targetPath);
+  if (deletePathErr) { res.status(400).json({ error: deletePathErr }); return; }
+
+  // Block deletion of root-level critical directories
+  const PROTECTED_PATHS = ["/", "/root", "/home", "/etc", "/var", "/usr", "/bin", "/sbin", "/lib", "/boot", "/dev", "/proc", "/sys"];
+  const normalizedTarget = path.posix.normalize(targetPath);
+  if (PROTECTED_PATHS.includes(normalizedTarget)) {
+    res.status(403).json({ error: "Cannot delete protected system directory" });
     return;
   }
 
   if (recursive) {
-    session.conn.exec(`rm -rf "${targetPath}"`, (err, stream) => {
+    // SECURITY: Use array-form exec to prevent shell injection.
+    // Escape single quotes in the path for safe shell usage.
+    const safePath = normalizedTarget.replace(/'/g, "'\\\"'\\\"'");
+    session.conn.exec(`rm -rf '${safePath}'`, (err, stream) => {
       if (err) {
         res.status(500).json({ error: "Failed to delete: " + err.message });
         return;

@@ -38,6 +38,7 @@ export default function NavBar() {
             <>
               <Link href="/dashboard" className="nav-link" style={styles.link}>Dashboard</Link>
               <Link href="/app" className="nav-link" style={styles.link}>IDE</Link>
+              <Link href="/docs" className="nav-link" style={styles.link}>Docs</Link>
               <Link href="/account" className="nav-link" style={styles.link}>Account</Link>
               {(session as any).role === "admin" && (
                 <Link href="/admin" className="nav-link" style={{ ...styles.link, color: "#eab308" }}>Admin</Link>

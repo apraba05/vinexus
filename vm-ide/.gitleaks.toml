@@ -1,0 +1,54 @@
+title = "InfraNexus Gitleaks Config"
+
+[allowlist]
+  description = "Allowlist for known safe patterns"
+  paths = [
+    '''\.env\.example$''',
+    '''\.env\.production$''',
+    '''node_modules/''',
+    '''package-lock\.json$''',
+  ]
+
+[[rules]]
+  id = "aws-access-key"
+  description = "AWS Access Key ID"
+  regex = '''AKIA[0-9A-Z]{16}'''
+  tags = ["aws", "credentials"]
+
+[[rules]]
+  id = "aws-secret-key"
+  description = "AWS Secret Access Key"
+  regex = '''(?i)aws_secret_access_key\s*=\s*[A-Za-z0-9/+=]{40}'''
+  tags = ["aws", "credentials"]
+
+[[rules]]
+  id = "stripe-secret-key"
+  description = "Stripe Secret Key"
+  regex = '''sk_(live|test)_[0-9a-zA-Z]{24,}'''
+  tags = ["stripe", "credentials"]
+
+[[rules]]
+  id = "stripe-webhook-secret"
+  description = "Stripe Webhook Secret"
+  regex = '''whsec_[0-9a-zA-Z]{32,}'''
+  tags = ["stripe", "credentials"]
+
+[[rules]]
+  id = "nextauth-secret"
+  description = "NextAuth Secret (non-placeholder)"
+  regex = '''NEXTAUTH_SECRET=[A-Za-z0-9+/=]{32,}'''
+  tags = ["auth", "credentials"]
+  [rules.allowlist]
+    regexes = ['''change-me''', '''GENERATE_WITH''']
+
+[[rules]]
+  id = "generic-api-key"
+  description = "Generic API Key"
+  regex = '''(?i)(api[_-]?key|apikey)\s*[:=]\s*['\"][0-9a-zA-Z]{20,}['\"]'''
+  tags = ["generic", "credentials"]
+
+[[rules]]
+  id = "private-key"
+  description = "Private Key"
+  regex = '''-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----'''
+  tags = ["private-key"]

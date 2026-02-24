@@ -100,26 +100,26 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          {isPro ? (
-            <a href="https://docs.infranexus.com" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-              <div className="card card-glow" style={{ padding: 24, textAlign: "center", cursor: "pointer" }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12, margin: "0 auto 14px",
-                  background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.12)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                  </svg>
-                </div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-bright)" }}>Documentation</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>Guides & API docs</div>
+          <Link href="/docs" style={{ textDecoration: "none" }}>
+            <div className="card card-glow" style={{ padding: 24, textAlign: "center", cursor: "pointer" }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12, margin: "0 auto 14px",
+                background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.12)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
               </div>
-            </a>
-          ) : (
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-bright)" }}>Documentation</div>
+              <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>Guides & API docs</div>
+            </div>
+          </Link>
+
+          {!isPro && (
             <Link href="/pricing" style={{ textDecoration: "none" }}>
               <div className="card card-glow" style={{ padding: 24, textAlign: "center", cursor: "pointer", borderColor: "rgba(6, 182, 212, 0.15)" }}>
                 <div style={{

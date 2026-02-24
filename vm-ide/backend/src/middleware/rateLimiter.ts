@@ -72,6 +72,15 @@ export const aiRateLimiter = rateLimiter({
 });
 
 /**
+ * Auth rate limiter — stricter for login/connect to prevent brute-force.
+ */
+export const authRateLimiter = rateLimiter({
+  windowMs: 60_000,
+  max: 10,
+  keyFn: (req) => `auth:${req.ip || req.socket.remoteAddress || "unknown"}`,
+});
+
+/**
  * Standard API rate limiter.
  */
 export const apiRateLimiter = rateLimiter({

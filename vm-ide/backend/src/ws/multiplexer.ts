@@ -15,13 +15,36 @@ import { ClientChannel } from "ssh2";
  * and keeps the legacy /ws/terminal endpoint for backward compatibility.
  */
 export function setupWebSockets(server: Server): void {
-  const multiplexWss = new WebSocketServer({ noServer: true });
-  const legacyWss = new WebSocketServer({ noServer: true });
+  const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+  const MAX_PAYLOAD = 1 * 1024 * 1024; // 1MB max WebSocket message size
+
+  const multiplexWss = new WebSocketServer({ noServer: true, maxPayload: MAX_PAYLOAD });
+  const legacyWss = new WebSocketServer({ noServer: true, maxPayload: MAX_PAYLOAD });
+
+  // ─── Security: Validate WebSocket origin ─────────────────────
+  function isOriginAllowed(req: IncomingMessage): boolean {
+    const origin = req.headers.origin;
+    if (!origin) return true; // Server-to-server or same-origin (no Origin header)
+    try {
+      const allowed = new URL(FRONTEND_ORIGIN);
+      const incoming = new URL(origin);
+      return allowed.host === incoming.host;
+    } catch {
+      return false;
+    }
+  }
 
   server.on("upgrade", (req: IncomingMessage, socket, head) => {
     const { pathname, query } = parseUrl(req.url || "");
     const params = parseQs(query || "");
     const sessionId = params.sessionId as string;
+
+    // ─── Security: Reject unauthorized origins ───
+    if (!isOriginAllowed(req)) {
+      socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+      socket.destroy();
+      return;
+    }
 
     if (pathname === "/ws/session") {
       // ─── Multiplexed endpoint ───

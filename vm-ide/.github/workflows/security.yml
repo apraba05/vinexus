@@ -1,0 +1,86 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # ── Dependency Audit ──────────────────────────────────────────
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Audit root
+        run: npm audit --audit-level=high || true
+
+      - name: Audit frontend
+        working-directory: frontend
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=high || true
+
+      - name: Audit backend
+        working-directory: backend
+        run: |
+          npm ci
+          npm audit --audit-level=high || true
+
+  # ── Secret Scanning ──────────────────────────────────────────
+  secret-scan:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── TypeScript Build Check ──────────────────────────────────
+  build-check:
+    name: Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root deps
+        run: npm ci --ignore-scripts
+
+      - name: Build backend
+        working-directory: backend
+        run: |
+          npm ci
+          npx prisma generate --schema=../prisma/schema.prisma
+          npm run build
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          DATABASE_URL: postgresql://test@localhost:5432/test
+        run: |
+          npm ci --ignore-scripts
+          cp ../prisma/schema.prisma prisma/ 2>/dev/null || true
+          npx prisma generate 2>/dev/null || true
+          npm run build

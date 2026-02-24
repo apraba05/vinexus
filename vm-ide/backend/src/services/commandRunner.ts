@@ -7,6 +7,21 @@ import {
 
 // Parameter values must match this pattern — no shell metacharacters
 const SAFE_PARAM_RE = /^[a-zA-Z0-9._\-/]+$/;
+const MAX_COMMAND_LENGTH = 4096;
+
+// Dangerous command patterns that should never be allowed via custom commands
+const DANGEROUS_PATTERNS = [
+  /rm\s+(-rf|-fr|--no-preserve-root)\s+\/\s*$/,  // rm -rf /
+  /rm\s+(-rf|-fr)\s+\/[a-z]+\s*$/,                // rm -rf /etc, /var, etc.
+  /mkfs\b/,                                        // filesystem formatting
+  /:\(\)\{\s*:|:\s*&\s*\}\s*;\s*:/,                // fork bomb
+  /dd\s+if=/,                                      // raw disk write
+  />(\s*)\/dev\/[sh]d/,                             // write to raw device
+  /chmod\s+(-R\s+)?777\s+\//,                      // chmod 777 /
+  /chown\s+(-R\s+)?.*\s+\//,                       // chown / root dirs
+  /shutdown\b|reboot\b|halt\b|poweroff\b/,         // system power
+  /init\s+0/,                                      // halt system
+];
 
 const BUILTIN_COMMANDS: CommandTemplate[] = [
   {
@@ -224,6 +239,18 @@ export class CommandRunner {
     sudo: boolean = false,
     timeout: number = 30_000
   ): Promise<CommandResult> {
+    // Security: Validate command length
+    if (command.length > MAX_COMMAND_LENGTH) {
+      throw new Error(`Command too long (max ${MAX_COMMAND_LENGTH} chars)`);
+    }
+
+    // Security: Check against dangerous command patterns
+    for (const pattern of DANGEROUS_PATTERNS) {
+      if (pattern.test(command)) {
+        throw new Error("Command blocked: matches a dangerous pattern");
+      }
+    }
+
     const result = await sshExecutor.exec({
       sessionId,
       command,

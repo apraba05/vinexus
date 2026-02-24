@@ -6,23 +6,22 @@ node_modules/
 .next/
 out/
 
-# env
+# environment / secrets
 .env
 .env.*
+!.env.example
+!.env.production
 
 # misc
 .DS_Store
-# dependencies
-node_modules/
-**/node_modules/
+*.log
 
-# Next.js
-.next/
-out/
+# audit logs (contain sensitive request data)
+logs/
 
-# env
-.env
-.env.*
+# IDE
+.vscode/
+.idea/
 
-# misc
-.DS_Store
+# OS
+Thumbs.db

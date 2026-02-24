@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import http from "http";
 import sessionRouter from "./routes/session";
 import fsRouter from "./routes/fs";
@@ -11,7 +12,7 @@ import aiRouter from "./routes/ai";
 import { setupWebSockets } from "./ws/multiplexer";
 import { startCleanupInterval } from "./sessionStore";
 import { authMiddleware } from "./middleware/auth";
-import { apiRateLimiter, aiRateLimiter } from "./middleware/rateLimiter";
+import { apiRateLimiter, aiRateLimiter, authRateLimiter } from "./middleware/rateLimiter";
 import { auditLogger } from "./middleware/auditLogger";
 import { requireUser } from "./middleware/requireUser";
 import { requirePro } from "./middleware/requirePro";
@@ -21,6 +22,11 @@ const PORT = parseInt(process.env.PORT || "4000", 10);
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
 
 // ─── Global middleware ──────────────────────────────────────────
+app.disable("x-powered-by");
+app.use(helmet({
+  contentSecurityPolicy: false, // CSP handled by Caddy in production
+  crossOriginEmbedderPolicy: false, // Required for Monaco editor
+}));
 app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 app.use(express.json({ limit: "3mb" }));
 app.use(auditLogger);
@@ -28,7 +34,7 @@ app.use(authMiddleware);
 app.use(apiRateLimiter);
 
 // ─── Routes ─────────────────────────────────────────────────────
-app.use("/api/session", sessionRouter);
+app.use("/api/session", authRateLimiter, sessionRouter);
 app.use("/api/fs", fsRouter);
 app.use("/api/commands", requireUser, requirePro, commandsRouter);
 app.use("/api/deploy", deployRouter);
