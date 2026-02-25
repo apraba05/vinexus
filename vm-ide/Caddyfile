@@ -1,4 +1,4 @@
-{$DOMAIN} {
+http://{$DOMAIN} {
     # Frontend (Next.js)
     handle /api/auth/* {
         reverse_proxy frontend:3000
