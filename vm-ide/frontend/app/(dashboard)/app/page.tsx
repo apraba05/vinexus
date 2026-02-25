@@ -9,9 +9,9 @@ import ToastContainer from "@/components/ToastContainer";
 import CommandBar from "@/components/CommandBar";
 import BottomPanelTabs, { BottomTab } from "@/components/BottomPanelTabs";
 import DeployPanel from "@/components/DeployPanel";
-import LogsPanel from "@/components/LogsPanel";
 import DiffView from "@/components/DiffView";
 import AIInsightsPanel from "@/components/AIInsightsPanel";
+import AIDeveloperPanel from "@/components/AIDeveloperPanel";
 import ValidationBadge from "@/components/ValidationBadge";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import StatusBar from "@/components/StatusBar";
@@ -20,7 +20,7 @@ import ProFeature from "@/components/ProFeature";
 import { useToast } from "@/lib/useToast";
 import { useCommands } from "@/hooks/useCommands";
 import { useDeployment } from "@/hooks/useDeployment";
-import { useLogs } from "@/hooks/useLogs";
+import { useAgentSession } from "@/hooks/useAgentSession";
 import { useProjectConfig } from "@/hooks/useProjectConfig";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import {
@@ -106,6 +106,9 @@ export default function Home() {
     setAiUsageCount(getAiUsageToday());
   }, [getAiUsageToday]);
 
+  // AI Developer Agent Session
+  const agent = useAgentSession(sessionId);
+
   // Validation
   const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
   const [validating, setValidating] = useState(false);
@@ -121,9 +124,6 @@ export default function Home() {
 
   // Deploy
   const deployment = useDeployment(sessionId);
-
-  // Logs
-  const logs = useLogs(sessionId);
 
   // Project config
   const { config: projectConfig } = useProjectConfig(sessionId);
@@ -375,6 +375,23 @@ export default function Home() {
   // Toggle command bar visibility
   const [showCommands, setShowCommands] = useState(false);
 
+  // AI Developer: handle live file edits from agent
+  const handleAgentFileEdit = useCallback(
+    (filePath: string, content: string) => {
+      setOpenFiles((prev) => {
+        const existing = prev.find((f) => f.path === filePath);
+        if (existing) {
+          return prev.map((f) =>
+            f.path === filePath ? { ...f, content, dirty: false } : f
+          );
+        }
+        return [...prev, { path: filePath, content, dirty: false }];
+      });
+      setActiveFile(filePath);
+    },
+    []
+  );
+
   // Deploy handler
   const handleDeploy = useCallback(() => {
     // Collect dirty files to save as part of deploy
@@ -393,23 +410,7 @@ export default function Home() {
     }
   }, [openFiles, deployment]);
 
-  // Handle viewing logs from deploy panel
-  const handleViewLogs = useCallback(
-    (service: string) => {
-      const svc =
-        service ||
-        serviceInput ||
-        projectConfig?.services?.[0]?.unit ||
-        "";
-      if (svc) {
-        logs.fetch(svc);
-        setBottomTab("logs");
-      } else {
-        addToast("Enter a service name to view logs", "info");
-      }
-    },
-    [serviceInput, projectConfig, logs, addToast]
-  );
+
 
   // AI: Explain file (limited to AI_DAILY_LIMIT per day)
   const handleExplain = useCallback(
@@ -519,7 +520,6 @@ export default function Home() {
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onDeploy: hasService ? handleDeploy : undefined,
-    onLogs: () => setBottomTab("logs"),
     onTerminal: () => setBottomTab("terminal"),
   });
 
@@ -667,7 +667,7 @@ export default function Home() {
             onTabChange={setBottomTab}
             hasDeployStatus={deployment.status !== null}
             deployFailed={deployment.status?.state === "failed"}
-            logCount={logs.entries.length}
+            agentState={agent.state}
           />
 
           {/* Bottom panel content */}
@@ -690,23 +690,24 @@ export default function Home() {
               </ErrorBoundary>
             </div>
 
-            {/* Logs */}
+            {/* AI Developer Tab */}
             <div
               style={{
                 ...styles.panelContent,
-                display: bottomTab === "logs" ? "flex" : "none",
+                display: bottomTab === "ai" ? "flex" : "none",
+                background: "var(--bg-primary)", // Ensure proper background
               }}
             >
-              <LogsPanel
-                entries={logs.entries}
-                loading={logs.loading}
-                service={logs.service}
-                onFetch={logs.fetch}
-                onClear={logs.clear}
-                serviceInput={serviceInput}
-                onDiagnose={handleDiagnose}
-                diagnosing={aiLoading}
-              />
+              <ErrorBoundary fallbackLabel="AI Developer">
+                <AIDeveloperPanel
+                  sessionId={sessionId}
+                  agent={agent}
+                  activeFile={activeFile}
+                  activeFileContent={openFiles.find((f) => f.path === activeFile)?.content}
+                  workspaceRoot={selectedDir}
+                  onFileEdit={handleAgentFileEdit}
+                />
+              </ErrorBoundary>
             </div>
 
             {/* Deploy */}
@@ -725,7 +726,6 @@ export default function Home() {
                   onCancel={deployment.cancel}
                   onRollback={deployment.rollback}
                   onReset={deployment.reset}
-                  onViewLogs={handleViewLogs}
                   hasService={hasService}
                 />
               </ErrorBoundary>
@@ -755,6 +755,8 @@ export default function Home() {
         usageCount={aiUsageCount}
         usageLimit={AI_DAILY_LIMIT}
       />
+
+
 
       {/* Diff Preview Modal */}
       {diffPreview && (

@@ -28,10 +28,16 @@ export class SSHExecutor {
     return new Promise<ExecResult>((resolve, reject) => {
       const startTime = Date.now();
       let timedOut = false;
+      let streamRef: any = null;
 
       const timer = setTimeout(() => {
         timedOut = true;
-        // The stream will be destroyed, triggering close
+        if (streamRef) {
+          try {
+            streamRef.signal('INT');
+            streamRef.close();
+          } catch (e) { }
+        }
       }, timeout);
 
       session.conn.exec(fullCommand, (err, stream) => {
@@ -40,6 +46,7 @@ export class SSHExecutor {
           return reject(new Error(`SSH exec failed: ${err.message}`));
         }
 
+        streamRef = stream;
         let stdout = "";
         let stderr = "";
 
@@ -111,9 +118,16 @@ export class SSHExecutor {
       let timedOut = false;
       let fullStdout = "";
       let fullStderr = "";
+      let streamRef: any = null;
 
       const timer = setTimeout(() => {
         timedOut = true;
+        if (streamRef) {
+          try {
+            streamRef.signal('INT');
+            streamRef.close();
+          } catch (e) { }
+        }
       }, timeout);
 
       session.conn.exec(fullCommand, (err, stream) => {
@@ -122,6 +136,7 @@ export class SSHExecutor {
           return reject(new Error(`SSH exec failed: ${err.message}`));
         }
 
+        streamRef = stream;
         let stdoutBuffer = "";
         let stderrBuffer = "";
 

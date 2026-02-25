@@ -8,6 +8,7 @@ import { TerminalChannel } from "./terminalChannel";
 import { ExecChannel } from "./execChannel";
 import { LogsChannel } from "./logsChannel";
 import { DeployChannel } from "./deployChannel";
+import { AgentChannel } from "./agentChannel";
 import { ClientChannel } from "ssh2";
 
 /**
@@ -102,6 +103,7 @@ export function setupWebSockets(server: Server): void {
       const execChannel = new ExecChannel(ws, session, sendMessage);
       const logsChannel = new LogsChannel(ws, session, sendMessage);
       const deployChannel = new DeployChannel(ws, session, sendMessage);
+      const agentChannel = new AgentChannel(ws, session, sendMessage);
 
       // Start terminal automatically
       terminalChannel.start();
@@ -137,6 +139,9 @@ export function setupWebSockets(server: Server): void {
           case "deploy":
             deployChannel.handleMessage(msg);
             break;
+          case "agent":
+            agentChannel.handleMessage(msg);
+            break;
           default:
             sendMessage({
               channel: "system",
@@ -152,6 +157,7 @@ export function setupWebSockets(server: Server): void {
         execChannel.destroy();
         logsChannel.destroy();
         deployChannel.destroy();
+        agentChannel.destroy();
       });
 
       ws.on("error", (err) => {
@@ -161,6 +167,7 @@ export function setupWebSockets(server: Server): void {
         execChannel.destroy();
         logsChannel.destroy();
         deployChannel.destroy();
+        agentChannel.destroy();
       });
 
       // Confirm connection

@@ -179,12 +179,97 @@ export interface ProjectConfig {
 
 // ─── WebSocket Multiplexer ───────────────────────────────────────
 
-export type WSChannel = "terminal" | "logs" | "deploy" | "exec" | "system";
+export type WSChannel = "terminal" | "logs" | "deploy" | "exec" | "agent" | "system";
 
 export interface WSMessage {
   channel: WSChannel;
   type: string;
   payload: any;
+}
+
+// ─── Agent Developer Mode ────────────────────────────────────────
+
+export type AgentState =
+  | "idle"
+  | "planning"
+  | "running"
+  | "awaiting_permission"
+  | "paused"
+  | "done"
+  | "failed"
+  | "stopped"
+  | "rolling_back";
+
+export interface AgentContext {
+  currentFile?: string;
+  selection?: string;
+  folderPath?: string;
+  wholeRepo?: boolean;
+  workspaceRoot: string;
+}
+
+export interface AgentStep {
+  id: string;
+  label: string;
+  state: "pending" | "running" | "done" | "failed" | "skipped";
+  output?: string;
+  error?: string;
+  durationMs?: number;
+  startedAt?: number;
+}
+
+export interface AgentToolCall {
+  id: string;
+  tool: string;
+  args: Record<string, any>;
+  result?: any;
+  error?: string;
+  durationMs?: number;
+}
+
+export interface AgentFileChange {
+  path: string;
+  action: "created" | "modified" | "deleted" | "renamed";
+  snapshotPath?: string; // backup path for rollback
+}
+
+export interface AgentSession {
+  id: string;
+  sshSessionId: string;
+  state: AgentState;
+  prompt: string;
+  context: AgentContext;
+  plan?: string;
+  steps: AgentStep[];
+  toolCalls: AgentToolCall[];
+  fileChanges: AgentFileChange[];
+  options: AgentOptions;
+  startedAt: number;
+  completedAt?: number;
+  summary?: string;
+  error?: string;
+  retryCount: number;
+  maxRetries: number;
+  pendingPermission?: {
+    tool: string;
+    args: Record<string, any>;
+    reason: string;
+    decision?: "granted" | "denied";
+  };
+}
+
+export interface AgentOptions {
+  autoRunCommands: boolean;
+  autoFixFailures: boolean;
+  autoInstallDeps: boolean;
+  isPro?: boolean;
+}
+
+export interface AgentEvent {
+  sessionId: string;
+  type: string;
+  data: any;
+  timestamp: number;
 }
 
 // ─── AI ──────────────────────────────────────────────────────────

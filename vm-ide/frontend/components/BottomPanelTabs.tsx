@@ -1,14 +1,14 @@
 "use client";
 import React from "react";
 
-export type BottomTab = "terminal" | "logs" | "deploy";
+export type BottomTab = "terminal" | "deploy" | "ai";
 
 interface Props {
   activeTab: BottomTab;
   onTabChange: (tab: BottomTab) => void;
   hasDeployStatus: boolean;
   deployFailed: boolean;
-  logCount: number;
+  agentState: string;
 }
 
 export default function BottomPanelTabs({
@@ -16,7 +16,7 @@ export default function BottomPanelTabs({
   onTabChange,
   hasDeployStatus,
   deployFailed,
-  logCount,
+  agentState,
 }: Props) {
   return (
     <div style={styles.bar}>
@@ -27,11 +27,17 @@ export default function BottomPanelTabs({
         onClick={() => onTabChange("terminal")}
       />
       <TabButton
-        label="Logs"
-        icon="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-        active={activeTab === "logs"}
-        onClick={() => onTabChange("logs")}
-        badge={logCount > 0 ? String(logCount) : undefined}
+        label="AI Developer"
+        icon="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.27a7 7 0 0 1-5.46 3.95 2 2 0 0 1-3.94-1.95A7 7 0 0 1 4.27 19H3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 12 2z"
+        active={activeTab === "ai"}
+        onClick={() => onTabChange("ai")}
+        indicator={
+          agentState === "running" || agentState === "planning"
+            ? "#06b6d4" // Cyan for running
+            : agentState === "awaiting_permission"
+              ? "#f0c040" // Yellow for blocked
+              : undefined
+        }
       />
       <TabButton
         label="Deploy"

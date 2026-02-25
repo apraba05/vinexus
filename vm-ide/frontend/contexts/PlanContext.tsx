@@ -9,6 +9,7 @@ export interface PlanFeatures {
   deploy: boolean;
   commands: boolean;
   ai: boolean;
+  agentDev: boolean;
 }
 
 interface PlanContextValue {
@@ -25,6 +26,7 @@ const defaultFeatures: PlanFeatures = {
   deploy: true,
   commands: false,
   ai: false,
+  agentDev: false,
 };
 
 const PlanContext = createContext<PlanContextValue>({

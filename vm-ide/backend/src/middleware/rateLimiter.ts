@@ -67,7 +67,7 @@ export function rateLimiter(options: RateLimitOptions = {}) {
  */
 export const aiRateLimiter = rateLimiter({
   windowMs: 60_000,
-  max: 10,
+  max: 100,
   keyFn: (req) => `ai:${req.body?.sessionId || req.ip}`,
 });
 

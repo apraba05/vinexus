@@ -9,6 +9,7 @@ import commandsRouter from "./routes/commands";
 import deployRouter from "./routes/deploy";
 import configRouter from "./routes/config";
 import aiRouter from "./routes/ai";
+import agentRouter from "./routes/agent";
 import { setupWebSockets } from "./ws/multiplexer";
 import { startCleanupInterval } from "./sessionStore";
 import { authMiddleware } from "./middleware/auth";
@@ -40,6 +41,7 @@ app.use("/api/commands", requireUser, requirePro, commandsRouter);
 app.use("/api/deploy", deployRouter);
 app.use("/api/config", configRouter);
 app.use("/api/ai", aiRateLimiter, requireUser, requirePro, aiRouter);
+app.use("/api/agent", aiRateLimiter, requireUser, agentRouter);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", auth: process.env.AUTH_ENABLED === "true" });

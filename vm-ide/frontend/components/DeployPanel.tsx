@@ -10,7 +10,6 @@ interface Props {
   onCancel: () => void;
   onRollback: () => void;
   onReset: () => void;
-  onViewLogs: (service: string) => void;
   hasService: boolean;
 }
 
@@ -50,7 +49,6 @@ export default function DeployPanel({
   onCancel,
   onRollback,
   onReset,
-  onViewLogs,
   hasService,
 }: Props) {
   if (!status && !error) {
@@ -116,9 +114,6 @@ export default function DeployPanel({
             <>
               <button style={styles.actionBtn} onClick={onRollback} disabled={loading}>
                 Rollback
-              </button>
-              <button style={styles.actionBtn} onClick={() => onViewLogs("")}>
-                View Logs
               </button>
             </>
           )}

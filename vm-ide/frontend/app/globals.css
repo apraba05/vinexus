@@ -2,7 +2,9 @@
    InfraNexus Design System
    ═══════════════════════════════════════════════════════════════ */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -43,8 +45,8 @@
 
   /* ─── Gradients ─────────────────────────────────── */
   --gradient-brand: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  --gradient-subtle: linear-gradient(135deg, rgba(6,182,212,0.12) 0%, rgba(8,145,178,0.06) 100%);
-  --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(6,182,212,0.06), transparent 40%);
+  --gradient-subtle: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(8, 145, 178, 0.06) 100%);
+  --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(6, 182, 212, 0.06), transparent 40%);
 
   /* ─── Misc ──────────────────────────────────────── */
   --scrollbar: #1e1e24;
@@ -62,7 +64,8 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
   font-family: var(--font-sans);
@@ -74,26 +77,62 @@ html, body {
 
 /* ─── Typography ──────────────────────────────────────── */
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: var(--text-bright);
   font-weight: 600;
   line-height: 1.2;
 }
 
-h1 { font-size: 42px; letter-spacing: -0.03em; }
-h2 { font-size: 32px; letter-spacing: -0.028em; }
-h3 { font-size: 24px; letter-spacing: -0.02em; }
-h4 { font-size: 18px; letter-spacing: -0.015em; }
-h5 { font-size: 16px; letter-spacing: -0.01em; }
-h6 { font-size: 14px; letter-spacing: -0.01em; }
+h1 {
+  font-size: 42px;
+  letter-spacing: -0.03em;
+}
 
-p { line-height: 1.7; }
+h2 {
+  font-size: 32px;
+  letter-spacing: -0.028em;
+}
 
-body { letter-spacing: -0.011em; }
+h3 {
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
 
-a { color: inherit; }
+h4 {
+  font-size: 18px;
+  letter-spacing: -0.015em;
+}
 
-code, pre, .mono {
+h5 {
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+h6 {
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+p {
+  line-height: 1.7;
+}
+
+body {
+  letter-spacing: -0.011em;
+}
+
+a {
+  color: inherit;
+}
+
+code,
+pre,
+.mono {
   font-family: var(--font-mono);
 }
 
@@ -120,13 +159,17 @@ button:disabled {
   transform: none !important;
 }
 
-input, textarea, select {
+input,
+textarea,
+select {
   font-family: inherit;
   font-size: inherit;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 3px var(--accent-glow), 0 0 0 1px var(--accent);
@@ -138,13 +181,23 @@ input::placeholder {
 
 /* ─── Scrollbar ───────────────────────────────────────── */
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 ::-webkit-scrollbar-thumb {
   background: var(--scrollbar);
   border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover { background: #2a2a35; }
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a2a35;
+}
 
 ::selection {
   background: rgba(6, 182, 212, 0.3);
@@ -154,43 +207,95 @@ input::placeholder {
 /* ─── Keyframes ───────────────────────────────────────── */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 /* ─── Utility Classes ─────────────────────────────────── */
@@ -219,7 +324,7 @@ input::placeholder {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* ─── Card Component ──────────────────────────────────── */
@@ -237,13 +342,13 @@ input::placeholder {
   border-color: rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
 }
 
 .card-glow:hover {
   border-color: rgba(6, 182, 212, 0.2);
   box-shadow:
-    0 12px 40px rgba(0,0,0,0.25),
+    0 12px 40px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(6, 182, 212, 0.1),
     inset 0 1px 0 rgba(6, 182, 212, 0.05);
 }
@@ -283,11 +388,11 @@ input::placeholder {
   background: var(--gradient-brand);
   color: #fff;
   border: none;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 0 20px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 20px rgba(6, 182, 212, 0.15);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 0 30px rgba(6, 182, 212, 0.25);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 30px rgba(6, 182, 212, 0.25);
   filter: brightness(1.1);
 }
 
@@ -504,11 +609,25 @@ input::placeholder {
   user-select: none;
 }
 
-.c-keyword { color: #c084fc; }
-.c-fn { color: #67e8f9; }
-.c-str { color: #86efac; }
-.c-num { color: #fbbf24; }
-.c-key { color: #93c5fd; }
+.c-keyword {
+  color: #c084fc;
+}
+
+.c-fn {
+  color: #67e8f9;
+}
+
+.c-str {
+  color: #86efac;
+}
+
+.c-num {
+  color: #fbbf24;
+}
+
+.c-key {
+  color: #93c5fd;
+}
 
 .ide-terminal {
   padding: 12px 16px;
@@ -572,7 +691,9 @@ input::placeholder {
   text-align: center;
 }
 
-.stat-item { padding: 8px 0; }
+.stat-item {
+  padding: 8px 0;
+}
 
 .stat-value {
   font-size: 36px;
@@ -745,7 +866,7 @@ input::placeholder {
 
 .pricing-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .pricing-card-highlight {
@@ -756,7 +877,7 @@ input::placeholder {
 
 .pricing-card-highlight:hover {
   border-color: rgba(6, 182, 212, 0.35);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 80px rgba(6, 182, 212, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 80px rgba(6, 182, 212, 0.1);
 }
 
 /* ─── Auth Cards ──────────────────────────────────────── */
@@ -768,7 +889,7 @@ input::placeholder {
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-xl);
   padding: 44px 40px;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
 }
 
 .auth-input {
@@ -893,26 +1014,76 @@ input::placeholder {
    ═══════════════════════════════════════════════════════════════ */
 
 @media (max-width: 1024px) {
-  .hero-blur-title { font-size: 42px; }
-  .features-grid { grid-template-columns: repeat(2, 1fr); }
-  .steps-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .ide-sidebar { display: none; }
+  .hero-blur-title {
+    font-size: 42px;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .steps-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .ide-sidebar {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
-  .hero-blur-title { font-size: 32px; }
-  .hero-section { min-height: 70vh; }
-  .section-container { padding: 64px 20px; }
-  .section-title { font-size: 30px; }
-  .features-grid { grid-template-columns: 1fr; gap: 16px; }
-  .steps-grid { grid-template-columns: 1fr; gap: 0; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .hero-preview { margin-top: 48px; }
+  .hero-blur-title {
+    font-size: 32px;
+  }
+
+  .hero-section {
+    min-height: 70vh;
+  }
+
+  .section-container {
+    padding: 64px 20px;
+  }
+
+  .section-title {
+    font-size: 30px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .steps-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero-preview {
+    margin-top: 48px;
+  }
 }
 
 @media (max-width: 480px) {
-  .hero-blur-title { font-size: 26px; }
-  .hero-actions { flex-direction: column; align-items: center; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .stat-value { font-size: 28px; }
+  .hero-blur-title {
+    font-size: 26px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
 }

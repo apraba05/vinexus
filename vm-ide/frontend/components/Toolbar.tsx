@@ -79,11 +79,12 @@ export default function Toolbar({
 
         <div style={styles.sep} />
 
-        {/* Save */}
         <button
           style={{
             ...styles.btn,
             ...(hasDirtyFiles && activeFile ? styles.btnAccent : {}),
+            opacity: (disabled || !activeFile || !hasDirtyFiles) ? 0.7 : 1,
+            cursor: (disabled || !activeFile || !hasDirtyFiles) ? "not-allowed" : "pointer",
           }}
           disabled={disabled || !activeFile || !hasDirtyFiles}
           onClick={onSave}
@@ -98,7 +99,11 @@ export default function Toolbar({
         {/* New + dropdown */}
         <div ref={newMenuRef} style={{ position: "relative" }}>
           <button
-            style={styles.btn}
+            style={{
+              ...styles.btn,
+              opacity: disabled ? 0.7 : 1,
+              cursor: disabled ? "not-allowed" : "pointer"
+            }}
             disabled={disabled}
             onClick={() => setNewMenuOpen(!newMenuOpen)}
             title="Create new file or folder"
@@ -144,7 +149,7 @@ export default function Toolbar({
               style={{
                 ...styles.btn,
                 ...(showCommands ? { color: "var(--accent)", background: "rgba(6, 182, 212, 0.08)" } : {}),
-                ...(!features.commands ? { opacity: 0.5 } : {}),
+                ...(!features.commands ? { opacity: 0.7, cursor: "not-allowed" } : {}),
               }}
               onClick={features.commands ? onToggleCommands : undefined}
               title={features.commands ? "Toggle server commands" : "Pro feature — upgrade to unlock"}
@@ -174,7 +179,8 @@ export default function Toolbar({
               style={{
                 ...styles.btn,
                 ...styles.deployBtn,
-                ...(isDeploying ? { opacity: 0.6 } : {}),
+                opacity: (disabled || isDeploying) ? 0.7 : 1,
+                cursor: (disabled || isDeploying) ? "not-allowed" : "pointer",
               }}
               disabled={disabled || isDeploying}
               onClick={onDeploy}

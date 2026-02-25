@@ -482,3 +482,102 @@ export async function createPortalSession(): Promise<{ url: string }> {
   if (!res.ok) throw new Error(data.error || "Failed to create portal session");
   return data;
 }
+
+// ─── Agent Developer Mode ────────────────────────────────────────
+
+export interface AgentContext {
+  currentFile?: string;
+  selection?: string;
+  folderPath?: string;
+  wholeRepo?: boolean;
+  workspaceRoot: string;
+}
+
+export interface AgentOptions {
+  autoRunCommands: boolean;
+  autoFixFailures: boolean;
+  autoInstallDeps: boolean;
+  isPro?: boolean;
+}
+
+export interface AgentFileChange {
+  path: string;
+  action: "created" | "modified" | "deleted" | "renamed";
+}
+
+export type AgentState =
+  | "idle"
+  | "planning"
+  | "running"
+  | "awaiting_permission"
+  | "paused"
+  | "done"
+  | "failed"
+  | "stopped"
+  | "rolling_back";
+
+export interface AgentSession {
+  id: string;
+  state: AgentState;
+  pendingPermission?: {
+    tool: string;
+    args: Record<string, any>;
+    reason: string;
+    decision?: "granted" | "denied";
+  };
+}
+
+export async function agentPlanOnly(
+  sessionId: string,
+  prompt: string,
+  context: AgentContext
+): Promise<{ plan: string }> {
+  return request("/api/agent/plan", {
+    method: "POST",
+    body: JSON.stringify({ sessionId, prompt, context }),
+  });
+}
+
+export async function agentStop(
+  agentSessionId: string
+): Promise<{ ok: boolean }> {
+  return request("/api/agent/stop", {
+    method: "POST",
+    body: JSON.stringify({ agentSessionId }),
+  });
+}
+
+export async function agentRollback(
+  agentSessionId: string
+): Promise<{ ok: boolean; restoredFiles: string[] }> {
+  return request("/api/agent/rollback", {
+    method: "POST",
+    body: JSON.stringify({ agentSessionId }),
+  });
+}
+
+export async function agentStatus(
+  agentSessionId: string
+): Promise<{
+  id: string;
+  state: AgentState;
+  plan?: string;
+  fileChanges: AgentFileChange[];
+  summary?: string;
+  error?: string;
+  toolCallCount: number;
+}> {
+  return request(`/api/agent/status?agentSessionId=${encodeURIComponent(agentSessionId)}`);
+}
+
+export async function getAgentHistory(sshSessionId: string): Promise<any[]> {
+  const data = await request(`/api/agent/history?sshSessionId=${encodeURIComponent(sshSessionId)}`) as any;
+  return data.history || [];
+}
+
+export async function deleteAgentSession(sessionId: string, sshSessionId: string): Promise<void> {
+  return request(`/api/agent/session?sessionId=${encodeURIComponent(sessionId)}&sshSessionId=${encodeURIComponent(sshSessionId)}`, {
+    method: "DELETE",
+  });
+}
+
