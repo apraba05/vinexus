@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import ConnectForm from "@/components/ConnectForm";
 import FileTree from "@/components/FileTree";
 import Editor from "@/components/Editor";
@@ -565,57 +566,117 @@ export default function Home() {
 
   return (
     <div style={styles.root}>
+      {/* ── macOS-style Title Bar ─────────────────────────── */}
+      <div style={styles.titleBar}>
+        <div style={styles.trafficLights}>
+          <span style={{ ...styles.trafficDot, background: "#ff5f56" }} />
+          <span style={{ ...styles.trafficDot, background: "#ffbd2e" }} />
+          <span style={{ ...styles.trafficDot, background: "#27c93f" }} />
+        </div>
+        <div style={styles.titleCenter}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
+          </svg>
+          <span style={styles.titleAppName}>InfraNexus</span>
+          {connInfo && (
+            <span style={styles.titleConn}>
+              <span style={{ opacity: 0.35 }}>—</span>
+              {connInfo.username}@{connInfo.host}
+            </span>
+          )}
+        </div>
+        <div style={styles.titleActions}>
+          {sessionId && (
+            <button onClick={handleDisconnect} style={styles.titleDisconnBtn} title="Disconnect from VM">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                <line x1="12" y1="2" x2="12" y2="12" />
+              </svg>
+              Disconnect
+            </button>
+          )}
+          <Link href="/dashboard" style={styles.titleNavBtn} title="Dashboard">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+          </Link>
+        </div>
+      </div>
+
       <UpgradeBanner />
-      {/* Top: Connect form */}
-      <ConnectForm
-        sessionId={sessionId}
-        onConnect={handleConnect}
-        onDisconnect={handleDisconnect}
-        onError={handleError}
-      />
 
-      {/* Toolbar */}
-      <Toolbar
-        sessionId={sessionId}
-        activeFile={activeFile}
-        hasDirtyFiles={hasDirtyFiles}
-        onSave={() => activeFile && handleSaveWithPreview(activeFile)}
-        onNewFile={handleNewFile}
-        onNewFolder={handleNewFolder}
-        onDeploy={handleDeploy}
-        hasService={hasService}
-        isDeploying={deployment.loading}
-        showCommands={showCommands}
-        onToggleCommands={() => setShowCommands((v) => !v)}
-      >
-        {activeFile && (
-          <ValidationBadge
-            report={validationReport}
-            loading={validating}
-            onValidate={handleValidate}
-            disabled={!sessionId}
-          />
-        )}
-      </Toolbar>
+      {/* ── Main IDE Body ─────────────────────────────────── */}
+      <div style={styles.appBody}>
 
-      {/* Command Bar (collapsible, Pro only) */}
-      {showCommands && (
-        <ProFeature feature="commands">
-          <CommandBar
-            sessionId={sessionId}
-            templates={commandTemplates}
-            onFetchTemplates={fetchTemplates}
-            onResult={handleCommandResult}
-            onError={handleError}
-            onSuccess={handleSuccess}
-          />
-        </ProFeature>
-      )}
+        {/* Activity Bar */}
+        <div style={styles.activityBar}>
+          <button style={{ ...styles.actBtn, ...styles.actBtnActive }} title="Explorer">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
+          </button>
+          <button style={styles.actBtn} title="Search (coming soon)" disabled>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+          <div style={{ flex: 1 }} />
+          <Link href="/dashboard" style={styles.actBtn as React.CSSProperties} title="Dashboard">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+            </svg>
+          </Link>
+          <Link href="/" style={styles.actBtn as React.CSSProperties} title="Home">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </Link>
+        </div>
 
-      {/* Main area: sidebar + editor + bottom panel */}
-      <div style={styles.main}>
         {/* Sidebar */}
         <div style={{ ...styles.sidebar, width: sidebarWidth }}>
+          {/* Sidebar header */}
+          <div style={styles.sidebarHeader}>
+            <span style={styles.sidebarLabel}>Explorer</span>
+            <div style={styles.sidebarHeaderBtns}>
+              {sessionId && (
+                <>
+                  <button style={styles.sidebarIconBtn} onClick={handleNewFile} title="New File">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <line x1="12" y1="11" x2="12" y2="17" /><line x1="9" y1="14" x2="15" y2="14" />
+                    </svg>
+                  </button>
+                  <button style={styles.sidebarIconBtn} onClick={handleNewFolder} title="New Folder">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                      <line x1="12" y1="11" x2="12" y2="17" /><line x1="9" y1="14" x2="15" y2="14" />
+                    </svg>
+                  </button>
+                  <button style={styles.sidebarIconBtn} onClick={refreshTree} title="Refresh">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="23 4 23 10 17 10" />
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Connected status strip */}
+          {sessionId && connInfo && (
+            <div style={styles.sidebarConnStatus}>
+              <span style={styles.sidebarConnDot} />
+              <span style={styles.sidebarConnText}>{connInfo.username}@{connInfo.host}</span>
+            </div>
+          )}
+
           <FileTree
             sessionId={sessionId}
             onSelectFile={handleSelectFile}
@@ -640,8 +701,46 @@ export default function Home() {
         {/* Sidebar resize handle */}
         <div style={styles.sidebarHandle} onMouseDown={handleSidebarDrag} />
 
-        {/* Right: editor + bottom panel */}
+        {/* Editor + panels */}
         <div style={styles.right}>
+          {/* Toolbar */}
+          <Toolbar
+            sessionId={sessionId}
+            activeFile={activeFile}
+            hasDirtyFiles={hasDirtyFiles}
+            onSave={() => activeFile && handleSaveWithPreview(activeFile)}
+            onNewFile={handleNewFile}
+            onNewFolder={handleNewFolder}
+            onDeploy={handleDeploy}
+            hasService={hasService}
+            isDeploying={deployment.loading}
+            showCommands={showCommands}
+            onToggleCommands={() => setShowCommands((v) => !v)}
+          >
+            {activeFile && (
+              <ValidationBadge
+                report={validationReport}
+                loading={validating}
+                onValidate={handleValidate}
+                disabled={!sessionId}
+              />
+            )}
+          </Toolbar>
+
+          {/* Command Bar */}
+          {showCommands && (
+            <ProFeature feature="commands">
+              <CommandBar
+                sessionId={sessionId}
+                templates={commandTemplates}
+                onFetchTemplates={fetchTemplates}
+                onResult={handleCommandResult}
+                onError={handleError}
+                onSuccess={handleSuccess}
+              />
+            </ProFeature>
+          )}
+
           {/* Editor */}
           <div style={styles.editorArea}>
             <ErrorBoundary fallbackLabel="Editor">
@@ -672,13 +771,7 @@ export default function Home() {
 
           {/* Bottom panel content */}
           <div style={{ ...styles.bottomPanel, height: bottomPanelHeight }}>
-            {/* Terminal */}
-            <div
-              style={{
-                ...styles.panelContent,
-                display: bottomTab === "terminal" ? "flex" : "none",
-              }}
-            >
+            <div style={{ ...styles.panelContent, display: bottomTab === "terminal" ? "flex" : "none" }}>
               <ErrorBoundary fallbackLabel="Terminal">
                 <TerminalPanel
                   sessionId={sessionId}
@@ -689,15 +782,7 @@ export default function Home() {
                 />
               </ErrorBoundary>
             </div>
-
-            {/* AI Developer Tab */}
-            <div
-              style={{
-                ...styles.panelContent,
-                display: bottomTab === "ai" ? "flex" : "none",
-                background: "var(--bg-primary)", // Ensure proper background
-              }}
-            >
+            <div style={{ ...styles.panelContent, display: bottomTab === "ai" ? "flex" : "none", background: "var(--bg-primary)" }}>
               <ErrorBoundary fallbackLabel="AI Developer">
                 <AIDeveloperPanel
                   sessionId={sessionId}
@@ -709,14 +794,7 @@ export default function Home() {
                 />
               </ErrorBoundary>
             </div>
-
-            {/* Deploy */}
-            <div
-              style={{
-                ...styles.panelContent,
-                display: bottomTab === "deploy" ? "flex" : "none",
-              }}
-            >
+            <div style={{ ...styles.panelContent, display: bottomTab === "deploy" ? "flex" : "none" }}>
               <ErrorBoundary fallbackLabel="Deploy">
                 <DeployPanel
                   status={deployment.status}
@@ -734,7 +812,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Status Bar */}
+      {/* ── Status Bar ────────────────────────────────────── */}
       <StatusBar
         sessionId={sessionId}
         host={connInfo?.host}
@@ -744,7 +822,16 @@ export default function Home() {
         dirtyFileCount={dirtyFileCount}
       />
 
-      {/* AI Insights Panel */}
+      {/* ── Overlays ──────────────────────────────────────── */}
+
+      {/* Connect Form — fixed modal overlay when disconnected */}
+      <ConnectForm
+        sessionId={sessionId}
+        onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
+        onError={handleError}
+      />
+
       <AIInsightsPanel
         visible={aiPanelVisible}
         loading={aiLoading}
@@ -756,9 +843,6 @@ export default function Home() {
         usageLimit={AI_DAILY_LIMIT}
       />
 
-
-
-      {/* Diff Preview Modal */}
       {diffPreview && (
         <DiffView
           originalContent={diffPreview.originalContent}
@@ -778,6 +862,7 @@ export default function Home() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  // ── Root ────────────────────────────────────────────
   root: {
     display: "flex",
     flexDirection: "column",
@@ -785,25 +870,204 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
     background: "var(--bg-primary)",
   },
-  main: {
+
+  // ── macOS Title Bar ──────────────────────────────────
+  titleBar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    height: 38,
+    padding: "0 14px",
+    background: "var(--bg-elevated)",
+    borderBottom: "1px solid var(--border)",
+    flexShrink: 0,
+    position: "relative" as const,
+    userSelect: "none" as const,
+  },
+  trafficLights: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    zIndex: 1,
+  },
+  trafficDot: {
+    width: 12,
+    height: 12,
+    borderRadius: "50%",
+    display: "inline-block",
+    flexShrink: 0,
+  },
+  titleCenter: {
+    position: "absolute" as const,
+    left: "50%",
+    transform: "translateX(-50%)",
+    display: "flex",
+    alignItems: "center",
+    gap: 7,
+    pointerEvents: "none" as const,
+  },
+  titleAppName: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "var(--text-bright)",
+    letterSpacing: "-0.01em",
+  },
+  titleConn: {
+    fontSize: 11,
+    color: "var(--text-secondary)",
+    fontFamily: "var(--font-mono)",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+  },
+  titleActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    zIndex: 1,
+  },
+  titleDisconnBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    padding: "3px 9px",
+    background: "rgba(239, 68, 68, 0.08)",
+    color: "var(--danger)",
+    border: "1px solid rgba(239, 68, 68, 0.18)",
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 500,
+    cursor: "pointer",
+  },
+  titleNavBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    color: "var(--text-secondary)",
+    textDecoration: "none",
+    background: "transparent",
+    border: "1px solid transparent",
+    cursor: "pointer",
+  },
+
+  // ── App body ─────────────────────────────────────────
+  appBody: {
     display: "flex",
     flex: 1,
     overflow: "hidden",
   },
+
+  // ── Activity Bar ─────────────────────────────────────
+  activityBar: {
+    width: 44,
+    flexShrink: 0,
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    padding: "8px 0",
+    gap: 2,
+    background: "var(--bg-elevated)",
+    borderRight: "1px solid var(--border)",
+  },
+  actBtn: {
+    width: 36,
+    height: 36,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    background: "transparent",
+    border: "none",
+    color: "var(--text-secondary)",
+    cursor: "pointer",
+    textDecoration: "none",
+    flexShrink: 0,
+  },
+  actBtnActive: {
+    color: "var(--accent)",
+    background: "rgba(63, 255, 162, 0.08)",
+  },
+
+  // ── Sidebar ──────────────────────────────────────────
   sidebar: {
     flexShrink: 0,
     overflow: "hidden",
+    display: "flex",
+    flexDirection: "column" as const,
+    background: "var(--bg-secondary)",
+    borderRight: "1px solid var(--border)",
+  },
+  sidebarHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "7px 10px 6px",
+    flexShrink: 0,
+    borderBottom: "1px solid var(--border-subtle)",
+  },
+  sidebarLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: "var(--text-secondary)",
+    letterSpacing: "0.07em",
+    textTransform: "uppercase" as const,
+  },
+  sidebarHeaderBtns: {
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
+  },
+  sidebarIconBtn: {
+    width: 22,
+    height: 22,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "transparent",
+    border: "none",
+    color: "var(--text-secondary)",
+    borderRadius: 4,
+    cursor: "pointer",
+  },
+  sidebarConnStatus: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "4px 10px 5px",
+    borderBottom: "1px solid var(--border-subtle)",
+    flexShrink: 0,
+  },
+  sidebarConnDot: {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "var(--accent)",
+    boxShadow: "0 0 5px rgba(63, 255, 162, 0.6)",
+    flexShrink: 0,
+    animation: "pulse 2s ease-in-out infinite",
+  },
+  sidebarConnText: {
+    fontSize: 10,
+    color: "var(--text-secondary)",
+    fontFamily: "var(--font-mono)",
+    overflow: "hidden" as const,
+    textOverflow: "ellipsis" as const,
+    whiteSpace: "nowrap" as const,
   },
   sidebarHandle: {
-    width: 3,
+    width: 1,
     cursor: "col-resize",
     background: "var(--border)",
     flexShrink: 0,
-    transition: "background 0.15s",
   },
+
+  // ── Right (editor + panels) ──────────────────────────
   right: {
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "column" as const,
     flex: 1,
     overflow: "hidden",
   },
@@ -812,21 +1076,20 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
   },
   bottomHandle: {
-    height: 3,
+    height: 2,
     cursor: "row-resize",
     background: "var(--border)",
     flexShrink: 0,
-    transition: "background 0.15s",
   },
   bottomPanel: {
     flexShrink: 0,
     overflow: "hidden",
-    position: "relative",
+    position: "relative" as const,
   },
   panelContent: {
-    position: "absolute",
+    position: "absolute" as const,
     inset: 0,
-    flexDirection: "column",
+    flexDirection: "column" as const,
     overflow: "hidden",
   },
 };

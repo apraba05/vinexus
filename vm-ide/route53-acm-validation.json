@@ -1,0 +1,18 @@
+{
+  "Comment": "ACM Validation",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "_0c03a2e454e6f5275d96cd8a94299628.infranexus.cloud.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "_f5aa8c51b682886e900e8938b367139e.jkddzztszm.acm-validations.aws."
+          }
+        ]
+      }
+    }
+  ]
+}

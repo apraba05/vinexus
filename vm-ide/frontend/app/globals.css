@@ -11,50 +11,56 @@
 }
 
 :root {
-  /* ─── Surface colors ────────────────────────────── */
-  --bg-primary: #09090b;
-  --bg-secondary: #111113;
-  --bg-tertiary: #18181b;
-  --bg-hover: #1f1f23;
-  --bg-active: #27272a;
-  --bg-elevated: #141416;
+  /* ─── Surface colors (Windsurf deep navy) ───────── */
+  --bg-primary: #0b1120;
+  --bg-secondary: #0d1528;
+  --bg-tertiary: #111c30;
+  --bg-hover: #162035;
+  --bg-active: #1a263d;
+  --bg-elevated: #0f1829;
 
   /* ─── Text ──────────────────────────────────────── */
-  --text-primary: #a1a1aa;
-  --text-secondary: #52525b;
-  --text-bright: #fafafa;
-  --text-muted: #3f3f46;
+  --text-primary: #8fa3c8;
+  --text-secondary: #4a6490;
+  --text-bright: #ffffff;
+  --text-muted: #2a3d5a;
 
   /* ─── Border ────────────────────────────────────── */
-  --border: #1e1e22;
-  --border-subtle: #161618;
-  --border-hover: #2a2a2e;
+  --border: #1a2640;
+  --border-subtle: #131f33;
+  --border-hover: #253550;
 
-  /* ─── Brand ─────────────────────────────────────── */
-  --accent: #06b6d4;
-  --accent-hover: #22d3ee;
-  --accent-muted: #0e7490;
-  --accent-glow: rgba(6, 182, 212, 0.15);
-  --accent-surface: rgba(6, 182, 212, 0.06);
+  /* ─── Brand (Windsurf teal) ──────────────────────── */
+  --accent: #3fffa2;
+  --accent-hover: #65ffb8;
+  --accent-muted: #1a7a55;
+  --accent-glow: rgba(63, 255, 162, 0.15);
+  --accent-surface: rgba(63, 255, 162, 0.06);
+
+  /* ─── Secondary accents ─────────────────────────── */
+  --accent-blue: #4f8ef7;
+  --accent-lavender: #a78bfa;
+  --accent-peach: #fca98d;
 
   /* ─── Semantic ──────────────────────────────────── */
   --danger: #ef4444;
   --success: #22c55e;
   --warning: #eab308;
-  --info: #3b82f6;
+  --info: #4f8ef7;
 
   /* ─── Gradients ─────────────────────────────────── */
-  --gradient-brand: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  --gradient-subtle: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(8, 145, 178, 0.06) 100%);
-  --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(6, 182, 212, 0.06), transparent 40%);
+  --gradient-brand: linear-gradient(90deg, #3fffa2 0%, #4f8ef7 100%);
+  --gradient-wave: linear-gradient(160deg, #3fffa2 0%, #4f8ef7 40%, #a78bfa 70%, #fca98d 100%);
+  --gradient-subtle: linear-gradient(135deg, rgba(63, 255, 162, 0.08) 0%, rgba(79, 142, 247, 0.04) 100%);
+  --gradient-hero: linear-gradient(135deg, #0b1120 0%, #0d1b3e 60%, #1a1040 100%);
 
   /* ─── Misc ──────────────────────────────────────── */
-  --scrollbar: #1e1e24;
+  --scrollbar: #1a2640;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 24px;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', 'Google Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
 }
 
@@ -62,6 +68,15 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 html,
@@ -386,14 +401,15 @@ input::placeholder {
 
 .btn-primary {
   background: var(--gradient-brand);
-  color: #fff;
+  color: #0b1120;
   border: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 20px rgba(6, 182, 212, 0.15);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 20px rgba(63, 255, 162, 0.15);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 30px rgba(6, 182, 212, 0.25);
-  filter: brightness(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 30px rgba(63, 255, 162, 0.25);
+  filter: brightness(1.08);
 }
 
 .btn-secondary {
@@ -488,12 +504,12 @@ input::placeholder {
 }
 
 .hero-blur-title {
-  font-size: 56px;
-  font-weight: 800;
+  font-size: clamp(44px, 7vw, 80px);
+  font-weight: 900;
   color: var(--text-bright);
-  line-height: 1.08;
-  margin-bottom: 24px;
-  letter-spacing: -0.035em;
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -0.04em;
   justify-content: center;
 }
 
@@ -582,7 +598,7 @@ input::placeholder {
 
 .ide-file.active {
   color: var(--text-bright);
-  background: rgba(6, 182, 212, 0.08);
+  background: rgba(63, 255, 162, 0.08);
   border-left: 2px solid var(--accent);
 }
 
@@ -642,6 +658,13 @@ input::placeholder {
 .ide-prompt {
   color: var(--accent);
   margin-right: 8px;
+}
+
+/* ─── Windsurf wave sweep background ─────────────── */
+.wave-bg {
+  background: var(--gradient-wave);
+  background-size: 300% 300%;
+  animation: gradientShift 6s ease infinite;
 }
 
 /* ─── Section Layout ─────────────────────────────────── */

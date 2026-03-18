@@ -4,66 +4,72 @@ import Link from "next/link";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="noise" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0b1120" }}>
       <NavBar />
       <main style={{ flex: 1 }}>{children}</main>
-      <footer style={footerStyles.footer}>
-        <div style={footerStyles.inner}>
-          <div style={footerStyles.grid}>
+      <footer style={f.footer}>
+        <div style={f.inner}>
+          <div style={f.grid}>
             {/* Brand */}
-            <div style={footerStyles.brand}>
-              <div style={footerStyles.logoRow}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                  <polyline points="2 17 12 22 22 17" />
-                  <polyline points="2 12 12 17 22 12" />
-                </svg>
-                <span style={footerStyles.logoText}>InfraNexus</span>
+            <div style={f.brand}>
+              <div style={f.logoRow}>
+                <div style={f.logoMark}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3fffa2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                    <polyline points="2 17 12 22 22 17" />
+                    <polyline points="2 12 12 17 22 12" />
+                  </svg>
+                </div>
+                <span style={f.logoText}>InfraNexus</span>
               </div>
-              <p style={footerStyles.brandDesc}>
+              <p style={f.brandDesc}>
                 Browser-based IDE for managing Linux virtual machines. Edit, deploy, and monitor from anywhere.
               </p>
             </div>
 
             {/* Product */}
-            <div style={footerStyles.col}>
-              <h4 style={footerStyles.colTitle}>Product</h4>
-              <a href="/pricing" style={footerStyles.colLink}>Pricing</a>
-              <a href="/signup" style={footerStyles.colLink}>Get Started</a>
-              <a href="/login" style={footerStyles.colLink}>Sign In</a>
+            <div style={f.col}>
+              <h4 style={f.colTitle}>Product</h4>
+              <a href="/pricing" style={f.colLink}>Pricing</a>
+              <a href="/signup" style={f.colLink}>Get Started</a>
+              <a href="/login" style={f.colLink}>Sign In</a>
             </div>
 
             {/* Features */}
-            <div style={footerStyles.col}>
-              <h4 style={footerStyles.colTitle}>Features</h4>
-              <span style={footerStyles.colLink}>Monaco Editor</span>
-              <span style={footerStyles.colLink}>SSH Terminal</span>
-              <span style={footerStyles.colLink}>AI Insights</span>
+            <div style={f.col}>
+              <h4 style={f.colTitle}>Features</h4>
+              <span style={f.colText}>Monaco Editor</span>
+              <span style={f.colText}>SSH Terminal</span>
+              <span style={f.colText}>AI Insights</span>
             </div>
 
-            {/* Legal */}
-            <div style={footerStyles.col}>
-              <h4 style={footerStyles.colTitle}>Company</h4>
-              <Link href="/privacy" style={footerStyles.colLink}>Privacy</Link>
-              <Link href="/terms" style={footerStyles.colLink}>Terms</Link>
-              <Link href="/contact" style={footerStyles.colLink}>Contact</Link>
+            {/* Company */}
+            <div style={f.col}>
+              <h4 style={f.colTitle}>Company</h4>
+              <Link href="/privacy" style={f.colLink}>Privacy</Link>
+              <Link href="/terms" style={f.colLink}>Terms</Link>
+              <Link href="/contact" style={f.colLink}>Contact</Link>
             </div>
           </div>
 
-          <div style={footerStyles.bottom}>
+          <div style={f.bottom}>
             <span>&copy; {new Date().getFullYear()} InfraNexus. All rights reserved.</span>
           </div>
         </div>
+
+        {/* Large display wordmark — Antigravity-inspired */}
+        <div style={f.wordmark} aria-hidden>InfraNexus</div>
       </footer>
     </div>
   );
 }
 
-const footerStyles: Record<string, React.CSSProperties> = {
+const f: Record<string, React.CSSProperties> = {
   footer: {
-    borderTop: "1px solid rgba(255,255,255,0.04)",
-    background: "rgba(9, 9, 11, 0.8)",
+    background: "#0b1120",
+    borderTop: "1px solid rgba(255,255,255,0.05)",
     padding: "64px 0 0",
+    overflow: "hidden",
   },
   inner: {
     maxWidth: 1200,
@@ -83,16 +89,28 @@ const footerStyles: Record<string, React.CSSProperties> = {
     gap: 8,
     marginBottom: 12,
   },
+  logoMark: {
+    width: 30,
+    height: 30,
+    borderRadius: 7,
+    background: "rgba(63,255,162,0.07)",
+    border: "1px solid rgba(63,255,162,0.15)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   logoText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 700,
-    color: "var(--text-bright)",
+    color: "#ffffff",
+    letterSpacing: "-0.02em",
   },
   brandDesc: {
     fontSize: 13,
-    color: "var(--text-secondary)",
+    color: "#4a6490",
     lineHeight: 1.7,
     maxWidth: 280,
+    margin: 0,
   },
   col: {
     display: "flex",
@@ -100,24 +118,39 @@ const footerStyles: Record<string, React.CSSProperties> = {
     gap: 10,
   },
   colTitle: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: "var(--text-bright)",
+    fontSize: 11,
+    fontWeight: 700,
+    color: "#8fa3c8",
     textTransform: "uppercase" as const,
-    letterSpacing: "0.06em",
-    marginBottom: 4,
+    letterSpacing: "0.08em",
+    margin: "0 0 4px",
   },
   colLink: {
     fontSize: 13,
-    color: "var(--text-secondary)",
+    color: "#4a6490",
     textDecoration: "none",
     transition: "color 0.15s",
     cursor: "pointer",
   },
+  colText: {
+    fontSize: 13,
+    color: "#4a6490",
+  },
   bottom: {
-    borderTop: "1px solid rgba(255,255,255,0.04)",
-    padding: "24px 0",
+    borderTop: "1px solid rgba(255,255,255,0.05)",
+    padding: "20px 0",
     fontSize: 12,
-    color: "var(--text-muted)",
+    color: "#2a3d5a",
+  },
+  wordmark: {
+    fontSize: "clamp(60px, 13vw, 148px)",
+    fontWeight: 900,
+    letterSpacing: "-0.04em",
+    color: "transparent",
+    WebkitTextStroke: "1px rgba(255,255,255,0.05)",
+    textAlign: "center" as const,
+    lineHeight: 0.9,
+    userSelect: "none" as const,
+    pointerEvents: "none" as const,
   },
 };

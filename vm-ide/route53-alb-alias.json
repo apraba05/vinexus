@@ -1,0 +1,42 @@
+{
+    "Comment": "Update A records to point to ALB and remove CNAME",
+    "Changes": [
+        {
+            "Action": "UPSERT",
+            "ResourceRecordSet": {
+                "Name": "infranexus.cloud.",
+                "Type": "A",
+                "AliasTarget": {
+                    "HostedZoneId": "Z35SXDOTRQ7X7K",
+                    "DNSName": "dualstack.infranexus-alb-1933158692.us-east-1.elb.amazonaws.com.",
+                    "EvaluateTargetHealth": true
+                }
+            }
+        },
+        {
+            "Action": "DELETE",
+            "ResourceRecordSet": {
+                "Name": "www.infranexus.cloud.",
+                "Type": "CNAME",
+                "TTL": 300,
+                "ResourceRecords": [
+                    {
+                        "Value": "infranexus.cloud"
+                    }
+                ]
+            }
+        },
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "www.infranexus.cloud.",
+                "Type": "A",
+                "AliasTarget": {
+                    "HostedZoneId": "Z35SXDOTRQ7X7K",
+                    "DNSName": "dualstack.infranexus-alb-1933158692.us-east-1.elb.amazonaws.com.",
+                    "EvaluateTargetHealth": true
+                }
+            }
+        }
+    ]
+}
