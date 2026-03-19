@@ -1,25 +1,54 @@
 {
-  "name": "infranexus",
+  "name": "vela",
   "version": "1.0.0",
+  "productName": "Vela",
+  "description": "Desktop IDE for managing and editing code on virtual machines",
+  "author": {
+    "name": "Vela",
+    "email": "support@vela.dev"
+  },
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "frontend:dev": "cd frontend && npm run dev",
+    "backend:dev": "cd backend && npm run dev",
+    "electron:dev": "concurrently --kill-others --names \"NEXT,EXPRESS,ELECTRON\" --prefix-colors \"cyan,yellow,magenta\" \"npm run frontend:dev\" \"npm run backend:dev\" \"wait-on tcp:3000 tcp:4000 && electron .\"",
+    "frontend:build": "cd frontend && npm run build",
+    "backend:build": "cd backend && npm run build",
+    "electron:build": "npm run frontend:build && npm run backend:build && electron-builder",
+    "electron:build:mac": "npm run frontend:build && npm run backend:build && electron-builder --mac",
+    "electron:build:win": "npm run frontend:build && npm run backend:build && electron-builder --win",
+    "electron:build:linux": "npm run frontend:build && npm run backend:build && electron-builder --linux",
+    "rebuild-native": "electron-rebuild -f -w node-pty"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-ec2": "3.1012.0",
     "@prisma/client": "^6.19.2",
-    "bcryptjs": "^3.0.3"
+    "bcryptjs": "^3.0.3",
+    "electron-log": "5.4.3",
+    "electron-store": "11.0.2",
+    "electron-updater": "6.8.3",
+    "node-pty": "1.1.0",
+    "ssh2": "1.17.0",
+    "uuid": "10.0.0"
   },
   "devDependencies": {
+    "concurrently": "9.2.1",
+    "electron": "41.0.3",
+    "electron-builder": "26.8.1",
+    "electron-rebuild": "3.2.9",
     "prisma": "^6.19.2",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "wait-on": "9.0.4"
   }
 }

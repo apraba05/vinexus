@@ -1,10 +1,10 @@
-# Security Policy — InfraNexus
+# Security Policy — Vela
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in InfraNexus, please report it responsibly:
+If you discover a security vulnerability in Vela, please report it responsibly:
 
-1. **Email**: security@infranexus.com
+1. **Email**: security@vela.dev
 2. **Do not** open a public GitHub issue for security vulnerabilities
 3. Include a detailed description, reproduction steps, and impact assessment
 4. Allow up to 72 hours for initial response

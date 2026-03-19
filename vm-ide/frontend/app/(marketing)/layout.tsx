@@ -20,7 +20,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
                     <polyline points="2 12 12 17 22 12" />
                   </svg>
                 </div>
-                <span style={f.logoText}>InfraNexus</span>
+                <span style={f.logoText}>Vela</span>
               </div>
               <p style={f.brandDesc}>
                 Browser-based IDE for managing Linux virtual machines. Edit, deploy, and monitor from anywhere.
@@ -53,12 +53,12 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           </div>
 
           <div style={f.bottom}>
-            <span>&copy; {new Date().getFullYear()} InfraNexus. All rights reserved.</span>
+            <span>&copy; {new Date().getFullYear()} Vela. All rights reserved.</span>
           </div>
         </div>
 
         {/* Large display wordmark — Antigravity-inspired */}
-        <div style={f.wordmark} aria-hidden>InfraNexus</div>
+        <div style={f.wordmark} aria-hidden>Vela</div>
       </footer>
     </div>
   );

@@ -64,7 +64,7 @@ function KeyboardShortcut({ keys }: { keys: string }) {
 
 function GettingStartedSection() {
     return (<>
-        <p style={S.para}>Welcome to InfraNexus — your browser-based IDE for managing virtual machines. No software to install, no setup required. Just sign in and connect.</p>
+        <p style={S.para}>Welcome to Vela — your browser-based IDE for managing virtual machines. No software to install, no setup required. Just sign in and connect.</p>
 
         <h3 style={S.h3}>1. Create Your Account</h3>
         <p style={S.para}>Click <strong>Get Started</strong> on the homepage or go to the <strong>Sign Up</strong> page. You can create an account with your email or sign in instantly with GitHub.</p>
@@ -73,7 +73,7 @@ function GettingStartedSection() {
         <p style={S.para}>From your <strong>Dashboard</strong>, click <strong>Open IDE</strong> to launch the editor. This is where you&apos;ll connect to your VM and start working.</p>
 
         <h3 style={S.h3}>3. Connect Your VM</h3>
-        <p style={S.para}>Enter your VM&apos;s IP address, username, and authentication credentials. InfraNexus supports both <strong>password</strong> and <strong>SSH key</strong> authentication. Once connected, your VM&apos;s file system and terminal are instantly accessible in the browser.</p>
+        <p style={S.para}>Enter your VM&apos;s IP address, username, and authentication credentials. Vela supports both <strong>password</strong> and <strong>SSH key</strong> authentication. Once connected, your VM&apos;s file system and terminal are instantly accessible in the browser.</p>
 
         <h3 style={S.h3}>4. Start Working</h3>
         <p style={S.para}>Browse your files, edit code, run commands in the terminal, and manage your server — all from a single browser tab.</p>
@@ -82,7 +82,7 @@ function GettingStartedSection() {
 
 function ConnectingSection() {
     return (<>
-        <p style={S.para}>InfraNexus connects to your VM securely via SSH. Here&apos;s how to set it up.</p>
+        <p style={S.para}>Vela connects to your VM securely via SSH. Here&apos;s how to set it up.</p>
 
         <h3 style={S.h3}>What You Need</h3>
         <ul style={S.list}>
@@ -108,7 +108,7 @@ function ConnectingSection() {
 
 function EditorSection() {
     return (<>
-        <p style={S.para}>InfraNexus features a full Monaco editor (the same engine that powers VS Code) directly in your browser.</p>
+        <p style={S.para}>Vela features a full Monaco editor (the same engine that powers VS Code) directly in your browser.</p>
 
         <h3 style={S.h3}>File Tree</h3>
         <p style={S.para}>The left sidebar shows your VM&apos;s file system. Click any file to open it in the editor. You can also:</p>
@@ -128,7 +128,7 @@ function EditorSection() {
             <li><strong>Command Palette</strong> — <KeyboardShortcut keys="F1" /></li>
         </ul>
 
-        <Callout type="tip">When you save a file, InfraNexus automatically creates a backup of the previous version on your VM. You can restore backups if you need to undo changes.</Callout>
+        <Callout type="tip">When you save a file, Vela automatically creates a backup of the previous version on your VM. You can restore backups if you need to undo changes.</Callout>
 
         <h3 style={S.h3}>Diff View</h3>
         <p style={S.para}>Before saving, you can preview exactly what changed with the built-in diff viewer. This shows a side-by-side comparison of the original file on your VM versus your edits.</p>
@@ -150,7 +150,7 @@ function TerminalSection() {
             <li><strong>Scrollback</strong> — Scroll up to see previous output</li>
         </ul>
 
-        <Callout type="info">The terminal runs on your VM, not on InfraNexus servers. Every command executes directly on your machine.</Callout>
+        <Callout type="info">The terminal runs on your VM, not on Vela servers. Every command executes directly on your machine.</Callout>
     </>);
 }
 
@@ -208,7 +208,7 @@ function PlansSection() {
         </ul>
 
         <h3 style={S.h3}>Pro Plan — $10/month</h3>
-        <p style={S.para}>Unlock the full power of InfraNexus:</p>
+        <p style={S.para}>Unlock the full power of Vela:</p>
         <ul style={S.list}>
             <li>⚡ Everything in Free</li>
             <li>⚡ One-click deploy with rollback</li>
@@ -231,7 +231,7 @@ function PlansSection() {
 
 function SecuritySection() {
     return (<>
-        <p style={S.para}>We take the security of your data and your VM seriously. Here&apos;s how InfraNexus protects you.</p>
+        <p style={S.para}>We take the security of your data and your VM seriously. Here&apos;s how Vela protects you.</p>
 
         <h3 style={S.h3}>Your VM Credentials</h3>
         <ul style={S.list}>
@@ -242,7 +242,7 @@ function SecuritySection() {
 
         <h3 style={S.h3}>Your Data</h3>
         <ul style={S.list}>
-            <li>Your files <strong>stay on your VM</strong> — InfraNexus never copies or stores them on our servers</li>
+            <li>Your files <strong>stay on your VM</strong> — Vela never copies or stores them on our servers</li>
             <li>We <strong>don&apos;t log</strong> your file contents, code, or terminal commands</li>
             <li>When you use AI features, your file is sent for analysis but <strong>nothing is kept</strong> afterward</li>
             <li>The only things we store are your <strong>account details</strong> (email, name) and <strong>subscription status</strong></li>
@@ -250,7 +250,7 @@ function SecuritySection() {
 
         <h3 style={S.h3}>Encryption</h3>
         <ul style={S.list}>
-            <li>All traffic between your browser and InfraNexus is <strong>fully encrypted</strong></li>
+            <li>All traffic between your browser and Vela is <strong>fully encrypted</strong></li>
             <li>Connections to your VM use <strong>SSH encryption</strong> — the same security used by professional server administrators worldwide</li>
             <li>Your account password is <strong>securely hashed</strong> — even we can&apos;t see it</li>
         </ul>
@@ -269,11 +269,11 @@ function SecuritySection() {
 
 function FAQSection() {
     const faqs = [
-        { q: "What is InfraNexus?", a: "InfraNexus is a browser-based IDE for managing remote virtual machines. Connect to any server via SSH and get a full editor, terminal, file manager, deploy tools, and AI-powered assistance — all without installing anything." },
-        { q: "Do I need to install anything?", a: "No. InfraNexus runs entirely in your browser. Just sign up, connect your VM, and start working." },
+        { q: "What is Vela?", a: "Vela is a browser-based IDE for managing remote virtual machines. Connect to any server via SSH and get a full editor, terminal, file manager, deploy tools, and AI-powered assistance — all without installing anything." },
+        { q: "Do I need to install anything?", a: "No. Vela runs entirely in your browser. Just sign up, connect your VM, and start working." },
         { q: "What VMs does it work with?", a: "Any server you can SSH into — AWS EC2, DigitalOcean Droplets, Google Cloud VMs, Linode, Vultr, Hetzner, self-hosted servers, Raspberry Pi, and more." },
         { q: "Is my data safe?", a: "Yes. Your files stay on your VM — we never copy or store them. SSH credentials only exist while you're connected and are wiped on disconnect. All traffic is encrypted." },
-        { q: "Does InfraNexus store my files?", a: "No. Your files live only on your VM. InfraNexus reads and writes files directly to your server. We never copy or store your data." },
+        { q: "Does Vela store my files?", a: "No. Your files live only on your VM. Vela reads and writes files directly to your server. We never copy or store your data." },
         { q: "What happens if I cancel my Pro subscription?", a: "You keep Pro features until the end of your billing period. After that, you're automatically moved to the Free plan. All your account data stays intact — you just lose access to deploy, server commands, and AI features." },
         { q: "Can I connect to multiple VMs?", a: "You connect to one VM per session. To switch VMs, disconnect from the current one and connect to a new one." },
         { q: "What happens after 30 minutes of inactivity?", a: "Your session automatically expires for security. You'll need to reconnect by entering your credentials again. This prevents unauthorized access if you leave your computer unattended." },
@@ -378,7 +378,7 @@ export default function DocsPage() {
                         </GradientText>
                     </h1>
                     <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: 0 }}>
-                        Learn how to use InfraNexus to manage your virtual machines from the browser.
+                        Learn how to use Vela to manage your virtual machines from the browser.
                     </p>
                 </div>
             </div>

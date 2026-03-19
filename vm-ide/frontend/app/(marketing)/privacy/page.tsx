@@ -3,7 +3,7 @@ import React from "react";
 const sections = [
   {
     title: "Introduction",
-    content: `InfraNexus ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our browser-based IDE platform and related services.`,
+    content: `Vela ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our browser-based IDE platform and related services.`,
   },
   {
     title: "Information We Collect",
@@ -46,7 +46,7 @@ To exercise these rights, contact us at the email below.`,
   },
   {
     title: "Children's Privacy",
-    content: `InfraNexus is not intended for use by individuals under 16 years of age. We do not knowingly collect personal information from children. If you believe a child has provided us with personal data, please contact us so we can take appropriate action.`,
+    content: `Vela is not intended for use by individuals under 16 years of age. We do not knowingly collect personal information from children. If you believe a child has provided us with personal data, please contact us so we can take appropriate action.`,
   },
   {
     title: "Changes to This Policy",
@@ -54,7 +54,7 @@ To exercise these rights, contact us at the email below.`,
   },
   {
     title: "Contact Us",
-    content: `If you have questions about this Privacy Policy or our data practices, please contact us at privacy@infranexus.com or through our Contact page.`,
+    content: `If you have questions about this Privacy Policy or our data practices, please contact us at privacy@vela.dev or through our Contact page.`,
   },
 ];
 

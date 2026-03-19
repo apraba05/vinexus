@@ -82,7 +82,7 @@ const CLOUD_STEPS: Record<CloudTab, { title: string; steps: { heading: string; b
 const SECURITY_PILLARS = [
   { icon: "🔐", label: "End-to-end encrypted", sub: "SSH tunnel — TLS in transit" },
   { icon: "🗝️", label: "Keys never leave your device", sub: "Private keys stay local" },
-  { icon: "🛡️", label: "Zero InfraNexus proxy", sub: "Direct peer-to-peer SSH" },
+  { icon: "🛡️", label: "Zero Vela proxy", sub: "Direct peer-to-peer SSH" },
   { icon: "📋", label: "Full audit trail", sub: "Session logs on your VM" },
 ];
 
@@ -137,7 +137,7 @@ export default function DashboardPage() {
           <div style={s.headerRow}>
             <div>
               <h1 style={s.headline}>Welcome back, {firstName}</h1>
-              <p style={s.headlineSub}>Your InfraNexus workspace is ready.</p>
+              <p style={s.headlineSub}>Your Vela workspace is ready.</p>
             </div>
             <div style={s.planPill}>
               <span style={s.planDot} />
@@ -154,7 +154,7 @@ export default function DashboardPage() {
 
               {/* Left copy */}
               <div style={s.downloadCopy}>
-                <div style={s.eyebrow}>InfraNexus Desktop · v2.1.0</div>
+                <div style={s.eyebrow}>Vela Desktop · v2.1.0</div>
                 <h2 style={s.downloadH}>Connect to any Linux VM.<br />Code like you're local.</h2>
                 <p style={s.downloadP}>
                   A full VS Code–grade IDE that SSH-tunnels directly into your cloud VMs. Monaco Editor, integrated terminal, file tree and one-click deploy — your credentials never touch our servers.
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                       <span style={{ ...s.dot, background: "#febc2e" }} />
                       <span style={{ ...s.dot, background: "#28c840" }} />
                     </div>
-                    <span style={s.ideBarTitle}>InfraNexus — New SSH Connection</span>
+                    <span style={s.ideBarTitle}>Vela — New SSH Connection</span>
                     <span />
                   </div>
 
@@ -264,7 +264,7 @@ export default function DashboardPage() {
                   {/* Status bar */}
                   <div style={s.ideStatus}>
                     <span style={{ color: "#3fffa2", fontSize: 10 }}>●</span>
-                    <span style={{ color: "#4a6490", fontSize: 10, marginLeft: 5, fontFamily: "var(--font-mono)" }}>SSH tunnel encrypted · keys stored locally · no InfraNexus proxy</span>
+                    <span style={{ color: "#4a6490", fontSize: 10, marginLeft: 5, fontFamily: "var(--font-mono)" }}>SSH tunnel encrypted · keys stored locally · no Vela proxy</span>
                   </div>
                 </div>
               </div>
@@ -293,7 +293,7 @@ export default function DashboardPage() {
             <div style={s.eyebrow} >CONNECT YOUR VM</div>
             <h3 style={s.sectionH}>Configure secure SSH access on your cloud provider</h3>
             <p style={s.sectionP}>
-              InfraNexus connects directly from the IDE to your VM via SSH. Your instance should never be open to the world — follow the steps below to allow only your IP while keeping the rest locked down.
+              Vela connects directly from the IDE to your VM via SSH. Your instance should never be open to the world — follow the steps below to allow only your IP while keeping the rest locked down.
             </p>
 
             {/* Provider tabs */}

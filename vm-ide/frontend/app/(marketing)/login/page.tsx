@@ -52,7 +52,7 @@ export default function LoginPage() {
                 <polyline points="2 12 12 17 22 12" />
               </svg>
             </div>
-            <span style={s.brandName}>InfraNexus</span>
+            <span style={s.brandName}>Vela</span>
           </div>
 
           <h2 style={s.brandHeadline}>
@@ -83,7 +83,7 @@ export default function LoginPage() {
         {/* Right column — form card */}
         <div style={s.card}>
           <h1 style={s.heading}>Welcome back</h1>
-          <p style={s.subheading}>Sign in to continue to InfraNexus</p>
+          <p style={s.subheading}>Sign in to continue to Vela</p>
 
           {/* Test account banner */}
           <button type="button" onClick={fillTest} style={s.testBanner}>

@@ -4,7 +4,7 @@ import "@xterm/xterm/css/xterm.css";
 import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "InfraNexus",
+  title: "Vela",
   description: "Browser-based IDE for your Linux VMs — deploy, monitor, and manage infrastructure",
 };
 
