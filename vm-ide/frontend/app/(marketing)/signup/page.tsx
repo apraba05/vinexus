@@ -72,7 +72,7 @@ export default function SignupPage() {
             <polyline points="2 12 12 17 22 12" />
           </svg>
           <GradientText colors={["#06b6d4", "#22d3ee", "#67e8f9"]} animationSpeed={6}>
-            <span style={{ fontSize: 20, fontWeight: 700 }}>InfraNexus</span>
+            <span style={{ fontSize: 20, fontWeight: 700 }}>Vela</span>
           </GradientText>
         </div>
 

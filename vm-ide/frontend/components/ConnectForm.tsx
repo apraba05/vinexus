@@ -93,7 +93,7 @@ export default function ConnectForm({ sessionId, onConnect, onDisconnect, onErro
               <polyline points="2 12 12 17 22 12" />
             </svg>
           </div>
-          <h1 style={styles.dialogTitle}>InfraNexus</h1>
+          <h1 style={styles.dialogTitle}>Vela</h1>
           <p style={styles.dialogSub}>Connect to your remote VM via SSH</p>
         </div>
 

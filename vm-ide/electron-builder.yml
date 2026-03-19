@@ -1,0 +1,138 @@
+# electron-builder.yml
+#
+# Vela Desktop — Build Configuration
+#
+# Produces:
+#   - macOS:   dist-electron/Vela-x.x.x.dmg + zip
+#   - Windows: dist-electron/Vela-Setup-x.x.x.exe (NSIS installer)
+#   - Linux:   dist-electron/Vela-x.x.x.AppImage + deb
+
+appId: com.vela.ide
+productName: Vela
+copyright: "Copyright © 2025 Vela"
+
+# ── Build Output ─────────────────────────────────────────────────────────────
+directories:
+  output: dist-electron
+  buildResources: electron/assets
+
+# ── Files to include in the app package ─────────────────────────────────────
+files:
+  - electron/**/*
+  - frontend/.next/standalone/**/*
+  - frontend/.next/static/**/*
+  - frontend/public/**/*
+  - backend/dist/**/*
+  - node_modules/**/*
+  - package.json
+
+# ── Extra Resources (copied outside the asar archive) ───────────────────────
+extraResources:
+  - from: frontend/.next/standalone
+    to: frontend/.next/standalone
+  - from: frontend/.next/static
+    to: frontend/.next/static
+  - from: frontend/public
+    to: frontend/public
+  - from: backend/dist
+    to: backend/dist
+
+# ── App Icons ────────────────────────────────────────────────────────────────
+# Place your icons in electron/assets/:
+#   icon.icns  — macOS (512x512)
+#   icon.ico   — Windows
+#   icon.png   — Linux (512x512 PNG)
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  icon: electron/assets/icon.icns
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: electron/assets/entitlements.mac.plist
+  entitlementsInherit: electron/assets/entitlements.mac.plist
+  # Deep link protocol handler
+  protocols:
+    - name: Vela
+      schemes:
+        - vela
+
+dmg:
+  title: "Vela ${version}"
+  background: electron/assets/dmg-background.png
+  icon: electron/assets/icon.icns
+  iconSize: 80
+  contents:
+    - x: 410
+      y: 200
+      type: link
+      path: /Applications
+    - x: 130
+      y: 200
+      type: file
+
+# ── Windows ───────────────────────────────────────────────────────────────────
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: electron/assets/icon.ico
+  protocols:
+    - name: Vela
+      schemes:
+        - vela
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Vela
+  installerIcon: electron/assets/icon.ico
+  uninstallerIcon: electron/assets/icon.ico
+  installerHeader: electron/assets/installer-header.bmp
+  license: LICENSE
+
+# ── Linux ─────────────────────────────────────────────────────────────────────
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  icon: electron/assets/icon.png
+  category: Development
+  protocols:
+    - name: Vela
+      schemes:
+        - vela
+  desktop:
+    Name: Vela
+    Comment: Desktop IDE for virtual machine management
+    Categories: Development;IDE;
+
+deb:
+  depends:
+    - libnotify4
+    - libxtst6
+    - libnss3
+
+# ── Auto Updater (GitHub Releases) ───────────────────────────────────────────
+publish:
+  provider: github
+  owner: your-org        # TODO: replace with your GitHub org/user
+  repo: vela             # TODO: replace with your repo name
+  releaseType: release
+
+# ── ASAR Unpacking ───────────────────────────────────────────────────────────
+# node-pty native module must be unpacked from asar
+asarUnpack:
+  - node_modules/node-pty/**/*
+  - node_modules/ssh2/**/*

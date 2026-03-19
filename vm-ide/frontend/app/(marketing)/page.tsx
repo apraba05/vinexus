@@ -294,7 +294,7 @@ function IdeMockup({ compact }: { compact?: boolean }) {
             <span key={c} style={{ width: compact ? 10 : 12, height: compact ? 10 : 12, borderRadius: "50%", background: c, display: "inline-block" }} />
           ))}
         </div>
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: compact ? 11 : 12, color: "rgba(255,255,255,0.3)" }}>InfraNexus — server01</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: compact ? 11 : 12, color: "rgba(255,255,255,0.3)" }}>Vela — server01</span>
         <div style={{ width: compact ? 40 : 52 }} />
       </div>
       <div style={{ display: "flex" }}>
@@ -374,7 +374,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p style={s.toolDesc}>
-            InfraNexus is our developer-first infrastructure management platform,
+            Vela is our developer-first infrastructure management platform,
             evolving the browser IDE into the cloud-native era — connect directly to
             any Linux VM with no agents, no config, no friction.
           </p>
@@ -415,7 +415,7 @@ export default function LandingPage() {
           <div style={s.twoColText}>
             <h2 style={s.twoColTitle}>An IDE Core<br />built for the cloud</h2>
             <p style={s.twoColDesc}>
-              InfraNexus's Editor view offers tab autocompletion, syntax highlighting for 50+ languages,
+              Vela's Editor view offers tab autocompletion, syntax highlighting for 50+ languages,
               natural language file commands, and a configurable context-aware file tree —
               all talking directly to your remote VM over SSH.
             </p>

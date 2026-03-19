@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import ConnectForm from "@/components/ConnectForm";
+import SshBar, { VmSession } from "@/components/SshBar";
 import FileTree from "@/components/FileTree";
 import Editor from "@/components/Editor";
 import Toolbar from "@/components/Toolbar";
@@ -39,6 +40,7 @@ import {
   clearAuthToken,
 } from "@/lib/api";
 import { normalizePath, joinPath } from "@/lib/pathUtils";
+import { isElectron, electronSsh } from "@/lib/electron";
 
 const TerminalPanel = dynamic(() => import("@/components/Terminal"), {
   ssr: false,
@@ -57,6 +59,129 @@ export default function Home() {
     }
     return null;
   });
+
+  // ── Electron SSH bar state ────────────────────────────────────────────────
+  const [vmSessions, setVmSessions] = useState<VmSession[]>([]);
+  const [activeVmSessionId, setActiveVmSessionId] = useState<string | null>(null);
+  const [vmConnecting, setVmConnecting] = useState(false);
+
+  // Sync Electron SSH sessions into vmSessions state
+  useEffect(() => {
+    if (!isElectron()) return;
+    const unsubscribe = electronSsh.onStatusChange((statusMap) => {
+      const list: VmSession[] = Object.values(statusMap).map((s: any) => ({
+        id: s.id,
+        label: s.label,
+        host: s.host,
+        username: s.username,
+        port: s.port,
+        status: s.status,
+      }));
+      setVmSessions(list);
+    });
+    // Load existing sessions on mount
+    electronSsh.getSessions().then((existing: any) => {
+      if (existing && typeof existing === "object") {
+        const list: VmSession[] = Object.values(existing).map((s: any) => ({
+          id: s.id,
+          label: s.label,
+          host: s.host,
+          username: s.username,
+          port: s.port,
+          status: s.status,
+        }));
+        setVmSessions(list);
+        if (list.length > 0 && !activeVmSessionId) {
+          setActiveVmSessionId(list[0].id);
+        }
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // Handle native menu events from Electron
+  useEffect(() => {
+    if (!isElectron() || typeof window === "undefined") return;
+    const el = window as any;
+    const handlers: Record<string, () => void> = {
+      "menu:save": () => activeFile && handleSaveWithPreview(activeFile),
+      "menu:newFile": () => handleNewFile(),
+      "menu:newFolder": () => handleNewFolder(),
+      "menu:toggleTerminal": () => setBottomTab("terminal"),
+      "menu:toggleAI": () => setBottomTab("ai"),
+      "menu:deploy": () => handleDeploy(),
+      "menu:newConnection": () => {/* SshBar handles this */},
+    };
+    // Listen via the Electron renderer IPC events (forwarded by menu.js via webContents.send)
+    // These arrive as custom window events which preload re-dispatches
+    const wrapped: Record<string, EventListener> = {};
+    for (const [name, fn] of Object.entries(handlers)) {
+      wrapped[name] = () => fn();
+      window.addEventListener(name, wrapped[name]);
+    }
+    return () => {
+      for (const [name, fn] of Object.entries(wrapped)) {
+        window.removeEventListener(name, fn);
+      }
+    };
+  });
+
+  const handleVmConnect = useCallback(async (params: any) => {
+    if (!isElectron()) return;
+    setVmConnecting(true);
+    try {
+      const result = await electronSsh.connect(params);
+      if (result.error) {
+        addToast(`SSH connection failed: ${result.error}`, "error");
+      } else if (result.sessionId) {
+        setActiveVmSessionId(result.sessionId);
+        // Also set the legacy sessionId for backward compat with existing components
+        setSessionId(result.sessionId);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("vm-ide-session", result.sessionId);
+        }
+        setConnInfo({ host: result.host!, username: result.username! });
+        addToast(`Connected to ${result.username}@${result.host}`, "success");
+      }
+    } finally {
+      setVmConnecting(false);
+    }
+  }, []);
+
+  const handleVmDisconnect = useCallback(async (vmId: string) => {
+    if (!isElectron()) return;
+    await electronSsh.disconnect(vmId);
+    if (vmId === activeVmSessionId) {
+      setActiveVmSessionId(null);
+      if (vmId === sessionId) {
+        setSessionId(null);
+        setConnInfo(null);
+        setOpenFiles([]);
+        setActiveFile(null);
+        if (typeof window !== "undefined") localStorage.removeItem("vm-ide-session");
+      }
+    }
+    addToast("Disconnected", "info");
+  }, [activeVmSessionId, sessionId]);
+
+  const handleVmSelect = useCallback((vmId: string) => {
+    setActiveVmSessionId(vmId);
+    setSessionId(vmId);
+    const s = vmSessions.find((s) => s.id === vmId);
+    if (s) setConnInfo({ host: s.host, username: s.username });
+    if (typeof window !== "undefined") localStorage.setItem("vm-ide-session", vmId);
+  }, [vmSessions]);
+
+  const handleVmRename = useCallback((id: string, newLabel: string) => {
+    setVmSessions((prev) => prev.map((s) => s.id === id ? { ...s, label: newLabel } : s));
+  }, []);
+
+  const handleVmOpenTerminal = useCallback((id: string) => {
+    setActiveVmSessionId(id);
+    setSessionId(id);
+    setBottomTab("terminal");
+  }, []);
+
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [selectedDir, setSelectedDir] = useState<string>("/home");
@@ -579,7 +704,7 @@ export default function Home() {
             <polyline points="2 17 12 22 22 17" />
             <polyline points="2 12 12 17 22 12" />
           </svg>
-          <span style={styles.titleAppName}>InfraNexus</span>
+          <span style={styles.titleAppName}>Vela</span>
           {connInfo && (
             <span style={styles.titleConn}>
               <span style={{ opacity: 0.35 }}>—</span>
@@ -607,6 +732,20 @@ export default function Home() {
       </div>
 
       <UpgradeBanner />
+
+      {/* ── SSH Bar (Electron desktop only, always visible) ──────────── */}
+      {isElectron() && (
+        <SshBar
+          sessions={vmSessions}
+          activeSessionId={activeVmSessionId}
+          onSessionSelect={handleVmSelect}
+          onConnect={handleVmConnect}
+          onDisconnect={handleVmDisconnect}
+          onRename={handleVmRename}
+          onOpenTerminal={handleVmOpenTerminal}
+          isConnecting={vmConnecting}
+        />
+      )}
 
       {/* ── Main IDE Body ─────────────────────────────────── */}
       <div style={styles.appBody}>

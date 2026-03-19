@@ -115,7 +115,7 @@ export default function ContactPage() {
         <div style={{ display: "flex", justifyContent: "center", gap: 32 }}>
           <div>
             <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 4 }}>Email</div>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>support@infranexus.com</div>
+            <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>support@vela.dev</div>
           </div>
           <div>
             <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 4 }}>Response time</div>

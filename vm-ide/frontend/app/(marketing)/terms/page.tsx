@@ -3,11 +3,11 @@ import React from "react";
 const sections = [
   {
     title: "Acceptance of Terms",
-    content: `By accessing or using InfraNexus ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service. These terms constitute a legally binding agreement between you and InfraNexus.`,
+    content: `By accessing or using Vela ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service. These terms constitute a legally binding agreement between you and Vela.`,
   },
   {
     title: "Description of Service",
-    content: `InfraNexus is a browser-based IDE platform that allows users to connect to and manage Linux virtual machines via SSH. The Service includes features such as a Monaco code editor, integrated terminal, file management, deployment tools, server commands, and AI-powered insights.`,
+    content: `Vela is a browser-based IDE platform that allows users to connect to and manage Linux virtual machines via SSH. The Service includes features such as a Monaco code editor, integrated terminal, file management, deployment tools, server commands, and AI-powered insights.`,
   },
   {
     title: "Account Registration",
@@ -19,17 +19,17 @@ const sections = [
   },
   {
     title: "Subscription Plans",
-    content: `InfraNexus offers a Free plan and a Pro plan ($10/month). The Free plan includes access to the Monaco editor, integrated terminal, and file management. The Pro plan additionally includes one-click deploy, server commands, and AI-powered insights.
+    content: `Vela offers a Free plan and a Pro plan ($10/month). The Free plan includes access to the Monaco editor, integrated terminal, and file management. The Pro plan additionally includes one-click deploy, server commands, and AI-powered insights.
 
 Subscriptions are billed monthly through Stripe. You may cancel your subscription at any time, and access will continue until the end of the current billing period. Refunds are not provided for partial billing periods.`,
   },
   {
     title: "Data & Privacy",
-    content: `Your use of the Service is also governed by our Privacy Policy. You retain ownership of all data and files on your servers. InfraNexus does not store your server files — all file operations occur in real-time over SSH. You are responsible for the security and backup of your server data.`,
+    content: `Your use of the Service is also governed by our Privacy Policy. You retain ownership of all data and files on your servers. Vela does not store your server files — all file operations occur in real-time over SSH. You are responsible for the security and backup of your server data.`,
   },
   {
     title: "Intellectual Property",
-    content: `The Service, including its design, code, and branding, is the intellectual property of InfraNexus. You retain all rights to code and content you create or modify using the Service. You may not copy, modify, or distribute the Service's proprietary code without permission.`,
+    content: `The Service, including its design, code, and branding, is the intellectual property of Vela. You retain all rights to code and content you create or modify using the Service. You may not copy, modify, or distribute the Service's proprietary code without permission.`,
   },
   {
     title: "Service Availability",
@@ -37,11 +37,11 @@ Subscriptions are billed monthly through Stripe. You may cancel your subscriptio
   },
   {
     title: "Limitation of Liability",
-    content: `To the maximum extent permitted by law, InfraNexus shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of data, profits, or business opportunities, arising from your use of the Service. Our total liability shall not exceed the amount you paid for the Service in the 12 months preceding the claim.`,
+    content: `To the maximum extent permitted by law, Vela shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of data, profits, or business opportunities, arising from your use of the Service. Our total liability shall not exceed the amount you paid for the Service in the 12 months preceding the claim.`,
   },
   {
     title: "Indemnification",
-    content: `You agree to indemnify and hold harmless InfraNexus and its officers, employees, and agents from any claims, damages, or expenses arising from your use of the Service, your violation of these terms, or your violation of any third-party rights.`,
+    content: `You agree to indemnify and hold harmless Vela and its officers, employees, and agents from any claims, damages, or expenses arising from your use of the Service, your violation of these terms, or your violation of any third-party rights.`,
   },
   {
     title: "Termination",
@@ -57,7 +57,7 @@ Subscriptions are billed monthly through Stripe. You may cancel your subscriptio
   },
   {
     title: "Contact",
-    content: `For questions about these Terms of Service, please contact us at legal@infranexus.com or through our Contact page.`,
+    content: `For questions about these Terms of Service, please contact us at legal@vela.dev or through our Contact page.`,
   },
 ];
 

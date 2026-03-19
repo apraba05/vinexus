@@ -27,7 +27,7 @@ export default function NavBar() {
               <polyline points="2 12 12 17 22 12" />
             </svg>
           </div>
-          <span style={styles.logoText}>InfraNexus</span>
+          <span style={styles.logoText}>Vela</span>
         </Link>
 
         <div style={styles.links}>
