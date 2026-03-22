@@ -2,8 +2,9 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { ThemeProvider } from "@/lib/ThemeContext";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardGuard({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
   const router = useRouter();
 
@@ -20,8 +21,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--bg-primary)",
-        color: "var(--text-secondary)",
+        background: "#0d1117",
+        color: "#8b949e",
         fontSize: 14,
       }}>
         Loading...
@@ -29,9 +30,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (status === "unauthenticated") {
-    return null;
-  }
+  if (status === "unauthenticated") return null;
 
   return <>{children}</>;
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <DashboardGuard>{children}</DashboardGuard>
+    </ThemeProvider>
+  );
 }

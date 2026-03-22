@@ -2,17 +2,8 @@
 /**
  * components/SshBar.tsx
  *
- * Vela Desktop — SSH Connection Bar
- *
- * The primary VM access point, pinned at the top of the IDE directly below
- * the native menu bar. Always visible, fixed 48px height, never collapsible.
- *
- * Features:
- *   - Displays connected VMs as pill badges with animated status dots
- *   - "+ New Connection" expands inline connection form (no modal)
- *   - Auth methods: Password, Private Key, AWS SSM
- *   - Right-click context menu on VM badges: Disconnect, Rename, Copy IP, Open Terminal
- *   - Clicking a VM badge switches active VM context
+ * Vinexus Desktop — SSH Connection Bar
+ * Matches the "Precision Architect" design language.
  */
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
@@ -48,7 +39,6 @@ interface SshBarProps {
   isConnecting: boolean;
 }
 
-// ─── Status Dot ───────────────────────────────────────────────────────────────
 const StatusDot = ({ status }: { status: SessionStatus }) => {
   const colors: Record<SessionStatus, string> = {
     connected: "#22c55e",
@@ -57,27 +47,20 @@ const StatusDot = ({ status }: { status: SessionStatus }) => {
     error: "#ef4444",
   };
   return (
-    <span
-      style={{
-        width: 7,
-        height: 7,
-        borderRadius: "50%",
-        flexShrink: 0,
-        background: colors[status],
-        boxShadow: status === "connected" ? `0 0 6px ${colors.connected}80` : "none",
-        animation: status === "connecting" ? "pulse 1s ease-in-out infinite" : "none",
-        display: "inline-block",
-      }}
-    />
+    <span style={{
+      width: 6,
+      height: 6,
+      borderRadius: "50%",
+      flexShrink: 0,
+      background: colors[status],
+      boxShadow: status === "connected" ? `0 0 5px ${colors.connected}80` : status === "disconnected" || status === "error" ? `0 0 5px #ef444480` : "none",
+      animation: status === "connecting" ? "pulse 1s ease-in-out infinite" : "none",
+      display: "inline-block",
+    }} />
   );
 };
 
-// ─── Context Menu ─────────────────────────────────────────────────────────────
-interface CtxMenu {
-  x: number;
-  y: number;
-  sessionId: string;
-}
+interface CtxMenu { x: number; y: number; sessionId: string; }
 
 export default function SshBar({
   sessions,
@@ -103,12 +86,9 @@ export default function SshBar({
   const formRef = useRef<HTMLDivElement>(null);
   const ctxRef = useRef<HTMLDivElement>(null);
 
-  // Close context menu on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ctxRef.current && !ctxRef.current.contains(e.target as Node)) {
-        setCtxMenu(null);
-      }
+      if (ctxRef.current && !ctxRef.current.contains(e.target as Node)) setCtxMenu(null);
     }
     if (ctxMenu) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -125,23 +105,14 @@ export default function SshBar({
       privateKey: authMethod === "privateKey" ? privateKey : undefined,
       label: label.trim() || undefined,
     });
-    // Reset form on success
-    setHost("");
-    setPort("22");
-    setUsername("");
-    setPassword("");
-    setPrivateKey("");
-    setLabel("");
+    setHost(""); setPort("22"); setUsername(""); setPassword(""); setPrivateKey(""); setLabel("");
     setShowForm(false);
   }, [host, port, username, authMethod, password, privateKey, label, onConnect]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") handleConnect();
-      if (e.key === "Escape") setShowForm(false);
-    },
-    [handleConnect]
-  );
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleConnect();
+    if (e.key === "Escape") setShowForm(false);
+  }, [handleConnect]);
 
   const handleBadgeRightClick = (e: React.MouseEvent, sessionId: string) => {
     e.preventDefault();
@@ -156,9 +127,7 @@ export default function SshBar({
   };
 
   const commitRename = () => {
-    if (renamingId && renameValue.trim()) {
-      onRename(renamingId, renameValue.trim());
-    }
+    if (renamingId && renameValue.trim()) onRename(renamingId, renameValue.trim());
     setRenamingId(null);
   };
 
@@ -170,8 +139,27 @@ export default function SshBar({
 
   return (
     <div style={styles.bar}>
-      {/* ── VM Badge pills ──────────────────────────────────────────────── */}
+      {/* Badge pills row */}
       <div style={styles.badgeRow}>
+        {/* + New Connection */}
+        <button
+          style={{ ...styles.newBtn, ...(showForm ? styles.newBtnActive : {}) }}
+          onClick={() => setShowForm((v) => !v)}
+          title="New SSH Connection"
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          New Connection
+        </button>
+
+        {sessions.length === 0 && !showForm && (
+          <span style={styles.emptyHint}>
+            No active connections — click New Connection to get started
+          </span>
+        )}
+
         {sessions.map((s) => (
           <div
             key={s.id}
@@ -200,194 +188,168 @@ export default function SshBar({
             ) : (
               <span style={styles.badgeLabel}>{s.label}</span>
             )}
+            <button
+              style={styles.badgeClose}
+              onClick={(e) => { e.stopPropagation(); onDisconnect(s.id); }}
+              title="Disconnect"
+            >
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
         ))}
-
-        {/* ── + New Connection button ──────────────────────────────────── */}
-        <button
-          style={{
-            ...styles.newBtn,
-            ...(showForm ? styles.newBtnActive : {}),
-          }}
-          onClick={() => setShowForm((v) => !v)}
-          title="New SSH Connection"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          New Connection
-        </button>
       </div>
 
-      {/* ── Inline Connection Form ───────────────────────────────────────── */}
+      {/* Inline connection form */}
       {showForm && (
         <div style={styles.formRow} ref={formRef}>
-          <input
-            placeholder="Host / IP"
-            value={host}
-            onChange={(e) => setHost(e.target.value)}
-            onKeyDown={handleKeyDown}
-            style={styles.input}
-            autoFocus
-          />
-          <input
-            placeholder="Port"
-            value={port}
-            onChange={(e) => setPort(e.target.value)}
-            onKeyDown={handleKeyDown}
-            style={{ ...styles.input, width: 56 }}
-          />
-          <input
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            onKeyDown={handleKeyDown}
-            style={styles.input}
-          />
-          <select
-            value={authMethod}
-            onChange={(e) => setAuthMethod(e.target.value as AuthMethod)}
-            style={styles.select}
-          >
+          <label style={styles.fieldLabel}>HOST</label>
+          <input placeholder="192.168.1.1" value={host} onChange={(e) => setHost(e.target.value)} onKeyDown={handleKeyDown} style={styles.input} autoFocus />
+
+          <label style={styles.fieldLabel}>PORT</label>
+          <input placeholder="22" value={port} onChange={(e) => setPort(e.target.value)} onKeyDown={handleKeyDown} style={{ ...styles.input, width: 50, flex: "none" }} />
+
+          <label style={styles.fieldLabel}>USER</label>
+          <input placeholder="ubuntu" value={username} onChange={(e) => setUsername(e.target.value)} onKeyDown={handleKeyDown} style={styles.input} />
+
+          <label style={styles.fieldLabel}>AUTH</label>
+          <select value={authMethod} onChange={(e) => setAuthMethod(e.target.value as AuthMethod)} style={styles.select}>
             <option value="password">Password</option>
             <option value="privateKey">Private Key</option>
             <option value="awsSsm">AWS SSM</option>
           </select>
 
           {authMethod === "password" && (
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={handleKeyDown}
-              style={styles.input}
-            />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} style={styles.input} />
           )}
           {authMethod === "privateKey" && (
-            <textarea
-              placeholder="Paste private key (PEM)…"
-              value={privateKey}
-              onChange={(e) => setPrivateKey(e.target.value)}
-              style={{ ...styles.input, height: 32, resize: "none", fontFamily: "var(--font-mono)", fontSize: 10 }}
-            />
+            <textarea placeholder="Paste private key…" value={privateKey} onChange={(e) => setPrivateKey(e.target.value)} style={{ ...styles.input, height: 28, resize: "none", fontFamily: "var(--font-mono)", fontSize: 10 }} />
           )}
           {authMethod === "awsSsm" && (
-            <span style={{ fontSize: 11, color: "var(--text-secondary)", alignSelf: "center" }}>
-              AWS SSM — no open port needed
-            </span>
+            <span style={{ fontSize: 11, color: "var(--text-muted)", alignSelf: "center", whiteSpace: "nowrap" }}>No open port needed</span>
           )}
 
-          <input
-            placeholder="Label (optional)"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            onKeyDown={handleKeyDown}
-            style={{ ...styles.input, width: 110 }}
-          />
+          <button style={styles.browseBtn} type="button">Browse…</button>
 
+          <button style={styles.cancelBtn} onClick={() => setShowForm(false)}>Cancel</button>
           <button
-            style={{
-              ...styles.connectBtn,
-              ...(isConnecting ? styles.connectBtnLoading : {}),
-            }}
+            style={{ ...styles.connectBtn, opacity: (isConnecting || !host.trim() || !username.trim()) ? 0.6 : 1 }}
             onClick={handleConnect}
             disabled={isConnecting || !host.trim() || !username.trim()}
           >
             {isConnecting ? (
-              <>
-                <span style={styles.spinner} />
-                Connecting…
-              </>
+              <><span style={styles.spinner} /> Connecting…</>
             ) : (
-              "Connect"
+              <>Connect →</>
             )}
           </button>
-          <button style={styles.cancelBtn} onClick={() => setShowForm(false)}>✕</button>
         </div>
       )}
 
-      {/* ── Right-click Context Menu ─────────────────────────────────────── */}
+      {/* Right-click context menu */}
       {ctxMenu && (
-        <div
-          ref={ctxRef}
-          style={{ ...styles.ctxMenu, left: ctxMenu.x, top: ctxMenu.y }}
-        >
-          {(() => {
-            const s = sessions.find((s) => s.id === ctxMenu.sessionId);
-            return (
-              <>
-                <button style={styles.ctxItem} onClick={() => { onOpenTerminal(ctxMenu.sessionId); setCtxMenu(null); }}>
-                  Open Terminal
-                </button>
-                <button style={styles.ctxItem} onClick={() => startRename(ctxMenu.sessionId)}>
-                  Rename
-                </button>
-                <button style={styles.ctxItem} onClick={() => copyIp(ctxMenu.sessionId)}>
-                  Copy IP
-                </button>
-                <div style={styles.ctxDivider} />
-                <button style={{ ...styles.ctxItem, color: "var(--danger)" }} onClick={() => { onDisconnect(ctxMenu.sessionId); setCtxMenu(null); }}>
-                  Disconnect
-                </button>
-              </>
-            );
-          })()}
+        <div ref={ctxRef} style={{ ...styles.ctxMenu, left: ctxMenu.x, top: ctxMenu.y }}>
+          <button className="nav-item" style={{ ...styles.ctxItem }} onClick={() => { onOpenTerminal(ctxMenu.sessionId); setCtxMenu(null); }}>
+            Open Terminal
+          </button>
+          <button className="nav-item" style={{ ...styles.ctxItem }} onClick={() => startRename(ctxMenu.sessionId)}>
+            Rename
+          </button>
+          <button className="nav-item" style={{ ...styles.ctxItem }} onClick={() => copyIp(ctxMenu.sessionId)}>
+            Copy IP
+          </button>
+          <div style={styles.ctxDivider} />
+          <button className="nav-item" style={{ ...styles.ctxItem, color: "var(--danger)" }} onClick={() => { onDisconnect(ctxMenu.sessionId); setCtxMenu(null); }}>
+            Disconnect
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
   bar: {
-    height: 48,
-    minHeight: 48,
+    minHeight: 42,
     flexShrink: 0,
     display: "flex",
     alignItems: "center",
     gap: 0,
-    background: "var(--bg-elevated)",
+    background: "var(--bg-secondary)",
     borderBottom: "1px solid var(--border)",
     padding: "0 12px",
     overflow: "visible",
     position: "relative",
     zIndex: 100,
+    flexWrap: "wrap" as const,
   },
   badgeRow: {
     display: "flex",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
     flexShrink: 0,
+    padding: "5px 0",
+  },
+  newBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    padding: "4px 11px",
+    background: "var(--accent)",
+    border: "none",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#ffffff",
+    transition: "background 0.15s",
+    fontFamily: "var(--font-sans)",
+  },
+  newBtnActive: {
+    background: "var(--accent-hover)",
   },
   badge: {
     display: "flex",
     alignItems: "center",
     gap: 5,
-    padding: "4px 10px 4px 8px",
-    background: "var(--bg-secondary)",
+    padding: "3px 8px 3px 9px",
+    background: "var(--bg-elevated)",
     border: "1px solid var(--border)",
-    borderRadius: 20,
+    borderRadius: 6,
     cursor: "pointer",
     fontSize: 12,
     color: "var(--text-secondary)",
     userSelect: "none",
-    transition: "border-color 0.15s, color 0.15s",
+    transition: "border-color 0.12s, background 0.12s",
   },
   badgeActive: {
-    border: "1px solid var(--accent)",
+    border: "1px solid rgba(0, 83, 219, 0.4)",
     color: "var(--text-bright)",
-    background: "rgba(63, 255, 162, 0.06)",
+    background: "var(--accent-surface)",
   },
   badgeLabel: {
     fontFamily: "var(--font-mono)",
     fontSize: 11,
-    maxWidth: 120,
+    maxWidth: 110,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+  },
+  badgeClose: {
+    width: 16,
+    height: 16,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    color: "var(--text-muted)",
+    borderRadius: 3,
+    padding: 0,
+    flexShrink: 0,
+    transition: "color 0.1s, background 0.1s",
   },
   renameInput: {
     background: "transparent",
@@ -396,101 +358,103 @@ const styles: Record<string, React.CSSProperties> = {
     color: "var(--text-bright)",
     fontFamily: "var(--font-mono)",
     fontSize: 11,
-    width: 90,
-  },
-  newBtn: {
-    display: "flex",
-    alignItems: "center",
-    gap: 5,
-    padding: "4px 10px",
-    background: "transparent",
-    border: "1px dashed var(--border)",
-    borderRadius: 20,
-    cursor: "pointer",
-    fontSize: 11,
-    color: "var(--text-secondary)",
-    fontWeight: 500,
-    transition: "border-color 0.15s, color 0.15s",
-  },
-  newBtnActive: {
-    borderColor: "var(--accent)",
-    color: "var(--accent)",
+    width: 80,
   },
   formRow: {
     display: "flex",
     alignItems: "center",
-    gap: 6,
-    marginLeft: 12,
+    gap: 5,
+    padding: "5px 0 5px 10px",
     flex: 1,
-    overflow: "visible",
+    flexWrap: "wrap" as const,
+  },
+  fieldLabel: {
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: "0.07em",
+    color: "var(--text-muted)",
+    textTransform: "uppercase" as const,
+    flexShrink: 0,
   },
   input: {
-    height: 28,
+    height: 26,
     padding: "0 8px",
-    background: "var(--bg-primary)",
+    background: "var(--bg-elevated)",
     border: "1px solid var(--border)",
-    borderRadius: 6,
+    borderRadius: 5,
     color: "var(--text-bright)",
     fontSize: 12,
     outline: "none",
     minWidth: 80,
     flex: 1,
-    maxWidth: 160,
+    maxWidth: 150,
+    transition: "border-color 0.12s",
+    fontFamily: "var(--font-sans)",
   },
   select: {
-    height: 28,
+    height: 26,
     padding: "0 6px",
-    background: "var(--bg-primary)",
+    background: "var(--bg-elevated)",
     border: "1px solid var(--border)",
-    borderRadius: 6,
-    color: "var(--text-bright)",
+    borderRadius: 5,
+    color: "var(--text-primary)",
     fontSize: 12,
     outline: "none",
     cursor: "pointer",
+    fontFamily: "var(--font-sans)",
+  },
+  browseBtn: {
+    height: 26,
+    padding: "0 10px",
+    background: "var(--bg-elevated)",
+    border: "1px solid var(--border)",
+    borderRadius: 5,
+    color: "var(--text-secondary)",
+    fontSize: 12,
+    cursor: "pointer",
+    flexShrink: 0,
+    fontFamily: "var(--font-sans)",
+    transition: "background 0.12s",
+  },
+  cancelBtn: {
+    height: 26,
+    padding: "0 10px",
+    background: "transparent",
+    border: "1px solid var(--border)",
+    borderRadius: 5,
+    color: "var(--text-secondary)",
+    fontSize: 12,
+    cursor: "pointer",
+    flexShrink: 0,
+    fontFamily: "var(--font-sans)",
+    transition: "background 0.12s",
   },
   connectBtn: {
     display: "flex",
     alignItems: "center",
     gap: 5,
-    height: 28,
-    padding: "0 14px",
+    height: 26,
+    padding: "0 13px",
     background: "var(--accent)",
     border: "none",
-    borderRadius: 6,
-    color: "#000",
+    borderRadius: 5,
+    color: "#ffffff",
     fontSize: 12,
-    fontWeight: 700,
+    fontWeight: 600,
     cursor: "pointer",
     flexShrink: 0,
-  },
-  connectBtnLoading: {
-    opacity: 0.7,
-    cursor: "not-allowed",
-  },
-  cancelBtn: {
-    height: 28,
-    width: 28,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "transparent",
-    border: "1px solid var(--border)",
-    borderRadius: 6,
-    color: "var(--text-secondary)",
-    fontSize: 13,
-    cursor: "pointer",
-    flexShrink: 0,
+    fontFamily: "var(--font-sans)",
+    transition: "background 0.12s",
   },
   spinner: {
     width: 10,
     height: 10,
-    border: "2px solid rgba(0,0,0,0.3)",
-    borderTopColor: "#000",
+    border: "2px solid rgba(255,255,255,0.3)",
+    borderTopColor: "#fff",
     borderRadius: "50%",
     display: "inline-block",
     animation: "spin 0.6s linear infinite",
   },
-  // ── Context Menu ───────────────────────────────────────────────────────────
   ctxMenu: {
     position: "fixed",
     background: "var(--bg-elevated)",
@@ -499,22 +463,29 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "4px 0",
     zIndex: 9999,
     minWidth: 150,
-    boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+    boxShadow: "0 8px 24px rgba(25, 49, 93, 0.1)",
   },
   ctxItem: {
     display: "block",
     width: "100%",
-    padding: "7px 14px",
+    padding: "6px 14px",
     background: "transparent",
     border: "none",
-    color: "var(--text-bright)",
+    color: "var(--text-primary)",
     fontSize: 12,
     textAlign: "left",
     cursor: "pointer",
+    fontFamily: "var(--font-sans)",
+    borderRadius: 0,
   },
   ctxDivider: {
     height: 1,
     background: "var(--border)",
     margin: "3px 0",
+  },
+  emptyHint: {
+    fontSize: 12,
+    color: "var(--text-muted)",
+    marginLeft: 8,
   },
 };
