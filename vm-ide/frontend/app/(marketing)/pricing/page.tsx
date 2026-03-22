@@ -101,7 +101,7 @@ export default function PricingPage() {
           <div style={s.card}>
             <div style={s.planBadge}>Generally Available</div>
             <div style={s.planName}>Free</div>
-            <div style={s.planTagline}>$0 / month</div>
+            <div style={s.planTagline}>CA$0 / month</div>
             <p style={s.planDesc}>For anyone who wants to connect and explore their VMs from the browser.</p>
 
             <div style={s.divider} />
@@ -142,7 +142,7 @@ export default function PricingPage() {
               <div style={s.proPlanName}>Pro</div>
             </div>
             <div style={s.proPrice}>
-              <span style={s.priceDollar}>$</span>
+              <span style={s.priceDollar}>CA$</span>
               <span style={s.priceNum}>10</span>
               <span style={s.priceInterval}>/month</span>
             </div>
