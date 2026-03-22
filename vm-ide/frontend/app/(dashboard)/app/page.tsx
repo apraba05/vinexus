@@ -43,7 +43,6 @@ import { isElectron, electronSsh } from "@/lib/electron";
 import LoginScreen from "@/components/LoginScreen";
 import SearchPanel from "@/components/SearchPanel";
 import GitPanel from "@/components/GitPanel";
-import type { TerminalHandle } from "@/components/Terminal";
 const TerminalPanel = dynamic(() => import("@/components/Terminal"), { ssr: false });
 
 interface OpenFile {
@@ -304,7 +303,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
     setActiveVmSessionId(id); setSessionId(id); setBottomTab("terminal");
   }, []);
 
-  const terminalRef = useRef<TerminalHandle>(null);
+  const terminalRef = useRef<any>(null);
 
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
