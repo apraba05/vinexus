@@ -21,7 +21,7 @@ jobs:
 
       - name: Install root dependencies
         working-directory: vm-ide
-        run: npm install --ignore-scripts
+        run: npm install --ignore-scripts --no-optional
 
       - name: Install frontend dependencies
         working-directory: vm-ide/frontend
@@ -71,7 +71,7 @@ jobs:
 
       - name: Install root dependencies
         working-directory: vm-ide
-        run: npm install --ignore-scripts
+        run: npm install --ignore-scripts --no-optional
 
       - name: Install frontend dependencies
         working-directory: vm-ide/frontend
@@ -132,7 +132,7 @@ jobs:
 
       - name: Install root dependencies
         working-directory: vm-ide
-        run: npm install --ignore-scripts
+        run: npm install --ignore-scripts --no-optional
 
       - name: Install frontend dependencies
         working-directory: vm-ide/frontend
