@@ -65,7 +65,7 @@ function MacOSContent() {
       {/* Download button */}
       <div style={{ marginBottom: 32 }}>
         <a
-          href="#"
+          href="https://github.com/apraba05/vinexus/releases/latest/download/Vinexus-mac.dmg"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -135,7 +135,7 @@ function WindowsContent() {
     <div>
       <div style={{ marginBottom: 32 }}>
         <a
-          href="#"
+          href="https://github.com/apraba05/vinexus/releases/latest/download/Vinexus-Setup.exe"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -205,7 +205,7 @@ function LinuxContent() {
     <div>
       <div style={{ marginBottom: 32 }}>
         <a
-          href="#"
+          href="https://github.com/apraba05/vinexus/releases/latest/download/Vinexus.AppImage"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -255,7 +255,7 @@ function LinuxContent() {
           <Step n={1} title="Download the AppImage">
             <div>
               The AppImage works on any Linux distro with no installation required.
-              <Code>{`curl -Lo Vinexus.AppImage https://download.vinexus.dev/latest/Vinexus.AppImage`}</Code>
+              <Code>{`curl -Lo Vinexus.AppImage https://github.com/apraba05/vinexus/releases/latest/download/Vinexus.AppImage`}</Code>
             </div>
           </Step>
           <Step n={2} title="Make it executable">
@@ -275,7 +275,7 @@ function LinuxContent() {
       {linuxVariant === "deb" && (
         <>
           <Step n={1} title="Download the .deb package">
-            <Code>{`curl -Lo vinexus.deb https://download.vinexus.dev/latest/Vinexus.deb`}</Code>
+            <Code>{`curl -Lo vinexus.deb https://github.com/apraba05/vinexus/releases/latest/download/Vinexus.deb`}</Code>
           </Step>
           <Step n={2} title="Install with dpkg">
             <div>
@@ -293,7 +293,7 @@ sudo apt-get install -f`}</Code>
       {linuxVariant === "rpm" && (
         <>
           <Step n={1} title="Download the .rpm package">
-            <Code>{`curl -Lo vinexus.rpm https://download.vinexus.dev/latest/Vinexus.rpm`}</Code>
+            <Code>{`curl -Lo vinexus.rpm https://github.com/apraba05/vinexus/releases/latest/download/Vinexus.rpm`}</Code>
           </Step>
           <Step n={2} title="Install with dnf (recommended)">
             <div>
