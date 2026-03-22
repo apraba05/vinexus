@@ -2,13 +2,35 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { useTheme } from "@/lib/ThemeContext";
+
+function SunIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
+}
 
 export default function NavBar() {
   const { data: session } = useSession();
+  const { D, isDark, toggle } = useTheme();
   const [scrolled, setScrolled] = useState(false);
 
   const plan = (session as any)?.plan || "free";
-  const isPro = plan === "pro";
+  const isPro = plan === "pro" || plan === "max" || plan === "premium" || plan === "enterprise" || plan === "ai-pro";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -17,41 +39,116 @@ export default function NavBar() {
   }, []);
 
   return (
-    <nav style={{ ...styles.nav, ...(scrolled ? styles.navScrolled : {}) }}>
-      <div style={styles.inner}>
-        <Link href="/" style={styles.logo}>
-          <div style={styles.logoMark}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3fffa2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 2 7 12 12 22 7 12 2" />
-              <polyline points="2 17 12 22 22 17" />
-              <polyline points="2 12 12 17 22 12" />
-            </svg>
-          </div>
-          <span style={styles.logoText}>Vela</span>
+    <nav style={{
+      position: "sticky",
+      top: 0,
+      zIndex: 50,
+      height: 56,
+      background: scrolled
+        ? (isDark ? "rgba(13,17,23,0.92)" : "rgba(249,249,255,0.92)")
+        : D.surfaceContainerLow,
+      backdropFilter: scrolled ? "blur(12px)" : "none",
+      borderBottom: `1px solid ${D.outlineVariant}`,
+      transition: "background 0.2s",
+    }}>
+      <div style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: "0 24px",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}>
+        {/* Logo — text only */}
+        <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+          <span style={{
+            fontSize: 16,
+            fontWeight: 800,
+            letterSpacing: "-0.03em",
+            color: D.inverseSurface,
+          }}>Vinexus</span>
         </Link>
 
-        <div style={styles.links}>
+        {/* Nav links */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           {session ? (
             <>
-              <Link href="/dashboard" className="nav-link" style={styles.link}>Dashboard</Link>
-              <Link href="/app" className="nav-link" style={styles.link}>IDE</Link>
-              <Link href="/docs" className="nav-link" style={styles.link}>Docs</Link>
-              <Link href="/account" className="nav-link" style={styles.link}>Account</Link>
+              <NavLink href="/dashboard" color={D.onSurfaceVariant}>Dashboard</NavLink>
+              <NavLink href="/app" color={D.onSurfaceVariant}>IDE</NavLink>
+              <NavLink href="/docs" color={D.onSurfaceVariant}>Docs</NavLink>
+              <NavLink href="/account" color={D.onSurfaceVariant}>Account</NavLink>
               {(session as any).role === "admin" && (
-                <Link href="/admin" className="nav-link" style={{ ...styles.link, color: "#eab308" }}>Admin</Link>
+                <NavLink href="/admin" color="#eab308">Admin</NavLink>
               )}
+            </>
+          ) : (
+            <>
+              <NavLink href="/#features" color={D.onSurfaceVariant}>Features</NavLink>
+              <NavLink href="/pricing" color={D.onSurfaceVariant}>Pricing</NavLink>
+              <NavLink href="/docs" color={D.onSurfaceVariant}>Docs</NavLink>
+            </>
+          )}
+        </div>
+
+        {/* Right actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={toggle}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            style={{
+              width: 30, height: 30, borderRadius: 6,
+              border: `1px solid ${D.outlineVariant}`,
+              background: "transparent", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: D.onSurfaceVariant, fontFamily: "inherit",
+            }}
+          >
+            {isDark ? <SunIcon /> : <MoonIcon />}
+          </button>
+
+          {session ? (
+            <>
               {!isPro && (
-                <Link href="/pricing" style={styles.ctaBtn}>Upgrade to Pro</Link>
+                <Link href="/pricing" style={{
+                  padding: "6px 14px", borderRadius: 9999,
+                  background: `${D.primary}20`, border: `1px solid ${D.primary}50`,
+                  color: D.primary, fontSize: 13, fontWeight: 600, textDecoration: "none",
+                }}>
+                  Upgrade
+                </Link>
               )}
-              <button style={styles.ghostBtn} onClick={() => signOut({ callbackUrl: "/" })}>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                style={{
+                  padding: "6px 16px",
+                  background: "transparent",
+                  color: D.onSurfaceVariant,
+                  border: `1px solid ${D.outlineVariant}`,
+                  borderRadius: 9999,
+                  fontSize: 13, fontWeight: 500, cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
                 Sign Out
               </button>
             </>
           ) : (
             <>
-              <Link href="/pricing" className="nav-link" style={styles.link}>Pricing</Link>
-              <Link href="/login" className="nav-link" style={styles.link}>Sign In</Link>
-              <Link href="/signup" style={styles.ctaBtn}>Get Started</Link>
+              <Link href="/login" style={{
+                padding: "6px 16px", borderRadius: 9999,
+                color: D.onSurfaceVariant, fontSize: 13, fontWeight: 500,
+                textDecoration: "none", border: `1px solid ${D.outlineVariant}`,
+              }}>
+                Sign In
+              </Link>
+              <Link href="/download" style={{
+                padding: "6px 16px", borderRadius: 9999,
+                background: D.primary, color: "#ffffff",
+                fontSize: 13, fontWeight: 700, textDecoration: "none",
+              }}>
+                Download
+              </Link>
             </>
           )}
         </div>
@@ -60,85 +157,14 @@ export default function NavBar() {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  nav: {
-    position: "sticky",
-    top: 0,
-    zIndex: 50,
-    background: "transparent",
-    borderBottom: "1px solid transparent",
-    transition: "all 0.25s ease",
-  },
-  navScrolled: {
-    background: "rgba(11, 17, 32, 0.92)",
-    backdropFilter: "blur(24px) saturate(180%)",
-    WebkitBackdropFilter: "blur(24px) saturate(180%)",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-  },
-  inner: {
-    maxWidth: 1200,
-    margin: "0 auto",
-    padding: "0 24px",
-    height: 64,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: 9,
-    textDecoration: "none",
-  },
-  logoMark: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
-    background: "rgba(63,255,162,0.07)",
-    border: "1px solid rgba(63,255,162,0.15)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoText: {
-    fontSize: 16,
-    fontWeight: 700,
-    color: "#ffffff",
-    letterSpacing: "-0.02em",
-  },
-  links: {
-    display: "flex",
-    alignItems: "center",
-    gap: 28,
-  },
-  link: {
-    color: "#8fa3c8",
-    textDecoration: "none",
-    fontSize: 14,
-    fontWeight: 500,
-    transition: "color 0.15s",
-  },
-  ctaBtn: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "8px 20px",
-    borderRadius: 9999,
-    background: "#3fffa2",
-    color: "#0b1120",
-    fontSize: 14,
-    fontWeight: 700,
-    textDecoration: "none",
-    transition: "all 0.15s",
-  },
-  ghostBtn: {
-    padding: "8px 18px",
-    background: "transparent",
-    color: "#8fa3c8",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 9999,
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all 0.15s",
-  },
-};
+function NavLink({ href, children, color }: { href: string; children: React.ReactNode; color?: string }) {
+  return (
+    <Link href={href} style={{
+      padding: "7px 14px", fontSize: 14, fontWeight: 500,
+      color: color ?? "#8fa3c8", textDecoration: "none",
+      borderRadius: 8, transition: "color 0.15s",
+    }}>
+      {children}
+    </Link>
+  );
+}

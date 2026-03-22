@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "@/lib/ThemeContext";
 
 export default function LoginPage() {
@@ -66,7 +67,13 @@ export default function LoginPage() {
 
         {/* Logo */}
         <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", marginBottom: 10 }}>
-          <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: D.inverseSurface }}>Vinexus</span>
+          <Image
+            src="/vinexus-wordmark.png"
+            alt="Vinexus"
+            width={110}
+            height={24}
+            style={{ filter: isDark ? "brightness(0) invert(1)" : "brightness(0)", objectFit: "contain" }}
+          />
         </Link>
         <p style={{ fontSize: 14, color: D.onSurfaceVariant, marginBottom: 36 }}>Sign in to your account</p>
 

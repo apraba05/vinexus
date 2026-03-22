@@ -1,156 +1,229 @@
 "use client";
-import NavBar from "@/components/NavBar";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 
-export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+function SunIcon() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0b1120" }}>
-      <NavBar />
-      <main style={{ flex: 1 }}>{children}</main>
-      <footer style={f.footer}>
-        <div style={f.inner}>
-          <div style={f.grid}>
-            {/* Brand */}
-            <div style={f.brand}>
-              <div style={f.logoRow}>
-                <div style={f.logoMark}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3fffa2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                    <polyline points="2 17 12 22 22 17" />
-                    <polyline points="2 12 12 17 22 12" />
-                  </svg>
-                </div>
-                <span style={f.logoText}>Vela</span>
-              </div>
-              <p style={f.brandDesc}>
-                Browser-based IDE for managing Linux virtual machines. Edit, deploy, and monitor from anywhere.
-              </p>
-            </div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
+}
 
-            {/* Product */}
-            <div style={f.col}>
-              <h4 style={f.colTitle}>Product</h4>
-              <a href="/pricing" style={f.colLink}>Pricing</a>
-              <a href="/signup" style={f.colLink}>Get Started</a>
-              <a href="/login" style={f.colLink}>Sign In</a>
-            </div>
+function MoonIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
+}
 
-            {/* Features */}
-            <div style={f.col}>
-              <h4 style={f.colTitle}>Features</h4>
-              <span style={f.colText}>Monaco Editor</span>
-              <span style={f.colText}>SSH Terminal</span>
-              <span style={f.colText}>AI Insights</span>
-            </div>
+function MarketingNav() {
+  const { D, isDark, toggle } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
 
-            {/* Company */}
-            <div style={f.col}>
-              <h4 style={f.colTitle}>Company</h4>
-              <Link href="/privacy" style={f.colLink}>Privacy</Link>
-              <Link href="/terms" style={f.colLink}>Terms</Link>
-              <Link href="/contact" style={f.colLink}>Contact</Link>
-            </div>
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  return (
+    <nav style={{
+      position: "sticky",
+      top: 0,
+      zIndex: 100,
+      height: 44,
+      background: scrolled
+        ? (isDark ? "rgba(13,17,23,0.92)" : "rgba(249,249,255,0.92)")
+        : D.surfaceContainerLow,
+      backdropFilter: scrolled ? "blur(12px)" : "none",
+      borderBottom: `1px solid ${D.outlineVariant}`,
+      transition: "background 0.2s",
+    }}>
+      <div style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: "0 20px",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 16,
+      }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}>
+          <span style={{
+            fontSize: 16,
+            fontWeight: 800,
+            letterSpacing: "-0.03em",
+            color: D.inverseSurface,
+          }}>Vinexus</span>
+        </Link>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, justifyContent: "center" }}>
+          {[
+            { href: "/#features", label: "Features" },
+            { href: "/pricing", label: "Pricing" },
+            { href: "/docs", label: "Docs" },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={{
+                padding: "5px 10px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: D.onSurfaceVariant,
+                textDecoration: "none",
+                borderRadius: 4,
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <button
+            onClick={toggle}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 4,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: D.onSurfaceVariant,
+              flexShrink: 0,
+            }}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDark ? <SunIcon /> : <MoonIcon />}
+          </button>
+          <Link href="/login" style={{
+            padding: "6px 14px",
+            fontSize: 13,
+            fontWeight: 500,
+            color: D.onSurfaceVariant,
+            textDecoration: "none",
+            background: "transparent",
+            borderRadius: 4,
+          }}>
+            Sign In
+          </Link>
+          <Link href="/download" style={{
+            padding: "6px 14px",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#fff",
+            textDecoration: "none",
+            background: D.primary,
+            borderRadius: 4,
+          }}>
+            Download
+          </Link>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function MarketingFooter() {
+  const { D } = useTheme();
+  return (
+    <footer style={{
+      background: D.surfaceContainerLow,
+      borderTop: `1px solid ${D.outlineVariant}`,
+      padding: "48px 20px 32px",
+    }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "2fr 1fr 1fr 1fr",
+          gap: 40,
+          paddingBottom: 40,
+        }}>
+          <div>
+            <Link href="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none", marginBottom: 12 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-0.03em", color: D.inverseSurface }}>Vinexus</span>
+            </Link>
+            <p style={{ fontSize: 12, color: D.onSurfaceVariant, lineHeight: 1.7, maxWidth: 240, margin: 0 }}>
+              A native desktop IDE that connects directly to your virtual machines via SSH. Full Monaco editor, integrated terminal, and AI pair programming.
+            </p>
           </div>
 
-          <div style={f.bottom}>
-            <span>&copy; {new Date().getFullYear()} Vela. All rights reserved.</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: D.onSurface, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Product</span>
+            {[
+              { href: "/#features", label: "Features" },
+              { href: "/pricing", label: "Pricing" },
+              { href: "/download", label: "Get Started" },
+              { href: "/login", label: "Sign In" },
+            ].map((l) => (
+              <Link key={l.href} href={l.href} style={{ fontSize: 12, color: D.onSurfaceVariant, textDecoration: "none" }}>{l.label}</Link>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: D.onSurface, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Docs</span>
+            {[
+              { href: "/docs", label: "Getting Started" },
+              { href: "/docs#claude-integration", label: "Claude Integration" },
+              { href: "/docs#ip-whitelisting", label: "IP Whitelisting" },
+              { href: "/docs#editor", label: "Editor Features" },
+            ].map((l) => (
+              <Link key={l.href} href={l.href} style={{ fontSize: 12, color: D.onSurfaceVariant, textDecoration: "none" }}>{l.label}</Link>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: D.onSurface, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Company</span>
+            {[
+              { href: "/privacy", label: "Privacy" },
+              { href: "/terms", label: "Terms" },
+              { href: "/contact", label: "Contact" },
+            ].map((l) => (
+              <Link key={l.href} href={l.href} style={{ fontSize: 12, color: D.onSurfaceVariant, textDecoration: "none" }}>{l.label}</Link>
+            ))}
           </div>
         </div>
 
-        {/* Large display wordmark — Antigravity-inspired */}
-        <div style={f.wordmark} aria-hidden>Vela</div>
-      </footer>
+        <div style={{
+          borderTop: `1px solid ${D.outlineVariant}`,
+          paddingTop: 20,
+          fontSize: 11,
+          color: D.onSurfaceVariant,
+        }}>
+          &copy; 2026 Vinexus. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function MarketingLayoutInner({ children }: { children: React.ReactNode }) {
+  const { D } = useTheme();
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: D.surface, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <MarketingNav />
+      <main style={{ flex: 1 }}>{children}</main>
+      <MarketingFooter />
     </div>
   );
 }
 
-const f: Record<string, React.CSSProperties> = {
-  footer: {
-    background: "#0b1120",
-    borderTop: "1px solid rgba(255,255,255,0.05)",
-    padding: "64px 0 0",
-    overflow: "hidden",
-  },
-  inner: {
-    maxWidth: 1200,
-    margin: "0 auto",
-    padding: "0 24px",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "2fr 1fr 1fr 1fr",
-    gap: 48,
-    paddingBottom: 48,
-  },
-  brand: {},
-  logoRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-  },
-  logoMark: {
-    width: 30,
-    height: 30,
-    borderRadius: 7,
-    background: "rgba(63,255,162,0.07)",
-    border: "1px solid rgba(63,255,162,0.15)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoText: {
-    fontSize: 15,
-    fontWeight: 700,
-    color: "#ffffff",
-    letterSpacing: "-0.02em",
-  },
-  brandDesc: {
-    fontSize: 13,
-    color: "#4a6490",
-    lineHeight: 1.7,
-    maxWidth: 280,
-    margin: 0,
-  },
-  col: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  },
-  colTitle: {
-    fontSize: 11,
-    fontWeight: 700,
-    color: "#8fa3c8",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.08em",
-    margin: "0 0 4px",
-  },
-  colLink: {
-    fontSize: 13,
-    color: "#4a6490",
-    textDecoration: "none",
-    transition: "color 0.15s",
-    cursor: "pointer",
-  },
-  colText: {
-    fontSize: 13,
-    color: "#4a6490",
-  },
-  bottom: {
-    borderTop: "1px solid rgba(255,255,255,0.05)",
-    padding: "20px 0",
-    fontSize: 12,
-    color: "#2a3d5a",
-  },
-  wordmark: {
-    fontSize: "clamp(60px, 13vw, 148px)",
-    fontWeight: 900,
-    letterSpacing: "-0.04em",
-    color: "transparent",
-    WebkitTextStroke: "1px rgba(255,255,255,0.05)",
-    textAlign: "center" as const,
-    lineHeight: 0.9,
-    userSelect: "none" as const,
-    pointerEvents: "none" as const,
-  },
-};
+export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <MarketingLayoutInner>{children}</MarketingLayoutInner>
+    </ThemeProvider>
+  );
+}
