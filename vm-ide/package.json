@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "productName": "Vinexus",
   "description": "Desktop IDE for managing and editing code on virtual machines",
+  "homepage": "https://vinexus.space",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apraba05/vinexus.git"
+  },
   "author": {
     "name": "Vinexus",
-    "email": "support@vinexus.dev"
+    "email": "support@vinexus.space"
   },
   "private": true,
   "main": "electron/main.js",

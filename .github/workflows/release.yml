@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-mac:
     name: Build macOS
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +30,8 @@ jobs:
           rm -rf node_modules/cpu-features
           # Make app-builder executable (--ignore-scripts skips postinstall chmod)
           find node_modules/app-builder-bin -type f ! -name "*.js" ! -name "*.json" ! -name "*.md" ! -name "*.txt" | xargs chmod +x 2>/dev/null || true
+          # Remove macOS quarantine flag from binaries (blocks execution on CI)
+          find node_modules/app-builder-bin -type f -exec xattr -d com.apple.quarantine {} \; 2>/dev/null || true
 
       - name: Install frontend dependencies
         working-directory: vm-ide/frontend
