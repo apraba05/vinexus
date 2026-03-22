@@ -65,7 +65,7 @@ function MacOSContent() {
       {/* Download button */}
       <div style={{ marginBottom: 32 }}>
         <a
-          href="https://github.com/apraba05/vscode-for-vm/releases/latest/download/Vinexus-mac.dmg"
+          href="https://github.com/apraba05/vinexus/releases/latest/download/Vinexus-mac.dmg"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -135,7 +135,7 @@ function WindowsContent() {
     <div>
       <div style={{ marginBottom: 32 }}>
         <a
-          href="https://github.com/apraba05/vscode-for-vm/releases/latest/download/Vinexus-Setup.exe"
+          href="https://github.com/apraba05/vinexus/releases/latest/download/Vinexus-Setup.exe"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -205,7 +205,7 @@ function LinuxContent() {
     <div>
       <div style={{ marginBottom: 32 }}>
         <a
-          href="https://github.com/apraba05/vscode-for-vm/releases/latest/download/Vinexus.AppImage"
+          href="https://github.com/apraba05/vinexus/releases/latest/download/Vinexus.AppImage"
           style={{
             display: "inline-flex",
             alignItems: "center",
