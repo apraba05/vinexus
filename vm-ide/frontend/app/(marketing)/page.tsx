@@ -1,278 +1,853 @@
 "use client";
-import React from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useTheme } from "@/lib/ThemeContext";
+import dynamic from "next/dynamic";
 
-const FEATURES = [
+const CountUp = dynamic(() => import("@/components/reactbits/CountUp"), { ssr: false });
+
+// ── Glowing particle dots for dark navy background ──────────────────────────
+const DOTS = Array.from({ length: 52 }, (_, i) => ({
+  left: `${(i * 19 + 3) % 98}%`,
+  top: `${(i * 27 + 5) % 94}%`,
+  size: i % 5 === 0 ? 3 : i % 3 === 0 ? 2.5 : 2,
+  opacity: 0.18 + (i % 6) * 0.07,
+  color: ["#3fffa2", "#4f8ef7", "#a78bfa", "#fca98d", "#ffffff"][i % 5],
+}));
+
+// ── Tool strip (circular icon buttons on dark surface) ──────────────────────
+const TOOLS = [
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-        <polyline points="13 2 13 9 20 9" />
-      </svg>
-    ),
-    title: "Monaco Code Editor",
-    desc: "Full VS Code editor power right in your browser. Syntax highlighting, IntelliSense, and multi-tab editing for any language.",
+    label: "Monaco Editor",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><polyline points="13 2 13 9 20 9" /></svg>,
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="4 17 10 11 4 5" />
-        <line x1="12" y1="19" x2="20" y2="19" />
-      </svg>
-    ),
-    title: "Integrated SSH Terminal",
-    desc: "Direct SSH terminal access to your VMs. Run commands, manage processes, and debug in real-time.",
+    label: "SSH Terminal",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></svg>,
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="16 16 12 12 8 16" />
-        <line x1="12" y1="12" x2="12" y2="21" />
-        <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-      </svg>
-    ),
-    title: "One-Click Deploy",
-    desc: "Deploy your code to any server instantly. Automate your workflow and ship faster than ever before.",
+    label: "One-Click Deploy",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>,
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
-        <circle cx="12" cy="12" r="4" />
-      </svg>
-    ),
-    title: "AI-Powered Insights",
-    desc: "Analyze your code with Claude AI. Get instant explanations, bug detection, and improvement suggestions.",
+    label: "AI Insights",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z" /><circle cx="12" cy="12" r="4" /></svg>,
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-    title: "File Management",
-    desc: "Browse, create, rename, and delete files directly on your remote server. Full directory tree at your fingertips.",
+    label: "File Manager",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>,
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </svg>
-    ),
-    title: "Desktop App",
-    desc: "Native desktop app for macOS, Windows, and Linux. All the power of Vinexus with a native experience.",
+    label: "Server Cmds",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>,
+  },
+  {
+    label: "SSH Connect",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" /></svg>,
+  },
+  {
+    label: "Multi-tab",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg>,
+  },
+  {
+    label: "Diff View",
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>,
   },
 ];
 
-export default function LandingPage() {
-  const { D, isDark } = useTheme();
-  const { data: session } = useSession();
-
-  return (
-    <div style={{ background: D.surface }}>
-      {/* Glow */}
-      <div aria-hidden style={{
-        position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)",
-        width: 900, height: 600,
-        background: `radial-gradient(ellipse at 50% 0%, ${D.primary}10 0%, transparent 70%)`,
-        filter: "blur(80px)", pointerEvents: "none", zIndex: 0,
-      }} />
-
-      <div style={{ position: "relative", zIndex: 1 }}>
-
-        {/* ── Hero ─────────────────────────────────────────────── */}
-        <section style={{ maxWidth: 1160, margin: "0 auto", padding: "96px 24px 80px", textAlign: "center" }}>
-          {/* Badge */}
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 28,
-            background: `${D.primary}10`, border: `1px solid ${D.primary}30`,
-            borderRadius: 99, padding: "6px 16px",
-          }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: D.primary, display: "inline-block" }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: D.primary, letterSpacing: "0.04em" }}>
-              Desktop IDE for Linux VMs
+// ── Feature cards with real product UI previews ──────────────────────────────
+const FEATURES: { icon: React.ReactNode; title: string; desc: string; color: string; preview: React.ReactNode }[] = [
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3fffa2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><polyline points="13 2 13 9 20 9" /></svg>,
+    title: "Monaco Editor",
+    desc: "Full VS Code editing with syntax highlighting, IntelliSense, and multi-file tabs.",
+    color: "#3fffa2",
+    preview: (
+      <div style={{ borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", fontSize: 11, fontFamily: "var(--font-mono)" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 0 }}>
+          {["index.js", "config.yml", ".env"].map((t, i) => (
+            <div key={t} style={{ padding: "5px 14px", fontSize: 10.5, color: i === 0 ? "#fff" : "rgba(255,255,255,0.35)", borderBottom: i === 0 ? "2px solid #3fffa2" : "2px solid transparent", background: i === 0 ? "rgba(63,255,162,0.05)" : "transparent" }}>{t}</div>
+          ))}
+        </div>
+        <div style={{ padding: "10px 0", lineHeight: 1.7, background: "rgba(0,0,0,0.2)" }}>
+          {[
+            [" 1", <><span style={{color:"#a78bfa"}}>const</span><span style={{color:"rgba(255,255,255,0.7)"}}> express = </span><span style={{color:"#67e8f9"}}>require</span><span style={{color:"#86efac"}}>('express')</span></>],
+            [" 2", <span style={{color:"rgba(255,255,255,0.7)"}}>const app = express();</span>],
+            [" 3", null],
+            [" 4", <><span style={{color:"rgba(255,255,255,0.7)"}}>app.</span><span style={{color:"#67e8f9"}}>get</span><span style={{color:"rgba(255,255,255,0.7)"}}>(</span><span style={{color:"#86efac"}}>'/'</span><span style={{color:"rgba(255,255,255,0.7)"}}>, (req, res) =&gt; {"{"}</span></>],
+            [" 5", <><span style={{color:"rgba(255,255,255,0.7)"}}>{"  "}res.</span><span style={{color:"#67e8f9"}}>json</span><span style={{color:"rgba(255,255,255,0.7)"}}>({"{"}status: </span><span style={{color:"#86efac"}}>'ok'</span><span style={{color:"rgba(255,255,255,0.7)"}}>{"}"})</span></>],
+            [" 6", <span style={{color:"rgba(255,255,255,0.7)"}}>{"});"}</span>],
+          ].map(([ln, code], i) => (
+            <div key={i} style={{ padding: "0 12px", display: "flex", gap: 12 }}>
+              <span style={{ color: "rgba(255,255,255,0.2)", minWidth: 14, textAlign: "right" as const }}>{ln as string}</span>
+              <span>{code as React.ReactNode}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></svg>,
+    title: "Integrated Terminal",
+    desc: "xterm.js SSH terminal with direct access to your Linux virtual machines.",
+    color: "#4f8ef7",
+    preview: (
+      <div style={{ borderRadius: 8, background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.06)", padding: "12px 14px", fontFamily: "var(--font-mono)", fontSize: 11, lineHeight: 1.8 }}>
+        <div style={{ color: "rgba(255,255,255,0.35)", marginBottom: 4, fontSize: 10 }}>SSH · server01 · ubuntu@192.168.1.10</div>
+        <div><span style={{ color: "#3fffa2" }}>ubuntu@server01</span><span style={{ color: "rgba(255,255,255,0.4)" }}>:</span><span style={{ color: "#4f8ef7" }}>~</span><span style={{ color: "rgba(255,255,255,0.4)" }}>$</span><span style={{ color: "rgba(255,255,255,0.8)", marginLeft: 8 }}>systemctl status nginx</span></div>
+        <div style={{ color: "#22c55e" }}>● nginx.service - A high performance web server</div>
+        <div style={{ color: "rgba(255,255,255,0.35)" }}>   Loaded: loaded (/lib/systemd/system/nginx.service)</div>
+        <div><span style={{ color: "#22c55e" }}>   Active: active (running)</span><span style={{ color: "rgba(255,255,255,0.3)" }}> since 2h 14m</span></div>
+        <div style={{ marginTop: 4 }}><span style={{ color: "#3fffa2" }}>ubuntu@server01</span><span style={{ color: "rgba(255,255,255,0.4)" }}>:</span><span style={{ color: "#4f8ef7" }}>~</span><span style={{ color: "rgba(255,255,255,0.4)" }}>$</span><span style={{ color: "rgba(255,255,255,0.55)", marginLeft: 8 }}>▌</span></div>
+      </div>
+    ),
+  },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>,
+    title: "One-Click Deploy",
+    desc: "Push changes live with pre-validation, automatic backups, and instant rollback.",
+    color: "#a78bfa",
+    preview: (
+      <div style={{ borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+        <div style={{ background: "rgba(167,139,250,0.06)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 14px", fontSize: 11, color: "rgba(255,255,255,0.5)", display: "flex", justifyContent: "space-between" }}>
+          <span>Deployment Pipeline</span><span style={{ color: "#a78bfa" }}>v2.4.1 → prod</span>
+        </div>
+        <div style={{ padding: "10px 14px", display: "flex", flexDirection: "column" as const, gap: 7 }}>
+          {[
+            { label: "Validate build", status: "done" },
+            { label: "Run tests", status: "done" },
+            { label: "Create backup", status: "done" },
+            { label: "Deploy to production", status: "live" },
+          ].map((step) => (
+            <div key={step.label} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11 }}>
+              <div style={{ width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: step.status === "live" ? "rgba(63,255,162,0.15)" : "rgba(34,197,94,0.1)", border: `1px solid ${step.status === "live" ? "#3fffa2" : "#22c55e"}`, flexShrink: 0 }}>
+                {step.status === "live"
+                  ? <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3fffa2", display: "block", boxShadow: "0 0 6px #3fffa2" }} />
+                  : <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><polyline points="2 6 5 9 10 3" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" /></svg>
+                }
+              </div>
+              <span style={{ color: step.status === "live" ? "#fff" : "rgba(255,255,255,0.55)" }}>{step.label}</span>
+              {step.status === "live" && <span style={{ marginLeft: "auto", fontSize: 9, background: "rgba(63,255,162,0.12)", color: "#3fffa2", padding: "2px 7px", borderRadius: 4, fontWeight: 600, letterSpacing: "0.05em" }}>LIVE</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fca98d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z" /><circle cx="12" cy="12" r="4" /></svg>,
+    title: "AI Insights",
+    desc: "AI-powered file analysis, log diagnosis, and config validation via AWS Bedrock.",
+    color: "#fca98d",
+    preview: (
+      <div style={{ borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", fontSize: 11 }}>
+        <div style={{ background: "rgba(252,169,141,0.06)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 14px", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", gap: 7 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fca98d", display: "inline-block", boxShadow: "0 0 5px #fca98d" }} />
+          Analysing config.yml
+        </div>
+        <div style={{ padding: "10px 14px", display: "flex", flexDirection: "column" as const, gap: 7 }}>
+          {[
+            { icon: "⚠", color: "#eab308", text: "NGINX worker_processes set to 1 — recommend auto" },
+            { icon: "✕", color: "#ef4444", text: "Missing ssl_certificate directive in server block" },
+            { icon: "✓", color: "#22c55e", text: "Gzip compression enabled" },
+            { icon: "✓", color: "#22c55e", text: "Security headers correctly configured" },
+          ].map((item, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <span style={{ color: item.color, flexShrink: 0, lineHeight: 1.4 }}>{item.icon}</span>
+              <span style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.4 }}>{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3fffa2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>,
+    title: "Server Commands",
+    desc: "Run predefined or custom commands with safety levels and sudo support.",
+    color: "#3fffa2",
+    preview: (
+      <div style={{ borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", fontSize: 11 }}>
+        <div style={{ background: "rgba(63,255,162,0.04)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 14px", color: "rgba(255,255,255,0.4)", fontSize: 10 }}>Server Commands</div>
+        {[
+          { name: "Restart NGINX", badge: "SAFE", bc: "#22c55e" },
+          { name: "Reload systemd", badge: "SUDO", bc: "#eab308" },
+          { name: "View error logs", badge: "SAFE", bc: "#22c55e" },
+          { name: "Flush iptables", badge: "DANGER", bc: "#ef4444" },
+        ].map((cmd) => (
+          <div key={cmd.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+            <span style={{ color: "rgba(255,255,255,0.7)" }}>{cmd.name}</span>
+            <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 4, background: `${cmd.bc}14`, color: cmd.bc, fontWeight: 700, letterSpacing: "0.06em" }}>{cmd.badge}</span>
+          </div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f8ef7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>,
+    title: "File Management",
+    desc: "Browse, create, rename, and delete files with a familiar tree interface.",
+    color: "#4f8ef7",
+    preview: (
+      <div style={{ borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", fontSize: 11, fontFamily: "var(--font-mono)" }}>
+        <div style={{ background: "rgba(79,142,247,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "8px 14px", color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" as const }}>Explorer</div>
+        {[
+          { indent: 0, type: "dir", name: "src", open: true },
+          { indent: 1, type: "dir", name: "components", open: false },
+          { indent: 1, type: "file", name: "index.js", active: true },
+          { indent: 1, type: "file", name: "config.yml" },
+          { indent: 0, type: "dir", name: "public", open: false },
+          { indent: 0, type: "file", name: "package.json" },
+        ].map((item: any, i) => (
+          <div key={i} style={{ padding: `5px 14px 5px ${14 + item.indent * 14}px`, display: "flex", alignItems: "center", gap: 6, background: item.active ? "rgba(79,142,247,0.1)" : "transparent", borderLeft: item.active ? "2px solid #4f8ef7" : "2px solid transparent" }}>
+            <span style={{ color: item.type === "dir" ? "#eab308" : item.active ? "#4f8ef7" : "rgba(255,255,255,0.4)", fontSize: 10 }}>
+              {item.type === "dir" ? (item.open ? "▾" : "▸") : "◦"}
             </span>
+            <span style={{ color: item.active ? "#fff" : "rgba(255,255,255,0.55)" }}>{item.name}</span>
           </div>
+        ))}
+      </div>
+    ),
+  },
+];
 
-          <h1 style={{
-            fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 900,
-            color: D.inverseSurface, letterSpacing: "-0.04em", lineHeight: 1.05,
-            margin: "0 0 24px",
-          }}>
-            Your VMs,<br />
-            <span style={{ color: D.primary }}>fully under control.</span>
-          </h1>
+const STATS = [
+  { value: 99.9, suffix: "%", label: "Uptime SLA" },
+  { value: 50, suffix: "ms", label: "Avg Latency" },
+  { value: 6, suffix: "+", label: "Core Tools" },
+  { value: 24, suffix: "/7", label: "Monitoring" },
+];
 
-          <p style={{
-            fontSize: "clamp(16px, 2vw, 20px)", color: D.onSurfaceVariant,
-            maxWidth: 560, margin: "0 auto 40px", lineHeight: 1.6,
-          }}>
-            Vinexus is a desktop IDE that connects to your Linux virtual machines over SSH.
-            Edit code, run commands, and deploy — all from one app.
-          </p>
+// ── CTA helpers ──────────────────────────────────────────────────────────────
+function TealPill({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} style={{
+      display: "inline-flex", alignItems: "center", gap: 8,
+      padding: "14px 32px", borderRadius: 9999, fontWeight: 700, fontSize: 15,
+      textDecoration: "none", background: "#3fffa2", color: "#0b1120",
+      boxShadow: "0 4px 28px rgba(63,255,162,0.3)", transition: "all 0.2s",
+    }}>
+      {children}
+    </Link>
+  );
+}
 
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href={session ? "/dashboard" : "/signup"} style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "14px 32px", borderRadius: 9999,
-              background: D.primary, color: "#fff",
-              fontSize: 16, fontWeight: 700, textDecoration: "none",
-              boxShadow: `0 4px 24px ${D.primary}44`,
-            }}>
-              Get Started Free
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-              </svg>
-            </Link>
-            <Link href="/download" style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "14px 28px", borderRadius: 9999,
-              background: D.surfaceContainerHigh, color: D.onSurface,
-              border: `1px solid ${D.outlineVariant}`,
-              fontSize: 16, fontWeight: 600, textDecoration: "none",
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Download App
-            </Link>
-          </div>
+function GhostPill({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} style={{
+      display: "inline-flex", alignItems: "center", gap: 8,
+      padding: "13px 28px", borderRadius: 9999, fontWeight: 600, fontSize: 15,
+      textDecoration: "none", background: "rgba(255,255,255,0.04)",
+      color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.1)",
+      transition: "all 0.2s",
+    }}>
+      {children}
+    </Link>
+  );
+}
 
-          <p style={{ fontSize: 12, color: D.onSurfaceVariant, marginTop: 16, opacity: 0.7 }}>
-            Free plan available · No credit card required
-          </p>
-        </section>
+const Arrow = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+  </svg>
+);
 
-        {/* ── App Preview ──────────────────────────────────────── */}
-        <section style={{ maxWidth: 1160, margin: "0 auto", padding: "0 24px 96px" }}>
-          <div style={{
-            borderRadius: 16, overflow: "hidden",
-            border: `1px solid ${D.outlineVariant}`,
-            boxShadow: `0 32px 80px ${isDark ? "rgba(0,0,0,0.5)" : "rgba(0,83,219,0.08)"}`,
-          }}>
-            {/* Title bar */}
-            <div style={{ background: isDark ? D.surfaceContainerHigh : "#e8edf5", padding: "12px 16px", display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${D.outlineVariant}` }}>
-              <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ff5f57" }} />
-              <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ffbd2e" }} />
-              <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#28c840" }} />
-              <span style={{ marginLeft: 8, fontSize: 12, color: D.onSurfaceVariant, fontWeight: 500 }}>Vinexus — ubuntu@192.168.1.100</span>
-            </div>
-            {/* IDE body */}
-            <div style={{ display: "flex", height: 380, background: D.surfaceLowest }}>
-              {/* Sidebar */}
-              <div style={{ width: 200, background: D.surfaceContainerLow, borderRight: `1px solid ${D.outlineVariant}`, padding: "12px 0" }}>
-                <div style={{ padding: "4px 16px", marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: D.onSurfaceVariant }}>Explorer</span>
-                </div>
-                {["index.js", "package.json", "server.ts", ".env", "README.md"].map((f, i) => (
-                  <div key={f} style={{ padding: "5px 16px", background: i === 0 ? D.surfaceContainerHigh : "transparent", display: "flex", alignItems: "center", gap: 8 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={i === 0 ? D.primary : D.onSurfaceVariant} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><polyline points="13 2 13 9 20 9" />
-                    </svg>
-                    <span style={{ fontSize: 12, color: i === 0 ? D.inverseSurface : D.onSurfaceVariant, fontFamily: "monospace" }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Editor */}
-              <div style={{ flex: 1, background: isDark ? "#0d1117" : "#ffffff", padding: "16px 20px", fontFamily: "JetBrains Mono, monospace", fontSize: 13, lineHeight: 1.7, overflow: "hidden" }}>
-                <div><span style={{ color: "#8b949e", marginRight: 16, userSelect: "none" }}>1</span><span style={{ color: isDark ? "#ff7b72" : "#b91c1c" }}>const</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}> express = </span><span style={{ color: isDark ? "#d2a8ff" : "#8250df" }}>require</span><span style={{ color: isDark ? "#a5d6ff" : "#0550ae" }}>(&#39;express&#39;)</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>;</span></div>
-                <div><span style={{ color: "#8b949e", marginRight: 16, userSelect: "none" }}>2</span><span style={{ color: isDark ? "#ff7b72" : "#b91c1c" }}>const</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}> app = </span><span style={{ color: isDark ? "#d2a8ff" : "#8250df" }}>express</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>();</span></div>
-                <div><span style={{ color: "#8b949e", marginRight: 16, userSelect: "none" }}>3</span></div>
-                <div><span style={{ color: "#8b949e", marginRight: 16, userSelect: "none" }}>4</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>app.</span><span style={{ color: isDark ? "#d2a8ff" : "#8250df" }}>get</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>(</span><span style={{ color: isDark ? "#a5d6ff" : "#0550ae" }}>&#39;/&#39;</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>, (req, res) =&gt; {"{"}</span></div>
-                <div><span style={{ color: "#8b949e", marginRight: 16, userSelect: "none" }}>5</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>  res.</span><span style={{ color: isDark ? "#d2a8ff" : "#8250df" }}>json</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>({"{"} status: </span><span style={{ color: isDark ? "#a5d6ff" : "#0550ae" }}>&#39;ok&#39;</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}> {"}"});</span></div>
-                <div><span style={{ color: "#8b949e", marginRight: 16, userSelect: "none" }}>6</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>{"})"} ;</span></div>
-                <div><span style={{ color: "#8b949e", marginRight: 16, userSelect: "none" }}>7</span></div>
-                <div><span style={{ color: "#8b949e", marginRight: 16, userSelect: "none" }}>8</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>app.</span><span style={{ color: isDark ? "#d2a8ff" : "#8250df" }}>listen</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>(</span><span style={{ color: isDark ? "#ffa657" : "#953800" }}>3000</span><span style={{ color: isDark ? "#c9d1d9" : "#24292f" }}>);</span></div>
-              </div>
-              {/* Terminal */}
-              <div style={{ width: 260, background: "#0d1117", borderLeft: `1px solid ${D.outlineVariant}`, padding: "12px 14px", fontFamily: "JetBrains Mono, monospace", fontSize: 12, lineHeight: 1.7 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Terminal</div>
-                <div style={{ color: "#c9d1d9" }}><span style={{ color: "#3fb950" }}>ubuntu@vm</span><span style={{ color: "#79c0ff" }}>:~$</span> node index.js</div>
-                <div style={{ color: "#3fb950" }}>Server running on :3000</div>
-                <div style={{ color: "#c9d1d9", marginTop: 4 }}><span style={{ color: "#3fb950" }}>ubuntu@vm</span><span style={{ color: "#79c0ff" }}>:~$</span> <span style={{ animation: "blink 1s step-end infinite", display: "inline-block", width: 8, height: 14, background: "#c9d1d9", verticalAlign: "middle" }} /></div>
-              </div>
-            </div>
-          </div>
-        </section>
+function HeroCTA() {
+  const { data: session } = useSession();
+  const isPro = (session as any)?.plan === "pro";
+  if (!session) return (
+    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <TealPill href="/signup">Get Started Free <Arrow /></TealPill>
+      <GhostPill href="/pricing">View Pricing</GhostPill>
+    </div>
+  );
+  if (isPro) return (
+    <div style={{ display: "flex", gap: 12 }}>
+      <TealPill href="/dashboard">Go to Dashboard <Arrow /></TealPill>
+    </div>
+  );
+  return (
+    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <TealPill href="/pricing">Upgrade to Pro <Arrow /></TealPill>
+      <GhostPill href="/dashboard">Dashboard</GhostPill>
+    </div>
+  );
+}
 
-        {/* ── Features ─────────────────────────────────────────── */}
-        <section style={{ maxWidth: 1160, margin: "0 auto", padding: "0 24px 96px" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: D.primary, marginBottom: 12 }}>Features</p>
-            <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.04em", lineHeight: 1.1, margin: 0 }}>
-              Everything you need to manage your VMs
-            </h2>
-          </div>
+function BottomCTA() {
+  const { data: session } = useSession();
+  const isPro = (session as any)?.plan === "pro";
+  const href = !session ? "/signup" : isPro ? "/dashboard" : "/pricing";
+  const label = !session ? "Get Started Free" : isPro ? "Go to Dashboard" : "Upgrade to Pro";
+  return <TealPill href={href}>{label} <Arrow /></TealPill>;
+}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-            {FEATURES.map((feat) => (
-              <div key={feat.title} style={{
-                background: D.surfaceContainerLow,
-                border: `1px solid ${D.outlineVariant}`,
-                borderRadius: 16, padding: "24px 22px",
-              }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12,
-                  background: `${D.primary}14`,
-                  border: `1px solid ${D.primary}22`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: 16,
-                  color: D.primary,
-                }}>
-                  {feat.icon}
-                </div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: D.inverseSurface, margin: "0 0 8px", letterSpacing: "-0.02em" }}>{feat.title}</h3>
-                <p style={{ fontSize: 13, color: D.onSurfaceVariant, lineHeight: 1.65, margin: 0 }}>{feat.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── CTA ──────────────────────────────────────────────── */}
-        <section style={{ maxWidth: 1160, margin: "0 auto", padding: "0 24px 120px" }}>
-          <div style={{
-            background: D.primaryContainer,
-            border: `1px solid ${D.primary}30`,
-            borderRadius: 24, padding: "64px 48px",
-            textAlign: "center",
-            boxShadow: `0 0 80px ${D.primary}12`,
-          }}>
-            <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.04em", margin: "0 0 16px" }}>
-              Ready to take control of your VMs?
-            </h2>
-            <p style={{ fontSize: 16, color: D.onSurfaceVariant, margin: "0 auto 36px", maxWidth: 480, lineHeight: 1.6 }}>
-              Start for free. No credit card required. Download the desktop app or use the web version.
-            </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href={session ? "/dashboard" : "/signup"} style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "14px 32px", borderRadius: 9999,
-                background: D.primary, color: "#fff",
-                fontSize: 16, fontWeight: 700, textDecoration: "none",
-                boxShadow: `0 4px 24px ${D.primary}44`,
-              }}>
-                Get Started Free
-              </Link>
-              <Link href="/pricing" style={{
-                display: "inline-flex", alignItems: "center",
-                padding: "14px 28px", borderRadius: 9999,
-                background: D.surfaceLowest, color: D.onSurface,
-                border: `1px solid ${D.outlineVariant}`,
-                fontSize: 16, fontWeight: 600, textDecoration: "none",
-              }}>
-                View Pricing
-              </Link>
-            </div>
-          </div>
-        </section>
-
+// ── IDE Mockup ───────────────────────────────────────────────────────────────
+function IdeMockup({ compact }: { compact?: boolean }) {
+  const fs = compact ? 11 : 13;
+  const lnW = compact ? 22 : 28;
+  return (
+    <div style={s.mockup}>
+      <div style={s.mockupBar}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {["#ff5f56","#ffbd2e","#27c93f"].map(c => (
+            <span key={c} style={{ width: compact ? 10 : 12, height: compact ? 10 : 12, borderRadius: "50%", background: c, display: "inline-block" }} />
+          ))}
+        </div>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: compact ? 11 : 12, color: "rgba(255,255,255,0.3)" }}>Vela — server01</span>
+        <div style={{ width: compact ? 40 : 52 }} />
+      </div>
+      <div style={{ display: "flex" }}>
+        <div style={{ ...s.mockupSidebar, ...(compact ? { width: 120 } : {}) }}>
+          {[["index.js", true], ["package.json", false], ["config.yml", false], [".env", false]].map(([name, active]) => (
+            <div key={name as string} style={{ ...s.mockupFile, ...(active ? s.mockupFileActive : {}), fontSize: fs }}>{name as string}</div>
+          ))}
+        </div>
+        <div style={{ ...s.mockupEditor, fontSize: fs }}>
+          <div style={s.cLine}><span style={{ ...s.ln, width: lnW }}>1</span><span style={s.kw}>const</span><span style={s.wh}> express = </span><span style={s.fn}>require</span><span style={s.st}>(&#39;express&#39;)</span><span style={s.wh}>;</span></div>
+          <div style={s.cLine}><span style={{ ...s.ln, width: lnW }}>2</span><span style={s.kw}>const</span><span style={s.wh}> app = </span><span style={s.fn}>express</span><span style={s.wh}>();</span></div>
+          <div style={s.cLine}><span style={{ ...s.ln, width: lnW }}>3</span></div>
+          <div style={s.cLine}><span style={{ ...s.ln, width: lnW }}>4</span><span style={s.wh}>app.</span><span style={s.fn}>get</span><span style={s.wh}>(</span><span style={s.st}>&#39;/&#39;</span><span style={s.wh}>, (req, res) =&gt; {"{"}</span></div>
+          <div style={s.cLine}><span style={{ ...s.ln, width: lnW }}>5</span><span style={s.wh}>  res.</span><span style={s.fn}>json</span><span style={s.wh}>({"{"} </span><span style={s.ky}>status</span><span style={s.wh}>: </span><span style={s.st}>&#39;running&#39;</span><span style={s.wh}> {"}"});</span></div>
+          <div style={s.cLine}><span style={{ ...s.ln, width: lnW }}>6</span><span style={s.wh}>{"})"}</span><span style={s.wh}>;</span></div>
+          <div style={s.cLine}><span style={{ ...s.ln, width: lnW }}>7</span></div>
+          <div style={s.cLine}><span style={{ ...s.ln, width: lnW }}>8</span><span style={s.wh}>app.</span><span style={s.fn}>listen</span><span style={s.wh}>(</span><span style={s.nm}>3000</span><span style={s.wh}>);</span></div>
+        </div>
+      </div>
+      <div style={{ ...s.mockupTerminal, fontSize: fs }}>
+        <span style={{ color: "#3fffa2", marginRight: 8 }}>$</span> node index.js
+        <br /><span style={{ color: "#22c55e" }}>Server listening on port 3000</span>
       </div>
     </div>
   );
 }
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+export default function LandingPage() {
+  return (
+    <div style={{ background: "#0b1120" }}>
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* 1 · HERO — dark navy, sweeping wave, white title  */}
+      {/* ══════════════════════════════════════════════════ */}
+      <section style={s.hero}>
+        {/* Sweeping gradient wave */}
+        <div style={s.heroWave} aria-hidden />
+        {/* Glowing particle field */}
+        <div style={s.particles} aria-hidden>
+          {DOTS.map((d, i) => (
+            <span key={i} style={{ position: "absolute", left: d.left, top: d.top, width: d.size, height: d.size, borderRadius: "50%", background: d.color, opacity: d.opacity }} />
+          ))}
+        </div>
+        <div style={s.heroInner}>
+          <div style={s.heroBadge}>
+            <span style={s.heroBadgeDot} />
+            Browser-based IDE for Linux VMs
+          </div>
+          <h1 style={s.heroTitle}>
+            Where developers<br />are doing their<br />best work.
+          </h1>
+          <p style={s.heroSub}>
+            A full VS Code-like IDE in your browser. Connect to any Linux VM over SSH —
+            edit files, run commands, deploy, and monitor with AI-powered insights.
+          </p>
+          <HeroCTA />
+        </div>
+        {/* IDE mockup */}
+        <div style={s.heroMockupWrap}>
+          <div style={s.heroMockupGlow} aria-hidden />
+          <IdeMockup />
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* 2 · TOOL STRIP — slightly lighter navy surface    */}
+      {/* ══════════════════════════════════════════════════ */}
+      <section style={s.toolSection}>
+        <div style={s.toolInner}>
+          <p style={s.toolLabel}>Explore the features</p>
+          <div style={s.toolRow}>
+            {TOOLS.map((t, i) => (
+              <div key={i} style={s.toolCircle} title={t.label}>
+                {t.icon}
+              </div>
+            ))}
+          </div>
+          <p style={s.toolDesc}>
+            Vela is our developer-first infrastructure management platform,
+            evolving the browser IDE into the cloud-native era — connect directly to
+            any Linux VM with no agents, no config, no friction.
+          </p>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* 3 · FEATURE HEADING + GRID — dark cards           */}
+      {/* ══════════════════════════════════════════════════ */}
+      <section style={s.featureSection}>
+        <div style={s.sectionInner}>
+          <h2 style={s.centeredTitle}>One IDE.<br />Unlimited superpowers.</h2>
+          <p style={s.centeredSub}>
+            Everything you need to manage Linux VMs — editor, terminal, deploy, and AI — in one browser tab.
+          </p>
+          <div style={s.featureGrid}>
+            {FEATURES.map((f, i) => (
+              <div key={i} style={s.featureCard}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{ ...s.featureIcon, background: `${f.color}10`, border: `1px solid ${f.color}22` }}>
+                    {f.icon}
+                  </div>
+                  <h3 style={s.featureTitle}>{f.title}</h3>
+                </div>
+                <p style={s.featureDesc}>{f.desc}</p>
+                <div style={{ marginTop: 18 }}>{f.preview}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* 4 · TWO-COL: Editor detail                        */}
+      {/* ══════════════════════════════════════════════════ */}
+      <section style={s.twoColSection}>
+        <div style={s.twoColWrap}>
+          <div style={s.twoColText}>
+            <h2 style={s.twoColTitle}>An IDE Core<br />built for the cloud</h2>
+            <p style={s.twoColDesc}>
+              Vela's Editor view offers tab autocompletion, syntax highlighting for 50+ languages,
+              natural language file commands, and a configurable context-aware file tree —
+              all talking directly to your remote VM over SSH.
+            </p>
+            <div style={{ marginTop: 36 }}>
+              <TealPill href="/signup">Try the Editor <Arrow /></TealPill>
+            </div>
+          </div>
+          <div style={s.twoColVisual}>
+            <div style={{ ...s.visualGlow, background: "radial-gradient(ellipse at 50% 40%, rgba(63,255,162,0.12) 0%, rgba(79,142,247,0.08) 50%, transparent 70%)" }} aria-hidden />
+            <IdeMockup compact />
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* 5 · TWO-COL: Deploy detail (flipped)              */}
+      {/* ══════════════════════════════════════════════════ */}
+      <section style={{ ...s.twoColSection, background: "#0d1528" }}>
+        <div style={{ ...s.twoColWrap, flexDirection: "row-reverse" as const }}>
+          <div style={s.twoColText}>
+            <h2 style={s.twoColTitle}>Cross-surface<br />Deploy & Control</h2>
+            <p style={s.twoColDesc}>
+              Push changes to production with pre-validation, automatic backup, and instant rollback.
+              Run server commands with safety levels, sudo support, and real-time output streaming
+              direct from your VM.
+            </p>
+            <div style={{ marginTop: 36 }}>
+              <TealPill href="/pricing">Explore Deploy <Arrow /></TealPill>
+            </div>
+          </div>
+          <div style={s.twoColVisual}>
+            <div style={{ ...s.visualGlow, background: "radial-gradient(ellipse at 50% 50%, rgba(79,142,247,0.14) 0%, rgba(167,139,250,0.08) 55%, transparent 75%)" }} aria-hidden />
+            <div style={s.mockup}>
+              <div style={s.mockupBar}>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {["#ff5f56","#ffbd2e","#27c93f"].map(c => <span key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c, display: "inline-block" }} />)}
+                </div>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>terminal</span>
+                <div style={{ width: 40 }} />
+              </div>
+              <div style={{ padding: "16px 20px", fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.9 }}>
+                <div><span style={{ color: "#3fffa2" }}>$</span><span style={{ color: "rgba(255,255,255,0.75)", marginLeft: 10 }}>git add . && git commit -m "fix auth"</span></div>
+                <div><span style={{ color: "rgba(255,255,255,0.3)" }}>[main 3a4f2c1] fix auth</span></div>
+                <div style={{ marginTop: 6 }}><span style={{ color: "#3fffa2" }}>$</span><span style={{ color: "rgba(255,255,255,0.75)", marginLeft: 10 }}>npm run deploy</span></div>
+                <div><span style={{ color: "#4f8ef7" }}>→</span><span style={{ color: "rgba(255,255,255,0.4)", marginLeft: 8 }}>Validating build...</span></div>
+                <div><span style={{ color: "#4f8ef7" }}>→</span><span style={{ color: "rgba(255,255,255,0.4)", marginLeft: 8 }}>Backup created: v1.2.3</span></div>
+                <div><span style={{ color: "#22c55e" }}>✓</span><span style={{ color: "#22c55e", marginLeft: 8 }}>Deployed to production</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* 6 · STATS + CTA                                   */}
+      {/* ══════════════════════════════════════════════════ */}
+      <section style={s.ctaSection}>
+        <div style={s.heroWave} aria-hidden />
+        <div style={s.ctaInner}>
+          <div style={s.statsGrid}>
+            {STATS.map((stat, i) => (
+              <div key={i} style={s.statItem}>
+                <div style={s.statValue}>
+                  <CountUp to={stat.value} duration={2.5} separator="," />
+                  <span>{stat.suffix}</span>
+                </div>
+                <div style={s.statLabel}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+          <div style={s.ctaBlock}>
+            <h2 style={s.centeredTitle}>Ready to streamline<br />your workflow?</h2>
+            <p style={{ ...s.centeredSub, marginBottom: 40 }}>
+              Start with the free plan. Upgrade anytime for Pro features.
+            </p>
+            <BottomCTA />
+          </div>
+        </div>
+      </section>
+
+    </div>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const s: Record<string, React.CSSProperties> = {
+
+  // Hero
+  hero: {
+    position: "relative",
+    background: "#0b1120",
+    padding: "110px 24px 80px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  heroWave: {
+    position: "absolute",
+    top: 0,
+    left: "-20%",
+    right: "-20%",
+    height: "65%",
+    background: "linear-gradient(160deg, rgba(63,255,162,0.07) 0%, rgba(79,142,247,0.11) 35%, rgba(167,139,250,0.08) 65%, rgba(252,169,141,0.04) 100%)",
+    borderRadius: "0 0 60% 60%",
+    filter: "blur(70px)",
+    pointerEvents: "none",
+  },
+  particles: {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+  },
+  heroInner: {
+    position: "relative",
+    zIndex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 28,
+    maxWidth: 700,
+    width: "100%",
+  },
+  heroBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "6px 16px",
+    borderRadius: 9999,
+    border: "1px solid rgba(63,255,162,0.2)",
+    background: "rgba(63,255,162,0.05)",
+    fontSize: 13,
+    fontWeight: 500,
+    color: "#3fffa2",
+    letterSpacing: "0.02em",
+  },
+  heroBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#3fffa2",
+    display: "inline-block",
+    boxShadow: "0 0 6px rgba(63,255,162,0.8)",
+  },
+  heroTitle: {
+    fontSize: "clamp(44px, 6.5vw, 76px)",
+    fontWeight: 800,
+    color: "#ffffff",
+    letterSpacing: "-0.04em",
+    lineHeight: 1.08,
+    margin: 0,
+  },
+  heroSub: {
+    fontSize: 18,
+    lineHeight: 1.7,
+    color: "#8fa3c8",
+    maxWidth: 540,
+    margin: 0,
+  },
+  heroMockupWrap: {
+    position: "relative",
+    zIndex: 1,
+    width: "100%",
+    maxWidth: 860,
+    marginTop: 72,
+  },
+  heroMockupGlow: {
+    position: "absolute",
+    inset: -60,
+    background: "radial-gradient(ellipse at 50% 50%, rgba(63,255,162,0.06) 0%, rgba(79,142,247,0.06) 50%, transparent 70%)",
+    pointerEvents: "none",
+    filter: "blur(30px)",
+  },
+
+  // Tool strip
+  toolSection: {
+    background: "#0d1528",
+    borderTop: "1px solid rgba(255,255,255,0.04)",
+    borderBottom: "1px solid rgba(255,255,255,0.04)",
+    padding: "80px 24px",
+  },
+  toolInner: {
+    maxWidth: 1000,
+    margin: "0 auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+  },
+  toolLabel: {
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    color: "#3fffa2",
+    marginBottom: 28,
+  },
+  toolRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap" as const,
+  },
+  toolCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.07)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "default",
+    flexShrink: 0,
+  },
+  toolDesc: {
+    marginTop: 52,
+    fontSize: "clamp(18px, 2.5vw, 24px)",
+    fontWeight: 400,
+    color: "#c5d5ee",
+    lineHeight: 1.6,
+    maxWidth: 640,
+  },
+
+  // Feature section
+  featureSection: {
+    background: "#0b1120",
+    padding: "120px 24px",
+  },
+  sectionInner: {
+    maxWidth: 1100,
+    margin: "0 auto",
+  },
+  centeredTitle: {
+    fontSize: "clamp(38px, 5.5vw, 68px)",
+    fontWeight: 800,
+    color: "#ffffff",
+    letterSpacing: "-0.04em",
+    lineHeight: 1.1,
+    textAlign: "center" as const,
+    margin: "0 0 20px",
+  },
+  centeredSub: {
+    fontSize: 18,
+    color: "#8fa3c8",
+    textAlign: "center" as const,
+    maxWidth: 520,
+    margin: "0 auto 64px",
+    lineHeight: 1.65,
+  },
+  featureGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: 16,
+  },
+  featureCard: {
+    background: "#0f1829",
+    border: "1px solid rgba(255,255,255,0.07)",
+    borderRadius: 16,
+    padding: "24px 22px",
+    display: "flex",
+    flexDirection: "column" as const,
+    transition: "border-color 0.2s",
+  },
+  featureIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 9,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  featureTitle: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#ffffff",
+    letterSpacing: "-0.01em",
+    margin: 0,
+  },
+  featureDesc: {
+    fontSize: 12.5,
+    lineHeight: 1.65,
+    color: "#4a6490",
+    margin: 0,
+  },
+
+  // Two-column sections
+  twoColSection: {
+    background: "#0b1120",
+    padding: "100px 24px",
+  },
+  twoColWrap: {
+    maxWidth: 1100,
+    margin: "0 auto",
+    display: "flex",
+    alignItems: "center",
+    gap: 80,
+  },
+  twoColText: {
+    flex: "0 0 400px",
+  },
+  twoColTitle: {
+    fontSize: "clamp(28px, 3.5vw, 46px)",
+    fontWeight: 700,
+    color: "#ffffff",
+    letterSpacing: "-0.03em",
+    lineHeight: 1.1,
+    margin: "0 0 16px",
+  },
+  twoColDesc: {
+    fontSize: 16,
+    lineHeight: 1.75,
+    color: "#8fa3c8",
+    margin: 0,
+  },
+  twoColVisual: {
+    flex: 1,
+    position: "relative",
+    minWidth: 0,
+  },
+  visualGlow: {
+    position: "absolute",
+    inset: -50,
+    pointerEvents: "none",
+    filter: "blur(40px)",
+  },
+
+  // CTA / Stats section
+  ctaSection: {
+    position: "relative",
+    background: "#0d1528",
+    padding: "120px 24px",
+    overflow: "hidden",
+  },
+  ctaInner: {
+    position: "relative",
+    zIndex: 1,
+    maxWidth: 900,
+    margin: "0 auto",
+  },
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 0,
+    border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  statItem: {
+    padding: "32px 24px",
+    textAlign: "center" as const,
+    borderRight: "1px solid rgba(255,255,255,0.06)",
+  },
+  statValue: {
+    fontSize: "clamp(30px, 4vw, 48px)",
+    fontWeight: 800,
+    color: "#3fffa2",
+    letterSpacing: "-0.04em",
+    lineHeight: 1,
+    marginBottom: 10,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "#4a6490",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.1em",
+    fontWeight: 600,
+  },
+  ctaBlock: {
+    marginTop: 96,
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    textAlign: "center" as const,
+  },
+
+  // Mockup chrome
+  mockup: {
+    position: "relative",
+    borderRadius: 14,
+    border: "1px solid rgba(255,255,255,0.07)",
+    overflow: "hidden",
+    background: "rgba(11,17,32,0.98)",
+    boxShadow: "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(63,255,162,0.03)",
+  },
+  mockupBar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "11px 16px",
+    background: "rgba(255,255,255,0.02)",
+    borderBottom: "1px solid rgba(255,255,255,0.05)",
+  },
+  mockupSidebar: {
+    width: 150,
+    padding: "12px 0",
+    borderRight: "1px solid rgba(255,255,255,0.04)",
+    background: "rgba(255,255,255,0.01)",
+  },
+  mockupFile: {
+    padding: "5px 16px",
+    fontSize: 12,
+    fontFamily: "var(--font-mono)",
+    color: "var(--text-secondary)",
+  },
+  mockupFileActive: {
+    color: "var(--text-bright)",
+    background: "rgba(63,255,162,0.08)",
+    borderLeft: "2px solid #3fffa2",
+  },
+  mockupEditor: {
+    flex: 1,
+    padding: "14px 0",
+    fontFamily: "var(--font-mono)",
+    lineHeight: 1.7,
+  },
+  mockupTerminal: {
+    padding: "11px 16px",
+    fontFamily: "var(--font-mono)",
+    fontSize: 12,
+    lineHeight: 1.6,
+    color: "var(--text-secondary)",
+    background: "rgba(0,0,0,0.25)",
+    borderTop: "1px solid rgba(255,255,255,0.04)",
+  },
+
+  // Code tokens
+  cLine: { padding: "0 16px", whiteSpace: "nowrap" as const },
+  ln: { display: "inline-block", width: 28, color: "rgba(255,255,255,0.18)", textAlign: "right" as const, marginRight: 16, userSelect: "none" as const },
+  kw: { color: "#a78bfa" },
+  fn: { color: "#67e8f9" },
+  st: { color: "#86efac" },
+  nm: { color: "#fbbf24" },
+  ky: { color: "#93c5fd" },
+  wh: { color: "rgba(255,255,255,0.75)" },
+};
