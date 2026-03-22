@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Install root dependencies
         working-directory: vm-ide
@@ -30,11 +30,6 @@ jobs:
       - name: Install backend dependencies
         working-directory: vm-ide/backend
         run: npm install
-
-      - name: Rebuild node-pty for Electron
-        working-directory: vm-ide
-        run: npx electron-rebuild -f -w node-pty
-        continue-on-error: true
 
       - name: Build frontend
         working-directory: vm-ide/frontend
@@ -72,7 +67,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Install root dependencies
         working-directory: vm-ide
@@ -85,11 +80,6 @@ jobs:
       - name: Install backend dependencies
         working-directory: vm-ide/backend
         run: npm install
-
-      - name: Rebuild node-pty for Electron
-        working-directory: vm-ide
-        run: npx electron-rebuild -f -w node-pty
-        continue-on-error: true
 
       - name: Build frontend
         working-directory: vm-ide/frontend
@@ -119,18 +109,16 @@ jobs:
 
   build-linux:
     name: Build Linux
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-bullseye
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          apt-get update
+          apt-get install -y \
             libgtk-3-dev \
             libwebkit2gtk-4.0-dev \
             libayatana-appindicator3-dev \
@@ -138,7 +126,9 @@ jobs:
             rpm \
             python3 \
             make \
-            g++
+            g++ \
+            fakeroot \
+            dpkg
 
       - name: Install root dependencies
         working-directory: vm-ide
@@ -151,11 +141,6 @@ jobs:
       - name: Install backend dependencies
         working-directory: vm-ide/backend
         run: npm install
-
-      - name: Rebuild node-pty for Electron
-        working-directory: vm-ide
-        run: npx electron-rebuild -f -w node-pty
-        continue-on-error: true
 
       - name: Build frontend
         working-directory: vm-ide/frontend
