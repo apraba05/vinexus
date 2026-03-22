@@ -54,10 +54,12 @@ async function main() {
   });
 
   // Admin account
-  const adminEmail = "apraba05@gmail.com";
+  const adminEmail = process.env.SEED_ADMIN_EMAIL || "";
+  if (!adminEmail) { console.log("No SEED_ADMIN_EMAIL set, skipping admin user."); return; }
   const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!existing) {
-    const passwordHash = await bcrypt.hash("AshanTest123", 12);
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "changeme123!";
+    const passwordHash = await bcrypt.hash(adminPassword, 12);
     const admin = await prisma.user.create({
       data: {
         email: adminEmail,

@@ -11,6 +11,7 @@ out/
 .env.*
 !.env.example
 !.env.production
+backend/.env
 
 # misc
 .DS_Store
