@@ -1,0 +1,63 @@
+{
+  "name": "infranexus-desktop",
+  "version": "1.0.0",
+  "description": "InfraNexus Desktop IDE — SSH-powered cloud development",
+  "main": "dist/main/main.js",
+  "author": "InfraNexus",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
+    "dev:renderer": "vite",
+    "dev:main": "tsc -p tsconfig.main.json && electron . --dev",
+    "build": "tsc -p tsconfig.main.json && vite build",
+    "start": "electron .",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:win": "npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.0",
+    "ssh2": "^1.16.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/ssh2": "^1.15.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "concurrently": "^9.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "monaco-editor": "^0.52.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.9.0",
+    "vite": "^6.0.0",
+    "@xterm/xterm": "^5.5.0",
+    "@xterm/addon-fit": "^0.10.0"
+  },
+  "build": {
+    "appId": "com.infranexus.desktop",
+    "productName": "InfraNexus",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*"
+    ],
+    "mac": {
+      "target": ["dmg", "zip"],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "hardenedRuntime": true
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "assets/icon.ico"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "your-org",
+      "repo": "infranexus-desktop"
+    }
+  }
+}
