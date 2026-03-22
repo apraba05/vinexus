@@ -20,6 +20,7 @@ model User {
   accounts         Account[]
   sessions         Session[]
   subscriptions    Subscription[]
+  aiUsage          AiUsage[]
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 }
@@ -94,6 +95,7 @@ model Subscription {
   currentPeriodEnd     DateTime?
   cancelAtPeriodEnd    Boolean   @default(false)
   canceledAt           DateTime?
+  isAdminGrant         Boolean   @default(false)
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan                 Plan      @relation(fields: [planId], references: [id])
   createdAt            DateTime  @default(now())
@@ -101,4 +103,19 @@ model Subscription {
 
   @@index([userId])
   @@index([status])
+}
+
+model AiUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String
+  model     String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, model])
+  @@index([userId])
+  @@index([date])
 }
