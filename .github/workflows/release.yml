@@ -21,7 +21,15 @@ jobs:
 
       - name: Install root dependencies
         working-directory: vm-ide
-        run: npm install --ignore-scripts --no-optional
+        run: npm install --ignore-scripts
+
+      - name: Prepare native modules (macOS)
+        working-directory: vm-ide
+        run: |
+          # Remove cpu-features (optional dep of ssh2 that fails to recompile for Electron)
+          rm -rf node_modules/cpu-features
+          # Make app-builder executable (--ignore-scripts skips postinstall chmod)
+          find node_modules/app-builder-bin -type f ! -name "*.js" ! -name "*.json" ! -name "*.md" ! -name "*.txt" | xargs chmod +x 2>/dev/null || true
 
       - name: Install frontend dependencies
         working-directory: vm-ide/frontend
@@ -71,7 +79,14 @@ jobs:
 
       - name: Install root dependencies
         working-directory: vm-ide
-        run: npm install --ignore-scripts --no-optional
+        run: npm install --ignore-scripts
+
+      - name: Prepare native modules (Windows)
+        working-directory: vm-ide
+        shell: bash
+        run: |
+          # Remove cpu-features (optional dep of ssh2 that fails to recompile for Electron)
+          rm -rf node_modules/cpu-features
 
       - name: Install frontend dependencies
         working-directory: vm-ide/frontend
@@ -132,7 +147,15 @@ jobs:
 
       - name: Install root dependencies
         working-directory: vm-ide
-        run: npm install --ignore-scripts --no-optional
+        run: npm install --ignore-scripts
+
+      - name: Prepare native modules (Linux)
+        working-directory: vm-ide
+        run: |
+          # Remove cpu-features (optional dep of ssh2 that fails to recompile for Electron)
+          rm -rf node_modules/cpu-features
+          # Make app-builder executable (--ignore-scripts skips postinstall chmod)
+          find node_modules/app-builder-bin -type f ! -name "*.js" ! -name "*.json" ! -name "*.md" ! -name "*.txt" | xargs chmod +x 2>/dev/null || true
 
       - name: Install frontend dependencies
         working-directory: vm-ide/frontend
