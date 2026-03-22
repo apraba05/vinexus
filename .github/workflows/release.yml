@@ -1,0 +1,214 @@
+name: Build & Release Desktop App
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-mac:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: vm-ide/package-lock.json
+
+      - name: Install root dependencies
+        working-directory: vm-ide
+        run: npm ci --ignore-scripts
+
+      - name: Install frontend dependencies
+        working-directory: vm-ide/frontend
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: vm-ide/backend
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        working-directory: vm-ide
+        run: npx electron-rebuild -f -w node-pty
+
+      - name: Build frontend
+        working-directory: vm-ide/frontend
+        env:
+          NEXT_PUBLIC_APP_URL: https://vinexus.space
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+        run: npm run build
+
+      - name: Build backend
+        working-directory: vm-ide/backend
+        run: npm run build
+
+      - name: Build Electron app (macOS)
+        working-directory: vm-ide
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac --publish never
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-build
+          path: |
+            vm-ide/dist/*.dmg
+            vm-ide/dist/*.zip
+          retention-days: 1
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: vm-ide/package-lock.json
+
+      - name: Install root dependencies
+        working-directory: vm-ide
+        run: npm ci --ignore-scripts
+
+      - name: Install frontend dependencies
+        working-directory: vm-ide/frontend
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: vm-ide/backend
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        working-directory: vm-ide
+        run: npx electron-rebuild -f -w node-pty
+
+      - name: Build frontend
+        working-directory: vm-ide/frontend
+        env:
+          NEXT_PUBLIC_APP_URL: https://vinexus.space
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+        run: npm run build
+
+      - name: Build backend
+        working-directory: vm-ide/backend
+        run: npm run build
+
+      - name: Build Electron app (Windows)
+        working-directory: vm-ide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish never
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            vm-ide/dist/*.exe
+          retention-days: 1
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: vm-ide/package-lock.json
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev rpm
+
+      - name: Install root dependencies
+        working-directory: vm-ide
+        run: npm ci --ignore-scripts
+
+      - name: Install frontend dependencies
+        working-directory: vm-ide/frontend
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: vm-ide/backend
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        working-directory: vm-ide
+        run: npx electron-rebuild -f -w node-pty
+
+      - name: Build frontend
+        working-directory: vm-ide/frontend
+        env:
+          NEXT_PUBLIC_APP_URL: https://vinexus.space
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+        run: npm run build
+
+      - name: Build backend
+        working-directory: vm-ide/backend
+        run: npm run build
+
+      - name: Build Electron app (Linux)
+        working-directory: vm-ide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --linux AppImage deb rpm --publish never
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            vm-ide/dist/*.AppImage
+            vm-ide/dist/*.deb
+            vm-ide/dist/*.rpm
+          retention-days: 1
+
+  release:
+    name: Create GitHub Release
+    needs: [build-mac, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Vinexus ${{ github.ref_name }}
+          body: |
+            ## Vinexus ${{ github.ref_name }}
+
+            ### Downloads
+            | Platform | File |
+            |----------|------|
+            | macOS | `Vinexus-mac.dmg` |
+            | Windows | `Vinexus-Setup.exe` |
+            | Linux | `Vinexus.AppImage`, `.deb`, `.rpm` |
+
+            ### Install instructions
+            Visit [vinexus.space/download](https://vinexus.space/download) for detailed setup steps.
+          files: artifacts/**/*
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

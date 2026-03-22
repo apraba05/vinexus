@@ -1,14 +1,42 @@
 {
-  "name": "vela",
+  "name": "vinexus",
   "version": "1.0.0",
-  "productName": "Vela",
+  "productName": "Vinexus",
   "description": "Desktop IDE for managing and editing code on virtual machines",
   "author": {
-    "name": "Vela",
-    "email": "support@vela.dev"
+    "name": "Vinexus",
+    "email": "support@vinexus.dev"
   },
   "private": true,
   "main": "electron/main.js",
+  "build": {
+    "appId": "com.vinexus.desktop",
+    "productName": "Vinexus",
+    "icon": "electron/assets/icon",
+    "artifactName": "${productName}-${os}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "icon": "electron/assets/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "artifactName": "Vinexus-mac.${ext}"
+    },
+    "dmg": {
+      "artifactName": "Vinexus-mac.dmg"
+    },
+    "win": {
+      "icon": "electron/assets/icon.png",
+      "artifactName": "Vinexus-Setup.${ext}"
+    },
+    "nsis": {
+      "artifactName": "Vinexus-Setup.exe"
+    },
+    "linux": {
+      "icon": "electron/assets/icon.png",
+      "artifactName": "Vinexus.${ext}"
+    }
+  },
   "scripts": {
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -35,7 +63,7 @@
     "@prisma/client": "^6.19.2",
     "bcryptjs": "^3.0.3",
     "electron-log": "5.4.3",
-    "electron-store": "11.0.2",
+    "electron-store": "10.0.0",
     "electron-updater": "6.8.3",
     "node-pty": "1.1.0",
     "ssh2": "1.17.0",
