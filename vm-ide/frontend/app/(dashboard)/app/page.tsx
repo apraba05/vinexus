@@ -672,10 +672,6 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
             isDeploying={deployment.loading}
             showCommands={showCommands}
             onToggleCommands={() => setShowCommands((v) => !v)}
-            onLogs={handleLogs}
-            onServerCommand={handleServerCommand}
-            onSignOut={handleLogout}
-            userName={user.name}
           >
             {activeFile && (<ValidationBadge report={validationReport} loading={validating} onValidate={handleValidate} disabled={!sessionId} />)}
           </Toolbar>
