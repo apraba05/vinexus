@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { useTheme } from "@/lib/ThemeContext";
 
 export default function NavBar() {
+  const { D, isDark, toggle } = useTheme();
   const { data: session } = useSession();
   const [scrolled, setScrolled] = useState(false);
 
-  const plan = (session as any)?.plan || "free";
-  const isPro = plan === "pro";
+  const role = (session as any)?.role;
+  const isOwner = role === "owner";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -17,41 +19,77 @@ export default function NavBar() {
   }, []);
 
   return (
-    <nav style={{ ...styles.nav, ...(scrolled ? styles.navScrolled : {}) }}>
-      <div style={styles.inner}>
-        <Link href="/" style={styles.logo}>
-          <div style={styles.logoMark}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3fffa2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <nav style={{
+      position: "sticky",
+      top: 0,
+      zIndex: 50,
+      background: scrolled
+        ? (isDark ? "rgba(13,17,23,0.92)" : "rgba(249,249,255,0.92)")
+        : "transparent",
+      backdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
+      WebkitBackdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
+      borderBottom: scrolled ? `1px solid ${D.outlineVariant}` : "1px solid transparent",
+      transition: "all 0.25s ease",
+    }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: `${D.primary}18`,
+            border: `1px solid ${D.primary}33`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={D.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="12 2 2 7 12 12 22 7 12 2" />
               <polyline points="2 17 12 22 22 17" />
               <polyline points="2 12 12 17 22 12" />
             </svg>
           </div>
-          <span style={styles.logoText}>Vela</span>
+          <span style={{ fontSize: 16, fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.03em" }}>Vinexus</span>
         </Link>
 
-        <div style={styles.links}>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {session ? (
             <>
-              <Link href="/dashboard" className="nav-link" style={styles.link}>Dashboard</Link>
-              <Link href="/app" className="nav-link" style={styles.link}>IDE</Link>
-              <Link href="/docs" className="nav-link" style={styles.link}>Docs</Link>
-              <Link href="/account" className="nav-link" style={styles.link}>Account</Link>
-              {(session as any).role === "admin" && (
-                <Link href="/admin" className="nav-link" style={{ ...styles.link, color: "#eab308" }}>Admin</Link>
+              <Link href="/dashboard" style={{ color: D.onSurfaceVariant, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Dashboard</Link>
+              <Link href="/app" style={{ color: D.onSurfaceVariant, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>IDE</Link>
+              <Link href="/account" style={{ color: D.onSurfaceVariant, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Account</Link>
+              {isOwner && (
+                <Link href="/admin" style={{ color: "#eab308", textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Admin</Link>
               )}
-              {!isPro && (
-                <Link href="/pricing" style={styles.ctaBtn}>Upgrade to Pro</Link>
-              )}
-              <button style={styles.ghostBtn} onClick={() => signOut({ callbackUrl: "/" })}>
+              <button
+                onClick={toggle}
+                style={{ background: "none", border: `1px solid ${D.outlineVariant}`, borderRadius: 8, cursor: "pointer", padding: "6px 8px", color: D.onSurfaceVariant, display: "flex", alignItems: "center" }}
+              >
+                {isDark ? "☀" : "☾"}
+              </button>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                style={{ padding: "7px 16px", background: "transparent", color: D.onSurfaceVariant, border: `1px solid ${D.outlineVariant}`, borderRadius: 9999, fontSize: 13, fontWeight: 500, cursor: "pointer" }}
+              >
                 Sign Out
               </button>
             </>
           ) : (
             <>
-              <Link href="/pricing" className="nav-link" style={styles.link}>Pricing</Link>
-              <Link href="/login" className="nav-link" style={styles.link}>Sign In</Link>
-              <Link href="/signup" style={styles.ctaBtn}>Get Started</Link>
+              <Link href="/pricing" style={{ color: D.onSurfaceVariant, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Pricing</Link>
+              <Link href="/docs" style={{ color: D.onSurfaceVariant, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Docs</Link>
+              <Link href="/download" style={{ color: D.onSurfaceVariant, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Download</Link>
+              <button
+                onClick={toggle}
+                style={{ background: "none", border: `1px solid ${D.outlineVariant}`, borderRadius: 8, cursor: "pointer", padding: "6px 8px", color: D.onSurfaceVariant, display: "flex", alignItems: "center" }}
+              >
+                {isDark ? "☀" : "☾"}
+              </button>
+              <Link href="/login" style={{ color: D.onSurfaceVariant, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Sign In</Link>
+              <Link href="/signup" style={{
+                display: "inline-flex", alignItems: "center",
+                padding: "8px 20px", borderRadius: 9999,
+                background: D.primary, color: "#fff",
+                fontSize: 14, fontWeight: 700, textDecoration: "none",
+              }}>
+                Get Started
+              </Link>
             </>
           )}
         </div>
@@ -59,86 +97,3 @@ export default function NavBar() {
     </nav>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  nav: {
-    position: "sticky",
-    top: 0,
-    zIndex: 50,
-    background: "transparent",
-    borderBottom: "1px solid transparent",
-    transition: "all 0.25s ease",
-  },
-  navScrolled: {
-    background: "rgba(11, 17, 32, 0.92)",
-    backdropFilter: "blur(24px) saturate(180%)",
-    WebkitBackdropFilter: "blur(24px) saturate(180%)",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-  },
-  inner: {
-    maxWidth: 1200,
-    margin: "0 auto",
-    padding: "0 24px",
-    height: 64,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: 9,
-    textDecoration: "none",
-  },
-  logoMark: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
-    background: "rgba(63,255,162,0.07)",
-    border: "1px solid rgba(63,255,162,0.15)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoText: {
-    fontSize: 16,
-    fontWeight: 700,
-    color: "#ffffff",
-    letterSpacing: "-0.02em",
-  },
-  links: {
-    display: "flex",
-    alignItems: "center",
-    gap: 28,
-  },
-  link: {
-    color: "#8fa3c8",
-    textDecoration: "none",
-    fontSize: 14,
-    fontWeight: 500,
-    transition: "color 0.15s",
-  },
-  ctaBtn: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "8px 20px",
-    borderRadius: 9999,
-    background: "#3fffa2",
-    color: "#0b1120",
-    fontSize: 14,
-    fontWeight: 700,
-    textDecoration: "none",
-    transition: "all 0.15s",
-  },
-  ghostBtn: {
-    padding: "8px 18px",
-    background: "transparent",
-    color: "#8fa3c8",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 9999,
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all 0.15s",
-  },
-};
