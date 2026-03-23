@@ -33,7 +33,7 @@ log.info("Vinexus Desktop starting", { version: app.getVersion(), pid: process.p
 const FRONTEND_PORT = 3000;
 const BACKEND_PORT = 4000;
 const DEV_MODE = !app.isPackaged;
-const APP_URL = `http://localhost:${FRONTEND_PORT}`;
+const APP_URL = `http://localhost:${FRONTEND_PORT}/app`;
 const DEEP_LINK_PROTOCOL = "vinexus";
 
 // ─── Electron Store (window state) ────────────────────────────────────────────

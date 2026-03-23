@@ -23,6 +23,7 @@
 const { ipcMain, app, shell } = require("electron");
 const Store = require("electron-store");
 const log = require("electron-log");
+const http = require("http");
 
 // ─── Encrypted Stores ─────────────────────────────────────────────────────────
 
@@ -132,6 +133,87 @@ function registerAuthHandlers() {
     } catch (err) {
       log.error("prefs:set error:", err);
       return { error: String(err.message) };
+    }
+  });
+
+  // ── Desktop Auth (Electron-only login/register/session) ──────────────────
+
+  /** Helper: POST JSON to a localhost Next.js API route */
+  function localPost(path, body) {
+    return new Promise((resolve, reject) => {
+      const payload = JSON.stringify(body);
+      const req = http.request(
+        { hostname: "127.0.0.1", port: 3000, path, method: "POST",
+          headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) } },
+        (res) => {
+          let data = "";
+          res.on("data", (c) => { data += c; });
+          res.on("end", () => {
+            try { resolve(JSON.parse(data)); } catch { resolve({}); }
+          });
+        }
+      );
+      req.on("error", reject);
+      req.write(payload);
+      req.end();
+    });
+  }
+
+  ipcMain.handle("auth:desktopLogin", async (_event, { email, password }) => {
+    try {
+      const result = await localPost("/api/auth/desktop-login", { email, password });
+      if (result.user) {
+        tokenStore.set("user", result.user);
+        return { user: result.user };
+      }
+      return { error: result.error || "Login failed" };
+    } catch (err) {
+      log.error("auth:desktopLogin error:", err);
+      return { error: String(err.message) };
+    }
+  });
+
+  ipcMain.handle("auth:desktopRegister", async (_event, { email, name, password }) => {
+    try {
+      const reg = await localPost("/api/auth/signup", { email, name, password });
+      if (reg.error) return { error: reg.error };
+      // Auto-login after registration
+      const result = await localPost("/api/auth/desktop-login", { email, password });
+      if (result.user) {
+        tokenStore.set("user", result.user);
+        return { user: result.user };
+      }
+      return { error: "Registration succeeded but login failed — please sign in." };
+    } catch (err) {
+      log.error("auth:desktopRegister error:", err);
+      return { error: String(err.message) };
+    }
+  });
+
+  ipcMain.handle("auth:getSession", (_event) => {
+    try {
+      const user = tokenStore.get("user", null);
+      return { user };
+    } catch (err) {
+      log.error("auth:getSession error:", err);
+      return { user: null };
+    }
+  });
+
+  ipcMain.handle("auth:syncPlan", async (_event) => {
+    try {
+      const user = tokenStore.get("user", null);
+      if (!user?.email) return { ok: false };
+      const result = await localPost("/api/auth/desktop-plan", { email: user.email });
+      if (result.planKey) {
+        const updated = { ...user, plan: result.planKey, features: result.features };
+        tokenStore.set("user", updated);
+        return { ok: true, plan: result.planKey, features: result.features };
+      }
+      return { ok: false };
+    } catch (err) {
+      log.error("auth:syncPlan error:", err);
+      return { ok: false };
     }
   });
 

@@ -3,6 +3,23 @@ import React from "react";
 import { usePlan } from "@/contexts/PlanContext";
 import Link from "next/link";
 
+const PRICING_URL = "https://vinexus.space/pricing";
+
+function UpgradeLink({ style }: { style: React.CSSProperties }) {
+  const isEl = typeof window !== "undefined" && "electronAPI" in window;
+  if (isEl) {
+    return (
+      <button
+        style={{ ...style, background: "linear-gradient(135deg, #06b6d4, #0891b2)", border: "none", cursor: "pointer" }}
+        onClick={() => (window as any).electronAPI.app.openExternal(PRICING_URL)}
+      >
+        Upgrade to Pro
+      </button>
+    );
+  }
+  return <Link href="/pricing" style={style}>Upgrade to Pro</Link>;
+}
+
 export default function UpgradeBanner() {
   const { isPro, isLoading } = usePlan();
 
@@ -14,9 +31,7 @@ export default function UpgradeBanner() {
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
       <span>Unlock Server Commands &amp; AI Insights</span>
-      <Link href="/pricing" style={styles.link}>
-        Upgrade to Pro
-      </Link>
+      <UpgradeLink style={styles.link} />
     </div>
   );
 }

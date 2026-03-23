@@ -3,6 +3,8 @@ import React from "react";
 import { usePlan, PlanFeatures } from "@/contexts/PlanContext";
 import Link from "next/link";
 
+const PRICING_URL = "https://vinexus.space/pricing";
+
 interface Props {
   feature: keyof PlanFeatures;
   children: React.ReactNode;
@@ -20,6 +22,8 @@ export default function ProFeature({ feature, children, fallback }: Props) {
 
   if (fallback) return <>{fallback}</>;
 
+  const isEl = typeof window !== "undefined" && "electronAPI" in window;
+
   return (
     <div style={styles.locked}>
       <div style={styles.lockIcon}>
@@ -29,9 +33,16 @@ export default function ProFeature({ feature, children, fallback }: Props) {
         </svg>
       </div>
       <span style={styles.lockText}>Pro Feature</span>
-      <Link href="/pricing" style={styles.upgradeLink}>
-        Upgrade
-      </Link>
+      {isEl ? (
+        <button
+          style={{ ...styles.upgradeLink, border: "none", cursor: "pointer" }}
+          onClick={() => (window as any).electronAPI.app.openExternal(PRICING_URL)}
+        >
+          Upgrade
+        </button>
+      ) : (
+        <Link href="/pricing" style={styles.upgradeLink}>Upgrade</Link>
+      )}
     </div>
   );
 }

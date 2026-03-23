@@ -39,6 +39,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
     deleteVmCredentials: (id) => ipcRenderer.invoke("auth:deleteVmCredentials", id),
     /** Listen for OAuth deep-link callback */
     onDeepLink: (callback) => on("auth:deep-link", callback),
+    /** Authenticate with email + password (desktop-only) */
+    login: (creds) => ipcRenderer.invoke("auth:desktopLogin", creds),
+    /** Register a new account then auto-login (desktop-only) */
+    register: (creds) => ipcRenderer.invoke("auth:desktopRegister", creds),
+    /** Get the currently stored desktop session */
+    getSession: () => ipcRenderer.invoke("auth:getSession"),
+    /** Sync the user's plan from the server */
+    syncPlan: () => ipcRenderer.invoke("auth:syncPlan"),
   },
 
   // ── SSH Session Management ─────────────────────────────────────────────────

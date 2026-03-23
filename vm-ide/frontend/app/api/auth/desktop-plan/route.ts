@@ -1,11 +1,7 @@
 /**
  * /api/auth/desktop-plan
  *
- * Localhost-only endpoint used by the Electron desktop app to fetch
- * a user's current plan from the database after they log in locally.
- *
- * Security: only reachable from 127.0.0.1 (the embedded Next.js server);
- * blocked for any request that arrives via an external proxy.
+ * Endpoint used by the Electron desktop app to fetch a user's current plan.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -17,18 +13,7 @@ const DEFAULT_FEATURES = {
   deploy: false, commands: false, ai: false,
 };
 
-function isLocalhost(req: NextRequest): boolean {
-  // Reject if the request came through an external proxy
-  if (req.headers.get("x-forwarded-for")) return false;
-  const host = req.headers.get("host") ?? "";
-  return host.startsWith("localhost:") || host.startsWith("127.0.0.1:");
-}
-
 export async function POST(req: NextRequest) {
-  if (!isLocalhost(req)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   let email: string;
   try {
     const body = await req.json();
@@ -47,7 +32,6 @@ export async function POST(req: NextRequest) {
   });
 
   if (!user) {
-    // Unknown user — return free plan so the app can still open
     return NextResponse.json({ planKey: "free", planName: "Free", features: DEFAULT_FEATURES });
   }
 
@@ -61,8 +45,8 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({
-    planKey:  sub?.plan.name     ?? "free",
+    planKey:  sub?.plan.name        ?? "free",
     planName: sub?.plan.displayName ?? "Free",
-    features: sub?.plan.features ?? DEFAULT_FEATURES,
+    features: sub?.plan.features    ?? DEFAULT_FEATURES,
   });
 }
