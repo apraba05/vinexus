@@ -128,7 +128,7 @@ export default function AccountPage() {
     display: "inline-flex", alignItems: "center", justifyContent: "center",
     padding: "10px 20px", borderRadius: 9999, fontSize: 13, fontWeight: 600,
     cursor: "pointer", border: "none", fontFamily: "inherit",
-    background: D.inverseSurface, color: D.inverseOnSurface,
+    background: D.inverseSurface, color: D.surface,
     transition: "opacity 0.15s",
   };
 
