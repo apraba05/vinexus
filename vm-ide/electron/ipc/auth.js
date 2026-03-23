@@ -232,4 +232,17 @@ function registerAuthHandlers() {
   log.info("Auth IPC handlers registered");
 }
 
-module.exports = { registerAuthHandlers };
+/**
+ * Store a user object directly into the token store.
+ * Called from main.js when a vinexus:// deep-link OAuth callback arrives.
+ */
+function storeUser(user) {
+  try {
+    tokenStore.set("user", user);
+    log.info("OAuth user stored via deep-link:", user?.email);
+  } catch (err) {
+    log.error("storeUser error:", err);
+  }
+}
+
+module.exports = { registerAuthHandlers, storeUser };

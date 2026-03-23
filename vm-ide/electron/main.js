@@ -20,7 +20,7 @@ const { autoUpdater } = require("electron-updater");
 const Store = require("electron-store");
 
 const menu = require("./menu");
-const { registerAuthHandlers } = require("./ipc/auth");
+const { registerAuthHandlers, storeUser } = require("./ipc/auth");
 const { registerSshHandlers } = require("./ipc/ssh");
 const { registerPtyHandlers, cleanupPty } = require("./ipc/pty");
 
@@ -287,9 +287,8 @@ function createWindow() {
   });
 
   // Handle navigations:
-  //  - OAuth provider redirects → open in system browser (not deep-link)
   //  - /signup → redirect to /login (desktop users already have accounts)
-  //  - vinexus:// deep links → forward to auth handler
+  //  - NextAuth OAuth initiation (/api/auth/signin/google, /github) → open via vinexus.space
   //  - other external URLs → block
   mainWindow.webContents.on("will-navigate", (event, url) => {
     const isLocal = url.startsWith("http://localhost") || url.startsWith("http://127.0.0.1");
@@ -300,19 +299,25 @@ function createWindow() {
         if (parsed.pathname === "/signup" || parsed.pathname.startsWith("/signup")) {
           event.preventDefault();
           mainWindow.webContents.loadURL(`http://localhost:${FRONTEND_PORT}/login`);
+          return;
+        }
+        // Intercept OAuth initiation — redirect through vinexus.space instead of localhost
+        // so Google/GitHub callback URLs (registered for vinexus.space) work correctly.
+        const oauthProviders = ["google", "github"];
+        for (const provider of oauthProviders) {
+          if (parsed.pathname.startsWith(`/api/auth/signin/${provider}`)) {
+            event.preventDefault();
+            const webSignInUrl = `https://vinexus.space/api/auth/signin/${provider}?callbackUrl=%2Fdesktop-callback`;
+            log.info(`OAuth initiation for ${provider} — opening via vinexus.space:`, webSignInUrl);
+            shell.openExternal(webSignInUrl);
+            return;
+          }
         }
       } catch {}
       return; // allow all other local navigations
     }
     event.preventDefault();
-    // OAuth provider redirects must open in the system browser
-    const oauthHosts = ["accounts.google.com", "github.com/login/oauth", "github.com/login/device"];
-    if (oauthHosts.some((h) => url.includes(h))) {
-      shell.openExternal(url);
-    } else {
-      // vinexus:// deep links and everything else
-      handleDeepLink(url);
-    }
+    log.info("Blocked external navigation:", url);
   });
 
   return mainWindow;
@@ -323,12 +328,30 @@ function handleDeepLink(url) {
   log.info("Deep link received:", url);
   if (!mainWindow) return;
 
-  // Forward the deep-link URL to the renderer so auth flow can complete
-  mainWindow.webContents.send("auth:deep-link", url);
-
   // Focus the window
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.focus();
+
+  // Handle vinexus://auth/callback?user=BASE64_JSON — OAuth flow via vinexus.space
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === "auth" && parsed.pathname === "/callback") {
+      const encoded = parsed.searchParams.get("user");
+      if (encoded) {
+        const user = JSON.parse(Buffer.from(encoded, "base64").toString("utf8"));
+        log.info("OAuth deep-link callback — storing user:", user?.email);
+        storeUser(user);
+        // Navigate the app to the IDE
+        mainWindow.loadURL(APP_URL).catch((err) => log.error("Failed to navigate after OAuth:", err));
+        return;
+      }
+    }
+  } catch (err) {
+    log.warn("Deep link parse error:", err);
+  }
+
+  // Fallback: forward the raw URL to the renderer
+  mainWindow.webContents.send("auth:deep-link", url);
 }
 
 // ─── App Events ───────────────────────────────────────────────────────────────
