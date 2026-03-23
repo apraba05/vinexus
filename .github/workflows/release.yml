@@ -19,54 +19,42 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install root dependencies
-        working-directory: vm-ide
+      - name: Install desktop dependencies
+        working-directory: vm-ide/desktop
         run: npm install --ignore-scripts
 
       - name: Prepare native modules (macOS)
-        working-directory: vm-ide
+        working-directory: vm-ide/desktop
         run: |
-          # Remove cpu-features (optional dep of ssh2 that fails to recompile for Electron)
-          rm -rf node_modules/cpu-features
-          # Make app-builder executable (--ignore-scripts skips postinstall chmod)
           find node_modules/app-builder-bin -type f ! -name "*.js" ! -name "*.json" ! -name "*.md" ! -name "*.txt" | xargs chmod +x 2>/dev/null || true
-          # Remove macOS quarantine flag from binaries (blocks execution on CI)
           find node_modules/app-builder-bin -type f -exec xattr -d com.apple.quarantine {} \; 2>/dev/null || true
 
-      - name: Install frontend dependencies
-        working-directory: vm-ide/frontend
-        run: npm install
+      - name: Build renderer (Vite)
+        working-directory: vm-ide/desktop
+        run: npx vite build
 
-      - name: Install backend dependencies
-        working-directory: vm-ide/backend
-        run: npm install
+      - name: Build main process (TypeScript)
+        working-directory: vm-ide/desktop
+        run: npx tsc -p tsconfig.main.json
 
-      - name: Build frontend
-        working-directory: vm-ide/frontend
-        env:
-          NEXT_PUBLIC_APP_URL: https://vinexus.space
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-          DATABASE_URL: file:./dummy.db
-        run: npm run build
-
-      - name: Build backend
-        working-directory: vm-ide/backend
-        run: npm run build
-
-      - name: Build Electron app (macOS)
-        working-directory: vm-ide
+      - name: Package with electron-builder (macOS)
+        working-directory: vm-ide/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npx electron-builder --mac --x64 --publish never
 
-      - name: Upload macOS artifacts
+      - name: Rename artifacts to stable names
+        working-directory: vm-ide/desktop/release
+        run: |
+          DMG=$(ls *.dmg 2>/dev/null | head -1)
+          if [ -n "$DMG" ]; then mv "$DMG" Vinexus-mac.dmg; fi
+
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: mac-build
-          path: |
-            vm-ide/dist/*.dmg
-            vm-ide/dist/*.zip
+          path: vm-ide/desktop/release/Vinexus-mac.dmg
           retention-days: 1
 
   build-windows:
@@ -79,63 +67,52 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install root dependencies
-        working-directory: vm-ide
+      - name: Install desktop dependencies
+        working-directory: vm-ide/desktop
         run: npm install --ignore-scripts
 
-      - name: Prepare native modules (Windows)
-        working-directory: vm-ide
-        shell: bash
-        run: |
-          # Remove cpu-features (optional dep of ssh2 that fails to recompile for Electron)
-          rm -rf node_modules/cpu-features
+      - name: Build renderer (Vite)
+        working-directory: vm-ide/desktop
+        run: npx vite build
 
-      - name: Install frontend dependencies
-        working-directory: vm-ide/frontend
-        run: npm install
+      - name: Build main process (TypeScript)
+        working-directory: vm-ide/desktop
+        run: npx tsc -p tsconfig.main.json
 
-      - name: Install backend dependencies
-        working-directory: vm-ide/backend
-        run: npm install
-
-      - name: Build frontend
-        working-directory: vm-ide/frontend
-        env:
-          NEXT_PUBLIC_APP_URL: https://vinexus.space
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-          DATABASE_URL: file:./dummy.db
-        run: npm run build
-
-      - name: Build backend
-        working-directory: vm-ide/backend
-        run: npm run build
-
-      - name: Build Electron app (Windows)
-        working-directory: vm-ide
+      - name: Package with electron-builder (Windows)
+        working-directory: vm-ide/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win --publish never
+        run: npx electron-builder --win --x64 --publish never
 
-      - name: Upload Windows artifacts
+      - name: Rename artifacts to stable names
+        working-directory: vm-ide/desktop/release
+        shell: bash
+        run: |
+          EXE=$(ls *.exe 2>/dev/null | head -1)
+          if [ -n "$EXE" ]; then mv "$EXE" Vinexus-Setup.exe; fi
+
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: |
-            vm-ide/dist/*.exe
+          path: vm-ide/desktop/release/Vinexus-Setup.exe
           retention-days: 1
 
   build-linux:
     name: Build Linux
     runs-on: ubuntu-latest
-    container:
-      image: node:20-bullseye
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Install system dependencies
         run: |
-          apt-get update
-          apt-get install -y \
+          sudo apt-get update
+          sudo apt-get install -y \
             libgtk-3-dev \
             libwebkit2gtk-4.0-dev \
             libayatana-appindicator3-dev \
@@ -147,52 +124,44 @@ jobs:
             fakeroot \
             dpkg
 
-      - name: Install root dependencies
-        working-directory: vm-ide
+      - name: Install desktop dependencies
+        working-directory: vm-ide/desktop
         run: npm install --ignore-scripts
 
       - name: Prepare native modules (Linux)
-        working-directory: vm-ide
+        working-directory: vm-ide/desktop
         run: |
-          # Remove cpu-features (optional dep of ssh2 that fails to recompile for Electron)
-          rm -rf node_modules/cpu-features
-          # Make app-builder executable (--ignore-scripts skips postinstall chmod)
           find node_modules/app-builder-bin -type f ! -name "*.js" ! -name "*.json" ! -name "*.md" ! -name "*.txt" | xargs chmod +x 2>/dev/null || true
 
-      - name: Install frontend dependencies
-        working-directory: vm-ide/frontend
-        run: npm install
+      - name: Build renderer (Vite)
+        working-directory: vm-ide/desktop
+        run: npx vite build
 
-      - name: Install backend dependencies
-        working-directory: vm-ide/backend
-        run: npm install
+      - name: Build main process (TypeScript)
+        working-directory: vm-ide/desktop
+        run: npx tsc -p tsconfig.main.json
 
-      - name: Build frontend
-        working-directory: vm-ide/frontend
-        env:
-          NEXT_PUBLIC_APP_URL: https://vinexus.space
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-          DATABASE_URL: file:./dummy.db
-        run: npm run build
-
-      - name: Build backend
-        working-directory: vm-ide/backend
-        run: npm run build
-
-      - name: Build Electron app (Linux)
-        working-directory: vm-ide
+      - name: Package with electron-builder (Linux)
+        working-directory: vm-ide/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --linux AppImage deb rpm --publish never
+        run: npx electron-builder --linux AppImage deb --publish never
+
+      - name: Rename artifacts to stable names
+        working-directory: vm-ide/desktop/release
+        run: |
+          APPIMAGE=$(ls *.AppImage 2>/dev/null | head -1)
+          if [ -n "$APPIMAGE" ]; then mv "$APPIMAGE" Vinexus.AppImage; fi
+          DEB=$(ls *.deb 2>/dev/null | head -1)
+          if [ -n "$DEB" ]; then mv "$DEB" Vinexus.deb; fi
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
           path: |
-            vm-ide/dist/*.AppImage
-            vm-ide/dist/*.deb
-            vm-ide/dist/*.rpm
+            vm-ide/desktop/release/Vinexus.AppImage
+            vm-ide/desktop/release/Vinexus.deb
           retention-days: 1
 
   release:
@@ -218,9 +187,14 @@ jobs:
             |----------|------|
             | macOS | `Vinexus-mac.dmg` |
             | Windows | `Vinexus-Setup.exe` |
-            | Linux | `Vinexus.AppImage`, `.deb`, `.rpm` |
+            | Linux | `Vinexus.AppImage`, `Vinexus.deb` |
 
-            Visit [vinexus.space/download](https://vinexus.space/download) for setup instructions.
+            **macOS install (no Gatekeeper dialogs):**
+            ```bash
+            /bin/bash -c "$(curl -fsSL https://vinexus.space/install.sh)"
+            ```
+
+            Or visit [vinexus.space/download](https://vinexus.space/download) for all install options.
           files: artifacts/**/*
           fail_on_unmatched_files: false
         env:

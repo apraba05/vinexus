@@ -1,9 +1,9 @@
 {
-  "name": "infranexus-desktop",
-  "version": "1.0.0",
-  "description": "InfraNexus Desktop IDE — SSH-powered cloud development",
+  "name": "vinexus-desktop",
+  "version": "1.0.5",
+  "description": "Vinexus Desktop IDE — SSH-powered development on virtual machines",
   "main": "dist/main/main.js",
-  "author": "InfraNexus",
+  "author": "Vinexus",
   "license": "MIT",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
@@ -35,8 +35,9 @@
     "@xterm/addon-fit": "^0.10.0"
   },
   "build": {
-    "appId": "com.infranexus.desktop",
-    "productName": "InfraNexus",
+    "appId": "com.vinexus.ide",
+    "productName": "Vinexus",
+    "copyright": "Copyright © 2025 Vinexus",
     "directories": {
       "output": "release"
     },
@@ -44,20 +45,35 @@
       "dist/**/*",
       "assets/**/*"
     ],
+    "asarUnpack": [
+      "node_modules/ssh2/**/*"
+    ],
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        { "target": "dmg", "arch": ["x64"] }
+      ],
       "icon": "assets/icon.icns",
       "category": "public.app-category.developer-tools",
-      "hardenedRuntime": true
+      "gatekeeperAssess": false
     },
     "win": {
-      "target": ["nsis"],
-      "icon": "assets/icon.ico"
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.png",
+      "category": "Development"
     },
     "publish": {
       "provider": "github",
-      "owner": "your-org",
-      "repo": "infranexus-desktop"
+      "owner": "apraba05",
+      "repo": "vinexus",
+      "releaseType": "release"
     }
   }
 }

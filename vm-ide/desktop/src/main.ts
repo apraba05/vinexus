@@ -3,7 +3,7 @@ import { autoUpdater } from "electron-updater";
 import * as path from "path";
 
 // ─── Constants ─────────────────────────────────────────────
-const APP_URL = process.env.INFRANEXUS_URL || "https://infranexus.dev";
+const APP_URL = process.env.VINEXUS_URL || "https://vinexus.dev";
 const IS_DEV = !app.isPackaged;
 const WINDOW_STATE = { width: 1400, height: 900, x: undefined as number | undefined, y: undefined as number | undefined };
 
@@ -21,7 +21,7 @@ function createWindow(): void {
     y: WINDOW_STATE.y,
     minWidth: 900,
     minHeight: 600,
-    title: "InfraNexus",
+    title: "Vinexus",
     titleBarStyle: "hiddenInset", // macOS frameless with traffic lights
     trafficLightPosition: { x: 14, y: 14 },
     backgroundColor: "#09090b",
@@ -77,7 +77,7 @@ function saveWindowState(): void {
 function buildMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
-      label: "InfraNexus",
+      label: "Vinexus",
       submenu: [
         { role: "about" },
         { type: "separator" },
@@ -139,7 +139,7 @@ function buildMenu(): void {
         },
         {
           label: "Report Issue",
-          click: () => shell.openExternal("https://github.com/your-org/infranexus-desktop/issues"),
+          click: () => shell.openExternal("https://github.com/apraba05/vinexus/issues"),
         },
       ],
     },

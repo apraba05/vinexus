@@ -6,7 +6,7 @@ let monacoRef: typeof import("monaco-editor") | null = null;
 async function getMonaco() {
   if (!monacoRef) {
     monacoRef = await import("monaco-editor");
-    monacoRef.editor.defineTheme("infranexus", {
+    monacoRef.editor.defineTheme("vinexus", {
       base: "vs-dark",
       inherit: true,
       rules: [
@@ -141,7 +141,7 @@ export default function App() {
       const editor = monaco.editor.create(editorRef.current!, {
         value: openFile.content,
         language: langMap[ext] || "plaintext",
-        theme: "infranexus",
+        theme: "vinexus",
         fontSize: 13,
         fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace",
         fontLigatures: true,
@@ -237,7 +237,7 @@ export default function App() {
     <div className="ide-root">
       {/* Title bar (drag region) */}
       <div className="title-bar">
-        <span className="title-bar-text">InfraNexus — {connected ? host : "Not Connected"}</span>
+        <span className="title-bar-text">Vinexus — {connected ? host : "Not Connected"}</span>
       </div>
 
       <div className="ide-body">
