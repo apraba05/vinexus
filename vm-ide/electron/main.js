@@ -109,6 +109,7 @@ function startFrontend() {
     frontendProcess = spawn(process.execPath, [serverPath], {
       env: {
         ...process.env,
+        ELECTRON_RUN_AS_NODE: "1", // run Electron binary as plain Node.js, not as an Electron app
         PORT: String(FRONTEND_PORT),
         NODE_ENV: "production",
         HOSTNAME: "127.0.0.1",
@@ -162,9 +163,10 @@ function startBackend() {
     backendProcess = spawn(process.execPath, [serverPath], {
       env: {
         ...process.env,
+        ELECTRON_RUN_AS_NODE: "1", // run Electron binary as plain Node.js, not as an Electron app
         PORT: String(BACKEND_PORT),
         NODE_ENV: "production",
-        FRONTEND_ORIGIN: APP_URL,
+        FRONTEND_ORIGIN: `http://localhost:${FRONTEND_PORT}`,
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
