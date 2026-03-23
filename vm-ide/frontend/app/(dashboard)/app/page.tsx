@@ -303,7 +303,6 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
     setActiveVmSessionId(id); setSessionId(id); setBottomTab("terminal");
   }, []);
 
-  const terminalRef = useRef<any>(null);
 
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -689,12 +688,12 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
           </div>
 
           <div style={styles.bottomHandle} onMouseDown={handleBottomDrag} />
-          <BottomPanelTabs activeTab={bottomTab} onTabChange={setBottomTab} hasDeployStatus={deployment.status !== null} deployFailed={deployment.status?.state === "failed"} plan={user.plan.toLowerCase()} />
+          <BottomPanelTabs activeTab={bottomTab} onTabChange={setBottomTab} hasDeployStatus={deployment.status !== null} deployFailed={deployment.status?.state === "failed"} agentState="" />
 
           <div style={{ ...styles.bottomPanel, height: bottomPanelHeight }}>
             <div style={{ ...styles.panelContent, display: bottomTab === "terminal" ? "flex" : "none" }}>
               <ErrorBoundary fallbackLabel="Terminal">
-                <TerminalPanel ref={terminalRef} sessionId={sessionId} onError={handleError} onActivity={handleTerminalActivity} cdPath={terminalCdPath} onCwdChange={handleTerminalCwdChange} />
+                <TerminalPanel sessionId={sessionId} onError={handleError} onActivity={handleTerminalActivity} cdPath={terminalCdPath} onCwdChange={handleTerminalCwdChange} />
               </ErrorBoundary>
             </div>
             <div style={{ ...styles.panelContent, display: bottomTab === "deploy" ? "flex" : "none" }}>
