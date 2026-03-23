@@ -31,6 +31,12 @@ jobs:
         working-directory: vm-ide/backend
         run: npm install --ignore-scripts
 
+      - name: Generate Prisma client
+        working-directory: vm-ide
+        env:
+          DATABASE_URL: postgresql://placeholder/placeholder
+        run: npx prisma generate
+
       - name: Build frontend (Next.js standalone)
         working-directory: vm-ide/frontend
         env:
@@ -38,7 +44,7 @@ jobs:
           NEXTAUTH_SECRET: build-placeholder
           DATABASE_URL: postgresql://placeholder/placeholder
           NEXT_PUBLIC_APP_URL: http://localhost:3000
-        run: npx prisma generate && npm run build
+        run: npm run build
 
       - name: Build backend
         working-directory: vm-ide/backend
@@ -86,6 +92,12 @@ jobs:
         working-directory: vm-ide/backend
         run: npm install --ignore-scripts
 
+      - name: Generate Prisma client
+        working-directory: vm-ide
+        env:
+          DATABASE_URL: postgresql://placeholder/placeholder
+        run: npx prisma generate
+
       - name: Build frontend (Next.js standalone)
         working-directory: vm-ide/frontend
         env:
@@ -93,7 +105,7 @@ jobs:
           NEXTAUTH_SECRET: build-placeholder
           DATABASE_URL: postgresql://placeholder/placeholder
           NEXT_PUBLIC_APP_URL: http://localhost:3000
-        run: npx prisma generate && npm run build
+        run: npm run build
 
       - name: Build backend
         working-directory: vm-ide/backend
@@ -148,6 +160,12 @@ jobs:
         working-directory: vm-ide/backend
         run: npm install --ignore-scripts
 
+      - name: Generate Prisma client
+        working-directory: vm-ide
+        env:
+          DATABASE_URL: postgresql://placeholder/placeholder
+        run: npx prisma generate
+
       - name: Build frontend (Next.js standalone)
         working-directory: vm-ide/frontend
         env:
@@ -155,7 +173,7 @@ jobs:
           NEXTAUTH_SECRET: build-placeholder
           DATABASE_URL: postgresql://placeholder/placeholder
           NEXT_PUBLIC_APP_URL: http://localhost:3000
-        run: npx prisma generate && npm run build
+        run: npm run build
 
       - name: Build backend
         working-directory: vm-ide/backend
