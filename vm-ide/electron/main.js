@@ -49,9 +49,7 @@ const windowStore = new Store({
 function loadRuntimeConfig() {
   if (DEV_MODE) return; // dev mode uses .env files loaded by Next.js directly
   const fs = require("fs");
-  // The CI writes runtime.env into the standalone dir, which is packed into the asar.
-  // Electron's fs patching lets readFileSync transparently read asar-internal paths.
-  const envPath = path.join(process.resourcesPath, "app.asar.unpacked", "frontend", ".next", "standalone", "runtime.env");
+  const envPath = path.join(__dirname, "..", "frontend", ".next", "standalone", "runtime.env");
   try {
     const lines = fs.readFileSync(envPath, "utf8").split("\n");
     for (const line of lines) {
@@ -103,8 +101,8 @@ function startFrontend() {
   }
 
   return new Promise((resolve, reject) => {
-    // asarUnpack extracts this to app.asar.unpacked/ — spawn() needs a real filesystem path.
-    const serverPath = path.join(process.resourcesPath, "app.asar.unpacked", "frontend", ".next", "standalone", "server.js");
+    // asar: false means __dirname is a real filesystem path — spawn() can reach this directly.
+    const serverPath = path.join(__dirname, "..", "frontend", ".next", "standalone", "server.js");
     log.info("Starting Next.js standalone server:", serverPath);
 
     frontendProcess = spawn(process.execPath, [serverPath], {
@@ -158,7 +156,7 @@ function startBackend() {
   }
 
   return new Promise((resolve, reject) => {
-    const serverPath = path.join(process.resourcesPath, "app.asar.unpacked", "backend", "dist", "server.js");
+    const serverPath = path.join(__dirname, "..", "backend", "dist", "server.js");
     log.info("Starting Express backend:", serverPath);
 
     backendProcess = spawn(process.execPath, [serverPath], {

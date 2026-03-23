@@ -16,11 +16,17 @@ directories:
   output: dist-electron
   buildResources: electron/assets
 
-# ── Files to include in the app package ─────────────────────────────────────
+# ── Packaging ────────────────────────────────────────────────────────────────
+# asar: false puts all files on the real filesystem inside the app bundle.
+# This lets spawn() reach server.js without any asar-unpacking workarounds
+# (asarUnpack globs silently skip dotfile directories like .next/).
+asar: false
+
 files:
   - electron/**/*
   - frontend/.next/standalone/**/*
   - backend/dist/**/*
+  - backend/node_modules/**/*
   - node_modules/**/*
   - package.json
 
@@ -113,12 +119,8 @@ publish:
   repo: vinexus
   releaseType: release
 
-# ── ASAR Unpacking ───────────────────────────────────────────────────────────
-# Files in asarUnpack are extracted to app.asar.unpacked/ on the real filesystem.
-# spawn() cannot execute scripts from inside an asar archive — anything that
-# needs to run as a child process must be unpacked here.
+# ── Native modules that need to stay on the real filesystem ──────────────────
+# (with asar: false this is redundant, but kept for clarity)
 asarUnpack:
   - node_modules/node-pty/**/*
   - node_modules/ssh2/**/*
-  - frontend/.next/standalone/**/*
-  - backend/dist/**/*
