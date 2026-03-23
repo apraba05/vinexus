@@ -60,8 +60,8 @@ export default function NavBar() {
         alignItems: "center",
         justifyContent: "space-between",
       }}>
-        {/* Logo — text only */}
-        <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+        {/* Logo */}
+        <Link href={session ? "/dashboard" : "/"} style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
           <span style={{
             fontSize: 16,
             fontWeight: 800,
@@ -74,8 +74,9 @@ export default function NavBar() {
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           {session ? (
             <>
-              <NavLink href="/dashboard" color={D.onSurfaceVariant}>Dashboard</NavLink>
-              <NavLink href="/app" color={D.onSurfaceVariant}>IDE</NavLink>
+              <NavLink href="/dashboard" color={D.onSurfaceVariant}>Home</NavLink>
+              <NavLink href="/#features" color={D.onSurfaceVariant}>Features</NavLink>
+              <NavLink href="/pricing" color={D.onSurfaceVariant}>Pricing</NavLink>
               <NavLink href="/docs" color={D.onSurfaceVariant}>Docs</NavLink>
               <NavLink href="/account" color={D.onSurfaceVariant}>Account</NavLink>
               {(session as any).role === "admin" && (
