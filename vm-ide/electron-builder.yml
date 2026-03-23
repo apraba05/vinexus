@@ -17,24 +17,12 @@ directories:
   buildResources: electron/assets
 
 # ── Files to include in the app package ─────────────────────────────────────
-# Only the Electron main-process code and its root node_modules go in the asar.
-# Frontend and backend servers are in extraResources so spawn() can reach them.
 files:
   - electron/**/*
+  - frontend/.next/standalone/**/*
+  - backend/dist/**/*
   - node_modules/**/*
   - package.json
-
-# ── Extra Resources (real filesystem, outside asar — required for spawn()) ───
-# Frontend:  standalone dir mapped to Resources/frontend/ so server.js, its
-#            node_modules, .next/static and public all land at predictable paths.
-# Backend:   dist + its own node_modules so require() resolves dependencies.
-extraResources:
-  - from: frontend/.next/standalone
-    to: frontend
-  - from: backend/dist
-    to: backend/dist
-  - from: backend/node_modules
-    to: backend/node_modules
 
 # ── macOS ─────────────────────────────────────────────────────────────────────
 mac:
@@ -126,7 +114,11 @@ publish:
   releaseType: release
 
 # ── ASAR Unpacking ───────────────────────────────────────────────────────────
-# node-pty native module must be unpacked from asar
+# Files in asarUnpack are extracted to app.asar.unpacked/ on the real filesystem.
+# spawn() cannot execute scripts from inside an asar archive — anything that
+# needs to run as a child process must be unpacked here.
 asarUnpack:
   - node_modules/node-pty/**/*
   - node_modules/ssh2/**/*
+  - frontend/.next/standalone/**/*
+  - backend/dist/**/*
