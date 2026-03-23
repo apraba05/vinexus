@@ -3,7 +3,11 @@
   "version": "1.0.5",
   "description": "Vinexus Desktop IDE — SSH-powered development on virtual machines",
   "main": "dist/main/main.js",
-  "author": "Vinexus",
+  "author": {
+    "name": "Vinexus",
+    "email": "support@vinexus.space"
+  },
+  "homepage": "https://vinexus.space",
   "license": "MIT",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:main\"",
