@@ -116,7 +116,7 @@ export default function AdminPage() {
   const [formMsg, setFormMsg]           = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const userEmail = (session?.user as any)?.email ?? "";
-  const isOwner = (session as any)?.role === "admin" && isOwnerEmail(userEmail);
+  const isOwner = (session as any)?.role === "owner";
 
   const fetchUsers = useCallback(async () => {
     const res = await fetch("/api/admin/users");

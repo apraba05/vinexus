@@ -168,7 +168,7 @@ const FEATURES = [
   },
   {
     title: "Claude AI Integration",
-    desc: "Install Claude Code on your VM and run it from the Vinexus terminal. Full AI pair programming on Premium+.",
+    desc: "Run any AI pair programming tool — Claude Code, Aider, Cursor, or any terminal-based assistant — directly from the Vinexus integrated terminal.",
     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0053db" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>,
   },
 ];
@@ -186,7 +186,7 @@ const PLANS = [
     name: "Premium",
     price: "$19",
     period: "/month",
-    features: ["3 VM connections", "Claude Code access", "AI hints (50/day)", "Deploy automation"],
+    features: ["3 VM connections", "AI pair programming", "AI hints (50/day)", "Deploy automation"],
     cta: "Get Premium",
     href: "/pricing",
   },
@@ -380,16 +380,16 @@ export default function LandingPage() {
               fontSize: 11, fontWeight: 600, color: D.primary,
               marginBottom: 20, letterSpacing: "0.08em", textTransform: "uppercase",
             }}>
-              Premium+ Feature
+              AI Pair Programming
             </div>
             <h2 style={{ fontSize: "clamp(22px, 2.8vw, 36px)", fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.03em", lineHeight: 1.1, margin: "0 0 16px" }}>
-              Claude Code,<br />directly in your terminal
+              Any AI assistant,<br />directly in your terminal
             </h2>
             <p style={{ fontSize: 14, color: D.onSurfaceVariant, lineHeight: 1.75, margin: "0 0 14px" }}>
-              Install Claude Code on your VM and run it from the Vinexus integrated terminal. Get full AI pair programming — Claude can read, write, and execute code directly on your server.
+              Run Claude Code, Aider, or any terminal-based AI tool directly on your VM from the Vinexus integrated terminal. Full AI pair programming — available on any plan.
             </p>
             <p style={{ fontSize: 14, color: D.onSurfaceVariant, lineHeight: 1.75, margin: "0 0 28px" }}>
-              Premium plans include Claude Haiku (50 req/day). Max plans unlock Claude Sonnet (500 req/day). Enterprise gets unlimited access with Claude Opus.
+              Premium and Max plans also include built-in AI hints. Or bring your own API key and run any AI tool you prefer.
             </p>
             <div style={{ display: "flex", gap: 10 }}>
               <Btn href="/docs#claude-integration" primary D={D}>Read the Docs</Btn>

@@ -7,7 +7,7 @@ import { useTheme } from "@/lib/ThemeContext";
 import { PLAN_FEATURES, PLAN_LABELS, PLAN_PRICES, type Plan } from "@/lib/plans";
 
 const MAC_URL = "https://github.com/apraba05/vinexus/releases/latest/download/Vinexus-mac.dmg";
-const WIN_URL = "https://github.com/aproba05/vinexus/releases/latest/download/Vinexus-Setup.exe";
+const WIN_URL = "https://github.com/apraba05/vinexus/releases/latest/download/Vinexus-Setup.exe";
 
 const PLAN_COLORS: Record<Plan, { text: string; dot: string }> = {
   free:       { text: "#8fa3c8", dot: "#5a7ab0" },

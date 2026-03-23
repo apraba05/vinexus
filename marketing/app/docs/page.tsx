@@ -484,12 +484,12 @@ function ClaudeIntegration() {
       </p>
 
       <Info>
-        <strong>Plan requirement:</strong> Claude Code integration is available on Premium and Max plans. Premium includes Claude Haiku (50 requests/day). Max includes Claude Sonnet (500 requests/day). Enterprise gets Claude Opus with unlimited requests.
+        <strong>Available on all plans.</strong> Claude Code and other terminal-based AI tools (Aider, etc.) run directly on your VM — any Vinexus plan can use them. Premium and Max plans also include built-in AI hints; bring your own API key to use any tool on the Free plan.
       </Info>
 
       <h3 style={S.h3}>Requirements</h3>
       <ul style={S.list}>
-        <li>Premium or Max Vinexus plan</li>
+        <li>Any Vinexus plan (Free, Premium, or Max)</li>
         <li>Node.js 18+ installed on your VM</li>
         <li>An Anthropic API key from <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" style={S.link}>console.anthropic.com</a></li>
       </ul>

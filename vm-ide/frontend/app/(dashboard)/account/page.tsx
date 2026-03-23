@@ -25,12 +25,37 @@ function fmt(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
+function UserIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>
+  );
+}
+
+function CreditCardIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+  );
+}
+
+function LogOutIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  );
+}
+
 export default function AccountPage() {
   const { D } = useTheme();
   const { data: session } = useSession();
   const router = useRouter();
   const emailVerified = (session as any)?.emailVerified;
 
+  const [activeTab, setActiveTab] = useState<"profile" | "subscription">("profile");
   const [sub, setSub] = useState<SubInfo | null>(null);
   const [subLoading, setSubLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -74,16 +99,12 @@ export default function AccountPage() {
       const res = await fetch("/api/billing/reactivate", { method: "POST" });
       const data = await res.json();
       if (!res.ok) { showToast(data.error ?? "Failed to reactivate.", "err"); return; }
-      if (data.url) { window.location.href = data.url; return; } // expired → new checkout
+      if (data.url) { window.location.href = data.url; return; }
       showToast("Subscription reactivated! Billing will continue as normal.", "ok");
       await fetchSub();
     } finally {
       setActionLoading(null);
     }
-  };
-
-  const handleUpgrade = (planKey: string) => {
-    router.push(`/pricing`);
   };
 
   const handlePortal = async () => {
@@ -103,261 +124,426 @@ export default function AccountPage() {
   const isCanceling = isPaid && sub?.cancelAtPeriodEnd;
   const isExpired = sub?.status === "canceled";
 
-  const S = {
-    page:   { minHeight: "100vh", background: D.surface, padding: "40px 20px", color: D.onSurface },
-    card:   { background: D.surfaceContainerLow, border: `1px solid ${D.outlineVariant}`, borderRadius: 8, padding: 28, marginBottom: 20 },
-    label:  { fontSize: 13, color: D.onSurfaceVariant },
-    value:  { fontSize: 13, color: D.onSurface, fontWeight: 500 as const },
-    row:    { display: "flex" as const, justifyContent: "space-between" as const, alignItems: "center" as const },
-    divider:{ height: 1, background: D.outlineVariant, margin: "20px 0" },
-    btnPrimary: {
-      display: "inline-flex" as const, alignItems: "center" as const, justifyContent: "center" as const,
-      padding: "8px 16px", borderRadius: 4, fontSize: 13, fontWeight: 600 as const,
-      cursor: "pointer", border: "none", fontFamily: "inherit",
-      background: D.primary, color: "#fff",
-    },
-    btnSecondary: {
-      display: "inline-flex" as const, alignItems: "center" as const, justifyContent: "center" as const,
-      padding: "8px 16px", borderRadius: 4, fontSize: 13, fontWeight: 600 as const,
-      cursor: "pointer", fontFamily: "inherit",
-      background: "transparent", color: D.onSurfaceVariant,
-      border: `1px solid ${D.outlineVariant}`,
-    },
-    btnDanger: {
-      display: "inline-flex" as const, alignItems: "center" as const, justifyContent: "center" as const,
-      padding: "8px 16px", borderRadius: 4, fontSize: 13, fontWeight: 600 as const,
-      cursor: "pointer", fontFamily: "inherit",
-      background: "transparent", color: "#f85149",
-      border: "1px solid rgba(248,81,73,0.3)",
-    },
+  const btnPrimary: React.CSSProperties = {
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    padding: "10px 20px", borderRadius: 9999, fontSize: 13, fontWeight: 600,
+    cursor: "pointer", border: "none", fontFamily: "inherit",
+    background: D.inverseSurface, color: D.inverseOnSurface,
+    transition: "opacity 0.15s",
   };
 
+  const btnSecondary: React.CSSProperties = {
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    padding: "10px 20px", borderRadius: 9999, fontSize: 13, fontWeight: 600,
+    cursor: "pointer", fontFamily: "inherit",
+    background: "transparent", color: D.onSurfaceVariant,
+    border: `1.5px solid ${D.outlineVariant}`,
+    transition: "opacity 0.15s",
+  };
+
+  const btnDanger: React.CSSProperties = {
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    padding: "10px 20px", borderRadius: 9999, fontSize: 13, fontWeight: 600,
+    cursor: "pointer", fontFamily: "inherit",
+    background: "transparent", color: "#f85149",
+    border: "1.5px solid rgba(248,81,73,0.25)",
+    transition: "opacity 0.15s",
+  };
+
+  const navItems = [
+    { id: "profile" as const, label: "Profile", Icon: UserIcon },
+    { id: "subscription" as const, label: "Subscription", Icon: CreditCardIcon },
+  ];
+
+  const initials = (session?.user?.name?.[0] || session?.user?.email?.[0] || "?").toUpperCase();
+
   return (
-    <div style={S.page}>
+    <div style={{ minHeight: "100vh", background: D.surface, display: "flex" }}>
 
       {/* Toast */}
       {toast && (
         <div style={{
           position: "fixed", top: 20, right: 20, zIndex: 9999,
-          padding: "12px 20px", borderRadius: 6, fontSize: 13, fontWeight: 500,
+          padding: "12px 20px", borderRadius: 8, fontSize: 13, fontWeight: 500,
           background: toast.type === "ok" ? "#15803d" : "#b91c1c", color: "#fff",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
         }}>
           {toast.msg}
         </div>
       )}
 
-      <div style={{ maxWidth: 600, margin: "0 auto" }}>
-        <Link href="/app" style={{ color: D.onSurfaceVariant, textDecoration: "none", fontSize: 13, marginBottom: 20, display: "inline-flex", alignItems: "center", gap: 6 }}>
+      {/* ── Sidebar ──────────────────────────────────────────── */}
+      <div style={{
+        width: 220,
+        flexShrink: 0,
+        borderRight: `1px solid ${D.outlineVariant}`,
+        background: D.surfaceContainerLow,
+        display: "flex",
+        flexDirection: "column",
+        padding: "32px 0",
+      }}>
+
+        {/* User info */}
+        <div style={{ padding: "0 20px 24px" }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: 14,
+            background: D.primaryContainer,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: D.primary, fontSize: 20, fontWeight: 800,
+            marginBottom: 14, letterSpacing: "-0.02em",
+          }}>
+            {initials}
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: D.inverseSurface, letterSpacing: "-0.01em", lineHeight: 1.2 }}>
+            {session?.user?.name || "User"}
+          </div>
+          <div style={{ fontSize: 12, color: D.onSurfaceVariant, marginTop: 3, marginBottom: 10 }}>
+            {session?.user?.email}
+          </div>
+          <span style={{
+            display: "inline-block",
+            fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase",
+            padding: "2px 8px", borderRadius: 4,
+            background: `${planMeta.color}18`, color: planMeta.color,
+            border: `1px solid ${planMeta.color}30`,
+          }}>
+            {subLoading ? "…" : planMeta.label}
+          </span>
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: D.outlineVariant, margin: "0 20px 12px" }} />
+
+        {/* Nav */}
+        <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "0 8px" }}>
+          {navItems.map(({ id, label, Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "8px 12px", borderRadius: 6,
+                  border: "none", cursor: "pointer", fontFamily: "inherit",
+                  fontSize: 13, fontWeight: isActive ? 600 : 500,
+                  color: isActive ? D.inverseSurface : D.onSurfaceVariant,
+                  background: isActive ? D.surfaceContainer : "transparent",
+                  transition: "background 0.15s, color 0.15s",
+                  textAlign: "left",
+                }}
+              >
+                <Icon />
+                {label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+
+        {/* Sign out */}
+        <div style={{ padding: "0 8px" }}>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "8px 12px", borderRadius: 6,
+              border: "none", cursor: "pointer", fontFamily: "inherit",
+              fontSize: 13, fontWeight: 500, color: "#f85149",
+              background: "transparent", width: "100%", textAlign: "left",
+              transition: "background 0.15s",
+            }}
+          >
+            <LogOutIcon />
+            Sign out
+          </button>
+        </div>
+      </div>
+
+      {/* ── Main content ──────────────────────────────────────── */}
+      <div style={{ flex: 1, padding: "40px 48px", maxWidth: 660 }}>
+
+        {/* Back link */}
+        <Link href="/dashboard" style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          fontSize: 13, color: D.onSurfaceVariant, textDecoration: "none",
+          marginBottom: 28,
+        }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
           Back
         </Link>
 
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: D.inverseSurface, margin: "12px 0 28px", letterSpacing: "-0.03em" }}>
-          Account
-        </h1>
-
-        {/* ── Profile ──────────────────────────────────────────────── */}
-        <div style={S.card}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 10,
-              background: D.primaryContainer, display: "flex", alignItems: "center", justifyContent: "center",
-              color: D.primary, fontSize: 18, fontWeight: 700,
-            }}>
-              {session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || "?"}
+        {/* ── PROFILE ─────────────────────────────────────────── */}
+        {activeTab === "profile" && (
+          <div>
+            <div style={{ marginBottom: 32 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.02em", margin: "0 0 6px" }}>
+                Profile
+              </h1>
+              <p style={{ fontSize: 14, color: D.onSurfaceVariant, margin: 0, lineHeight: 1.6 }}>
+                Your account details and verification status.
+              </p>
             </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: D.inverseSurface }}>
-                {session?.user?.name || "User"}
+
+            {/* Rows */}
+            <div style={{ borderTop: `1px solid ${D.outlineVariant}` }}>
+              {/* Name */}
+              <div style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+              }}>
+                <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Name</span>
+                <span style={{ fontSize: 14, color: D.onSurface, fontWeight: 500 }}>{session?.user?.name || "Not set"}</span>
               </div>
-              <div style={{ fontSize: 13, color: D.onSurfaceVariant, marginTop: 2 }}>
-                {session?.user?.email}
+
+              {/* Email */}
+              <div style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+              }}>
+                <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Email</span>
+                <span style={{ fontSize: 14, color: D.onSurface, fontWeight: 500 }}>{session?.user?.email}</span>
               </div>
-            </div>
-          </div>
 
-          <div style={S.divider} />
+              {/* Verified */}
+              <div style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+              }}>
+                <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Email verified</span>
+                {emailVerified ? (
+                  <span style={{ fontSize: 14, color: "#3fb950", fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3fb950" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Verified
+                  </span>
+                ) : (
+                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 14, color: "#d29922", fontWeight: 500 }}>Unverified</span>
+                    <button
+                      style={{ ...btnSecondary, padding: "4px 12px", fontSize: 12, color: "#d29922", borderColor: "rgba(210,153,34,0.3)", borderRadius: 9999 }}
+                      onClick={async () => {
+                        await fetch("/api/auth/resend-verification", { method: "POST" });
+                        showToast("Verification email sent!", "ok");
+                      }}
+                    >
+                      Resend
+                    </button>
+                  </span>
+                )}
+              </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={S.row}>
-              <span style={S.label}>Name</span>
-              <span style={S.value}>{session?.user?.name || "Not set"}</span>
-            </div>
-            <div style={S.row}>
-              <span style={S.label}>Email</span>
-              <span style={S.value}>{session?.user?.email}</span>
-            </div>
-            <div style={S.row}>
-              <span style={S.label}>Email verified</span>
-              {emailVerified ? (
-                <span style={{ fontSize: 13, color: "#3fb950", fontWeight: 500, display: "flex", alignItems: "center", gap: 5 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3fb950" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  Verified
-                </span>
-              ) : (
+              {/* Plan */}
+              <div style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+              }}>
+                <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Current plan</span>
                 <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 13, color: "#d29922", fontWeight: 500 }}>Unverified</span>
-                  <button style={{ ...S.btnSecondary, padding: "3px 10px", fontSize: 12, color: "#d29922", borderColor: "rgba(210,153,34,0.3)" }}
-                    onClick={async () => { await fetch("/api/auth/resend-verification", { method: "POST" }); showToast("Verification email sent!", "ok"); }}>
-                    Resend
+                  <span style={{ fontSize: 14, color: D.onSurface, fontWeight: 500 }}>
+                    {subLoading ? "…" : planMeta.label}
+                  </span>
+                  <button style={{ ...btnSecondary, padding: "4px 12px", fontSize: 12, borderRadius: 9999 }} onClick={() => setActiveTab("subscription")}>
+                    Manage
                   </button>
                 </span>
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* ── Subscription ─────────────────────────────────────────── */}
-        <div style={S.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, color: D.inverseSurface, margin: 0 }}>Subscription</h2>
-            <span style={{
-              fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase",
-              padding: "3px 10px", borderRadius: 4,
-              background: `${planMeta.color}18`, color: planMeta.color,
-              border: `1px solid ${planMeta.color}30`,
-            }}>
-              {subLoading ? "…" : planMeta.label}
-            </span>
-          </div>
-
-          {subLoading ? (
-            <p style={{ fontSize: 13, color: D.onSurfaceVariant, margin: 0 }}>Loading subscription…</p>
-          ) : !isPaid && !isExpired ? (
-            /* ── Free / no subscription ── */
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <p style={{ fontSize: 13, color: D.onSurfaceVariant, margin: 0, lineHeight: 1.65 }}>
-                You're on the Free plan. Upgrade to Premium or Max to unlock AI features, deploy automation, and more.
+        {/* ── SUBSCRIPTION ────────────────────────────────────── */}
+        {activeTab === "subscription" && (
+          <div>
+            <div style={{ marginBottom: 32 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.02em", margin: "0 0 6px" }}>
+                Subscription
+              </h1>
+              <p style={{ fontSize: 14, color: D.onSurfaceVariant, margin: 0, lineHeight: 1.6 }}>
+                Manage your plan and billing.
               </p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button style={S.btnPrimary} onClick={() => handleUpgrade("premium")}>
-                  Upgrade to Premium — $19/mo
-                </button>
-                <button style={S.btnSecondary} onClick={() => handleUpgrade("max")}>
-                  View all plans
-                </button>
-              </div>
             </div>
-          ) : isExpired ? (
-            /* ── Expired subscription ── */
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{
-                padding: "10px 14px", borderRadius: 5, fontSize: 13, lineHeight: 1.6,
-                background: "rgba(248,81,73,0.08)", border: "1px solid rgba(248,81,73,0.2)", color: "#f85149",
-              }}>
-                Your {sub?.planName} subscription ended on {fmt(sub?.currentPeriodEnd ?? null)}.
-              </div>
-              <button
-                style={{ ...S.btnPrimary, opacity: actionLoading === "reactivate" ? 0.7 : 1 }}
-                disabled={actionLoading === "reactivate"}
-                onClick={handleReactivate}
-              >
-                {actionLoading === "reactivate" ? "Loading…" : `Resubscribe to ${sub?.planName}`}
-              </button>
-              <button style={S.btnSecondary} onClick={() => handleUpgrade("premium")}>View all plans</button>
-            </div>
-          ) : isCanceling ? (
-            /* ── Active but scheduled to cancel ── */
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{
-                padding: "10px 14px", borderRadius: 5, fontSize: 13, lineHeight: 1.6,
-                background: "rgba(210,153,34,0.08)", border: "1px solid rgba(210,153,34,0.25)", color: "#d29922",
-              }}>
-                Your {sub?.planName} plan will cancel on <strong>{fmt(sub?.currentPeriodEnd ?? null)}</strong>. You keep full access until then.
-              </div>
-              <div style={S.row}>
-                <span style={S.label}>Current period ends</span>
-                <span style={S.value}>{fmt(sub?.currentPeriodEnd ?? null)}</span>
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button
-                  style={{ ...S.btnPrimary, opacity: actionLoading === "reactivate" ? 0.7 : 1 }}
-                  disabled={actionLoading === "reactivate"}
-                  onClick={handleReactivate}
-                >
-                  {actionLoading === "reactivate" ? "Loading…" : "Keep my subscription"}
-                </button>
-                <button style={S.btnSecondary} onClick={handlePortal} disabled={actionLoading === "portal"}>
-                  {actionLoading === "portal" ? "Loading…" : "Billing portal"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* ── Active subscription ── */
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={S.row}>
-                  <span style={S.label}>Plan</span>
-                  <span style={S.value}>{sub?.planName}</span>
-                </div>
-                <div style={S.row}>
-                  <span style={S.label}>Status</span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: sub?.status === "active" ? "#3fb950" : D.onSurfaceVariant, textTransform: "capitalize" }}>
-                    {sub?.status}
-                  </span>
-                </div>
-                <div style={S.row}>
-                  <span style={S.label}>Next billing date</span>
-                  <span style={S.value}>{fmt(sub?.currentPeriodEnd ?? null)}</span>
-                </div>
-              </div>
 
-              <div style={S.divider} />
+            {subLoading ? (
+              <p style={{ fontSize: 14, color: D.onSurfaceVariant }}>Loading subscription…</p>
+            ) : !isPaid && !isExpired ? (
 
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button style={{ ...S.btnSecondary, opacity: actionLoading === "portal" ? 0.7 : 1 }}
-                  disabled={actionLoading === "portal"} onClick={handlePortal}>
-                  {actionLoading === "portal" ? "Loading…" : "Billing portal"}
-                </button>
-                <button style={S.btnSecondary} onClick={() => router.push("/pricing")}>
-                  Change plan
-                </button>
-              </div>
-
-              {/* Cancel section */}
-              <div style={{ ...S.divider, margin: "4px 0" }} />
-              {confirmCancel ? (
-                <div style={{
-                  padding: "14px 16px", borderRadius: 6, fontSize: 13, lineHeight: 1.65,
-                  background: "rgba(248,81,73,0.07)", border: "1px solid rgba(248,81,73,0.2)",
-                }}>
-                  <p style={{ margin: "0 0 12px", color: D.onSurface }}>
-                    Cancel your {sub?.planName} plan? You'll keep access until <strong>{fmt(sub?.currentPeriodEnd ?? null)}</strong>, then revert to the Free plan. You can reactivate any time before that date.
-                  </p>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      style={{ ...S.btnDanger, opacity: actionLoading === "cancel" ? 0.7 : 1 }}
-                      disabled={actionLoading === "cancel"}
-                      onClick={handleCancel}
-                    >
-                      {actionLoading === "cancel" ? "Cancelling…" : "Yes, cancel plan"}
-                    </button>
-                    <button style={S.btnSecondary} onClick={() => setConfirmCancel(false)}>
-                      Keep subscription
-                    </button>
+              /* ── Free ── */
+              <div>
+                <div style={{ borderTop: `1px solid ${D.outlineVariant}` }}>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+                  }}>
+                    <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Plan</span>
+                    <span style={{ fontSize: 14, color: D.onSurface, fontWeight: 500 }}>Free</span>
+                  </div>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+                  }}>
+                    <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Features</span>
+                    <span style={{ fontSize: 14, color: D.onSurface, fontWeight: 500 }}>Editor, terminal, file manager</span>
                   </div>
                 </div>
-              ) : (
-                <button style={{ ...S.btnDanger, alignSelf: "flex-start" as const }} onClick={() => setConfirmCancel(true)}>
-                  Cancel plan
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+                <div style={{ marginTop: 28, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button style={btnPrimary} onClick={() => router.push("/pricing")}>
+                    Upgrade to Premium — $19/mo
+                  </button>
+                  <button style={btnSecondary} onClick={() => router.push("/pricing")}>
+                    View all plans
+                  </button>
+                </div>
+                <p style={{ fontSize: 13, color: D.onSurfaceVariant, marginTop: 16, lineHeight: 1.65 }}>
+                  Upgrade to unlock AI features, deploy automation, and server commands.
+                </p>
+              </div>
 
-        {/* ── Sign out ──────────────────────────────────────────────── */}
-        <button
-          style={{ ...S.btnDanger, marginTop: 4 }}
-          onClick={() => signOut({ callbackUrl: "/" })}
-        >
-          Sign out
-        </button>
+            ) : isExpired ? (
+
+              /* ── Expired ── */
+              <div>
+                <div style={{
+                  padding: "14px 16px", borderRadius: 8, fontSize: 14, lineHeight: 1.65,
+                  background: "rgba(248,81,73,0.06)", border: "1px solid rgba(248,81,73,0.15)", color: "#f85149",
+                  marginBottom: 24,
+                }}>
+                  Your {sub?.planName} subscription ended on {fmt(sub?.currentPeriodEnd ?? null)}.
+                </div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    style={{ ...btnPrimary, opacity: actionLoading === "reactivate" ? 0.6 : 1 }}
+                    disabled={actionLoading === "reactivate"}
+                    onClick={handleReactivate}
+                  >
+                    {actionLoading === "reactivate" ? "Loading…" : `Resubscribe to ${sub?.planName}`}
+                  </button>
+                  <button style={btnSecondary} onClick={() => router.push("/pricing")}>View all plans</button>
+                </div>
+              </div>
+
+            ) : isCanceling ? (
+
+              /* ── Canceling ── */
+              <div>
+                <div style={{
+                  padding: "14px 16px", borderRadius: 8, fontSize: 14, lineHeight: 1.65,
+                  background: "rgba(210,153,34,0.06)", border: "1px solid rgba(210,153,34,0.2)", color: "#d29922",
+                  marginBottom: 24,
+                }}>
+                  Your {sub?.planName} plan will cancel on <strong>{fmt(sub?.currentPeriodEnd ?? null)}</strong>. You keep full access until then.
+                </div>
+                <div style={{ borderTop: `1px solid ${D.outlineVariant}` }}>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+                  }}>
+                    <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Access until</span>
+                    <span style={{ fontSize: 14, color: D.onSurface, fontWeight: 500 }}>{fmt(sub?.currentPeriodEnd ?? null)}</span>
+                  </div>
+                </div>
+                <div style={{ marginTop: 24, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    style={{ ...btnPrimary, opacity: actionLoading === "reactivate" ? 0.6 : 1 }}
+                    disabled={actionLoading === "reactivate"}
+                    onClick={handleReactivate}
+                  >
+                    {actionLoading === "reactivate" ? "Loading…" : "Keep my subscription"}
+                  </button>
+                  <button style={btnSecondary} onClick={handlePortal} disabled={actionLoading === "portal"}>
+                    {actionLoading === "portal" ? "Loading…" : "Billing portal"}
+                  </button>
+                </div>
+              </div>
+
+            ) : (
+
+              /* ── Active ── */
+              <div>
+                <div style={{ borderTop: `1px solid ${D.outlineVariant}` }}>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+                  }}>
+                    <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Plan</span>
+                    <span style={{ fontSize: 14, color: D.onSurface, fontWeight: 500 }}>{sub?.planName}</span>
+                  </div>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+                  }}>
+                    <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Status</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: sub?.status === "active" ? "#3fb950" : D.onSurfaceVariant, textTransform: "capitalize" }}>
+                      {sub?.status}
+                    </span>
+                  </div>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "18px 0", borderBottom: `1px solid ${D.outlineVariant}`,
+                  }}>
+                    <span style={{ fontSize: 14, color: D.onSurfaceVariant, fontWeight: 500 }}>Next billing date</span>
+                    <span style={{ fontSize: 14, color: D.onSurface, fontWeight: 500 }}>{fmt(sub?.currentPeriodEnd ?? null)}</span>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 24, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    style={{ ...btnSecondary, opacity: actionLoading === "portal" ? 0.6 : 1 }}
+                    disabled={actionLoading === "portal"}
+                    onClick={handlePortal}
+                  >
+                    {actionLoading === "portal" ? "Loading…" : "Billing portal"}
+                  </button>
+                  <button style={btnSecondary} onClick={() => router.push("/pricing")}>
+                    Change plan
+                  </button>
+                </div>
+
+                {/* Cancel */}
+                <div style={{ marginTop: 40, paddingTop: 24, borderTop: `1px solid ${D.outlineVariant}` }}>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: D.inverseSurface, marginBottom: 4 }}>Cancel subscription</div>
+                    <div style={{ fontSize: 13, color: D.onSurfaceVariant, lineHeight: 1.6 }}>
+                      You'll keep access until the end of your billing period.
+                    </div>
+                  </div>
+
+                  {confirmCancel ? (
+                    <div style={{
+                      padding: "16px", borderRadius: 8, fontSize: 14, lineHeight: 1.65,
+                      background: "rgba(248,81,73,0.05)", border: "1px solid rgba(248,81,73,0.15)",
+                    }}>
+                      <p style={{ margin: "0 0 14px", color: D.onSurface }}>
+                        Cancel your {sub?.planName} plan? You'll keep access until <strong>{fmt(sub?.currentPeriodEnd ?? null)}</strong>, then revert to the Free plan.
+                      </p>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          style={{ ...btnDanger, opacity: actionLoading === "cancel" ? 0.6 : 1 }}
+                          disabled={actionLoading === "cancel"}
+                          onClick={handleCancel}
+                        >
+                          {actionLoading === "cancel" ? "Cancelling…" : "Yes, cancel plan"}
+                        </button>
+                        <button style={btnSecondary} onClick={() => setConfirmCancel(false)}>
+                          Keep subscription
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button style={btnDanger} onClick={() => setConfirmCancel(true)}>
+                      Cancel plan
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

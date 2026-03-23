@@ -1,52 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/ThemeContext";
 
-// ── Currency conversion ────────────────────────────────────────────
-const CURRENCIES: { code: string; symbol: string; label: string }[] = [
-  { code: "USD", symbol: "$",  label: "USD — US Dollar"         },
-  { code: "EUR", symbol: "€",  label: "EUR — Euro"              },
-  { code: "GBP", symbol: "£",  label: "GBP — British Pound"     },
-  { code: "AUD", symbol: "A$", label: "AUD — Australian Dollar" },
-  { code: "CAD", symbol: "C$", label: "CAD — Canadian Dollar"   },
-  { code: "INR", symbol: "₹",  label: "INR — Indian Rupee"      },
-  { code: "JPY", symbol: "¥",  label: "JPY — Japanese Yen"      },
-  { code: "BRL", symbol: "R$", label: "BRL — Brazilian Real"    },
-  { code: "SGD", symbol: "S$", label: "SGD — Singapore Dollar"  },
-  { code: "MXN", symbol: "MX$",label: "MXN — Mexican Peso"      },
-];
-
-// USD base prices
-const USD_PRICES: Record<string, { monthly: number; annual: number }> = {
+// ── CAD prices ─────────────────────────────────────────────────────
+const CAD_PRICES: Record<string, { monthly: number; annual: number }> = {
   free:       { monthly: 0,   annual: 0    },
   premium:    { monthly: 19,  annual: 159  },
   max:        { monthly: 49,  annual: 409  },
   "ai-pro":   { monthly: 99,  annual: 829  },
   enterprise: { monthly: -1,  annual: -1   },
 };
-
-function useCurrencyRates() {
-  const [rates, setRates] = useState<Record<string, number>>({ USD: 1 });
-  useEffect(() => {
-    fetch("https://open.er-api.com/v6/latest/USD")
-      .then((r) => r.json())
-      .then((d) => { if (d.rates) setRates(d.rates); })
-      .catch(() => {}); // silently fall back to USD
-  }, []);
-  return rates;
-}
-
-function formatPrice(usd: number, currency: string, symbol: string, rates: Record<string, number>): string {
-  if (usd < 0) return "Contact";
-  if (usd === 0) return `${symbol}0`;
-  const rate = rates[currency] ?? 1;
-  const converted = usd * rate;
-  // JPY & INR: no decimals; others: round to nearest whole
-  const rounded = currency === "JPY" ? Math.round(converted) : Math.round(converted);
-  return `${symbol}${rounded.toLocaleString()}`;
-}
 
 // ── Pricing data ───────────────────────────────────────────────────
 const PLANS = [
@@ -217,10 +182,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const [currency, setCurrency] = useState("USD");
-  const rates = useCurrencyRates();
   const isAnnual = billing === "annual";
-  const currencyInfo = CURRENCIES.find((c) => c.code === currency) ?? CURRENCIES[0];
 
   async function handleCheckout(planKey: string) {
     if (planKey === "free") { router.push("/download"); return; }
@@ -266,8 +228,7 @@ export default function PricingPage() {
           Start free. Upgrade when you need more power. No hidden fees.
         </p>
 
-        {/* Billing toggle + currency selector */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+        {/* Billing toggle */}
         <div style={{ display: "inline-flex", borderRadius: 6, background: D.surfaceContainerHigh, padding: 3, gap: 2 }}>
           {(["monthly", "annual"] as const).map((b) => (
             <button key={b} onClick={() => setBilling(b)} style={{
@@ -290,31 +251,15 @@ export default function PricingPage() {
             </button>
           ))}
         </div>
-        {/* Currency selector */}
-        <select
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value)}
-          style={{
-            padding: "6px 10px", borderRadius: 6, fontSize: 13, fontWeight: 500,
-            background: D.surfaceContainerHigh, color: D.onSurface,
-            border: `1px solid ${D.outlineVariant}`, cursor: "pointer",
-            fontFamily: "inherit", outline: "none",
-          }}
-        >
-          {CURRENCIES.map((c) => (
-            <option key={c.code} value={c.code}>{c.label}</option>
-          ))}
-        </select>
-        </div>
 
         {isAnnual && (
           <p style={{ fontSize: 12, color: D.onSurfaceVariant, marginTop: 10 }}>
-            Billed annually · ~2 months free · Prices shown in {currency}
+            Billed annually · ~2 months free · All prices in CAD
           </p>
         )}
-        {!isAnnual && currency !== "USD" && (
+        {!isAnnual && (
           <p style={{ fontSize: 12, color: D.onSurfaceVariant, marginTop: 10 }}>
-            Prices shown in {currency} · Charged in USD at checkout
+            All prices in CAD
           </p>
         )}
       </section>
@@ -324,12 +269,13 @@ export default function PricingPage() {
         <div style={{ maxWidth: 1300, margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }}>
             {PLANS.map((plan) => {
-              const usdPrices = USD_PRICES[plan.key];
-              const usdMonthly = usdPrices?.monthly ?? 0;
-              const usdAnnual  = usdPrices?.annual  ?? 0;
-              const price      = formatPrice(isAnnual ? usdAnnual : usdMonthly, currency, currencyInfo.symbol, rates);
-              const monthlyEquiv = usdAnnual > 0 ? formatPrice(Math.round(usdAnnual / 12), currency, currencyInfo.symbol, rates) : "";
-              const subLabel   = isAnnual && plan.annualMonthly ? `~${monthlyEquiv}/mo` : "";
+              const cadPrices  = CAD_PRICES[plan.key];
+              const cadMonthly = cadPrices?.monthly ?? 0;
+              const cadAnnual  = cadPrices?.annual  ?? 0;
+              const rawPrice   = isAnnual ? cadAnnual : cadMonthly;
+              const price      = rawPrice < 0 ? "Contact" : rawPrice === 0 ? "$0" : `$${rawPrice}`;
+              const monthlyEquiv = cadAnnual > 0 ? `~$${Math.round(cadAnnual / 12)}/mo` : "";
+              const subLabel   = isAnnual && plan.annualMonthly ? monthlyEquiv : "";
               const savings    = isAnnual && plan.annualSavings  ? plan.annualSavings  : "";
               const periodLabel = plan.key === "enterprise" ? "" : isAnnual && plan.key !== "free" ? "/year" : plan.key !== "free" ? "/month" : "";
 

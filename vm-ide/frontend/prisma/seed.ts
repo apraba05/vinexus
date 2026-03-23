@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || "aproba05@gmail.com";
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || "apraba05@gmail.com";
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "changeme123!";
 
 const plans = [

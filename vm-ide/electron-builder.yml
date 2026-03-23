@@ -1,15 +1,15 @@
 # electron-builder.yml
 #
-# Vela Desktop — Build Configuration
+# Vinexus Desktop — Build Configuration
 #
 # Produces:
-#   - macOS:   dist-electron/Vela-x.x.x.dmg + zip
-#   - Windows: dist-electron/Vela-Setup-x.x.x.exe (NSIS installer)
-#   - Linux:   dist-electron/Vela-x.x.x.AppImage + deb
+#   - macOS:   dist-electron/Vinexus-x.x.x.dmg + zip (code-signed & notarized)
+#   - Windows: dist-electron/Vinexus-Setup-x.x.x.exe (NSIS installer)
+#   - Linux:   dist-electron/Vinexus-x.x.x.AppImage + deb
 
-appId: com.vela.ide
-productName: Vela
-copyright: "Copyright © 2025 Vela"
+appId: com.vinexus.ide
+productName: Vinexus
+copyright: "Copyright © 2025 Vinexus"
 
 # ── Build Output ─────────────────────────────────────────────────────────────
 directories:
@@ -37,12 +37,6 @@ extraResources:
   - from: backend/dist
     to: backend/dist
 
-# ── App Icons ────────────────────────────────────────────────────────────────
-# Place your icons in electron/assets/:
-#   icon.icns  — macOS (512x512)
-#   icon.ico   — Windows
-#   icon.png   — Linux (512x512 PNG)
-
 # ── macOS ─────────────────────────────────────────────────────────────────────
 mac:
   category: public.app-category.developer-tools
@@ -52,18 +46,17 @@ mac:
     - target: zip
       arch: [x64, arm64]
   icon: electron/assets/icon.icns
-  hardenedRuntime: true
   gatekeeperAssess: false
-  entitlements: electron/assets/entitlements.mac.plist
-  entitlementsInherit: electron/assets/entitlements.mac.plist
+  # hardenedRuntime, entitlements, notarize — only needed with code signing
+  # Re-enable when Apple Developer account is set up
   # Deep link protocol handler
   protocols:
-    - name: Vela
+    - name: Vinexus
       schemes:
-        - vela
+        - vinexus
 
 dmg:
-  title: "Vela ${version}"
+  title: "Vinexus ${version}"
   background: electron/assets/dmg-background.png
   icon: electron/assets/icon.icns
   iconSize: 80
@@ -84,17 +77,19 @@ win:
     - target: portable
       arch: [x64]
   icon: electron/assets/icon.ico
+  # Code signing for Windows — set WIN_CSC_LINK + WIN_CSC_KEY_PASSWORD in GitHub Secrets
+  # or use EV certificate for immediate SmartScreen trust
   protocols:
-    - name: Vela
+    - name: Vinexus
       schemes:
-        - vela
+        - vinexus
 
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: Vela
+  shortcutName: Vinexus
   installerIcon: electron/assets/icon.ico
   uninstallerIcon: electron/assets/icon.ico
   installerHeader: electron/assets/installer-header.bmp
@@ -110,11 +105,11 @@ linux:
   icon: electron/assets/icon.png
   category: Development
   protocols:
-    - name: Vela
+    - name: Vinexus
       schemes:
-        - vela
+        - vinexus
   desktop:
-    Name: Vela
+    Name: Vinexus
     Comment: Desktop IDE for virtual machine management
     Categories: Development;IDE;
 
@@ -127,8 +122,8 @@ deb:
 # ── Auto Updater (GitHub Releases) ───────────────────────────────────────────
 publish:
   provider: github
-  owner: your-org        # TODO: replace with your GitHub org/user
-  repo: vela             # TODO: replace with your repo name
+  owner: apraba05
+  repo: vinexus
   releaseType: release
 
 # ── ASAR Unpacking ───────────────────────────────────────────────────────────

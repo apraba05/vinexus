@@ -19,6 +19,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: { prompt: "select_account" },
+      },
     }),
     Credentials({
       name: "credentials",
@@ -72,7 +75,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // Auto-promote the owner email to "owner" role if not already set
         const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
-        if (dbUser && adminEmail && dbUser.email?.toLowerCase().trim() === adminEmail && dbUser.role !== "owner") {
+        const isAdmin = !!(dbUser && adminEmail && dbUser.email?.toLowerCase().trim() === adminEmail);
+        if (isAdmin && dbUser && dbUser.role !== "owner") {
           dbUser = await prisma.user.update({
             where: { id: dbUser.id },
             data: { role: "owner" },
@@ -82,25 +86,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session as any).role = dbUser?.role || "user";
         (session as any).emailVerified = dbUser?.emailVerified || null;
 
-        // Fetch subscription info
-        const subscription = await prisma.subscription.findFirst({
-          where: {
-            userId: token.id as string,
-            status: { in: ["active", "trialing"] },
-          },
-          include: { plan: true },
-          orderBy: { createdAt: "desc" },
-        });
+        // Admin always gets AI Pro for free
+        if (isAdmin) {
+          (session as any).plan = "ai-pro";
+          (session as any).features = {
+            ide: true,
+            terminal: true,
+            files: true,
+            deploy: true,
+            commands: true,
+            ai: true,
+          };
+        } else {
+          // Fetch subscription info for regular users
+          const subscription = await prisma.subscription.findFirst({
+            where: {
+              userId: token.id as string,
+              status: { in: ["active", "trialing"] },
+            },
+            include: { plan: true },
+            orderBy: { createdAt: "desc" },
+          });
 
-        (session as any).plan = subscription?.plan?.name || "free";
-        (session as any).features = subscription?.plan?.features || {
-          ide: true,
-          terminal: true,
-          files: true,
-          deploy: false,
-          commands: false,
-          ai: false,
-        };
+          (session as any).plan = subscription?.plan?.name || "free";
+          (session as any).features = subscription?.plan?.features || {
+            ide: true,
+            terminal: true,
+            files: true,
+            deploy: false,
+            commands: false,
+            ai: false,
+          };
+        }
       }
       return session;
     },

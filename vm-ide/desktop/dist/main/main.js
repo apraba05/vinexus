@@ -49,7 +49,7 @@ function createWindow() {
         height: 900,
         minWidth: 900,
         minHeight: 600,
-        title: "InfraNexus",
+        title: "Vinexus",
         titleBarStyle: "hiddenInset",
         trafficLightPosition: { x: 14, y: 14 },
         backgroundColor: "#09090b",
@@ -162,7 +162,7 @@ electron_1.ipcMain.on("terminal:resize", (_event, cols, rows) => {
 function buildMenu() {
     const template = [
         {
-            label: "InfraNexus",
+            label: "Vinexus",
             submenu: [
                 { role: "about" },
                 { type: "separator" },
