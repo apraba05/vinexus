@@ -9,6 +9,7 @@ APP_NAME="Vinexus"
 DMG_NAME="Vinexus-mac.dmg"
 INSTALL_DIR="/Applications"
 TMP_DMG="/tmp/Vinexus-install.dmg"
+TMP_MOUNT="/tmp/Vinexus-dmg-mount"
 
 echo ""
 echo "  Vinexus Installer"
@@ -21,27 +22,48 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 1
 fi
 
-echo "  Downloading Vinexus..."
-curl -fsSL "https://github.com/${REPO}/releases/latest/download/${DMG_NAME}" -o "$TMP_DMG"
+# Clean up any previous partial install attempt
+rm -f "$TMP_DMG"
+hdiutil detach "$TMP_MOUNT" -quiet 2>/dev/null || true
+rm -rf "$TMP_MOUNT"
+
+echo "  Downloading Vinexus (~175 MB)..."
+curl -fL --progress-bar \
+  "https://github.com/${REPO}/releases/latest/download/${DMG_NAME}" \
+  -o "$TMP_DMG"
 
 echo "  Mounting disk image..."
-MOUNT_POINT=$(hdiutil attach "$TMP_DMG" -nobrowse -quiet | tail -1 | awk '{print $NF}')
+mkdir -p "$TMP_MOUNT"
+hdiutil attach "$TMP_DMG" -nobrowse -quiet -mountpoint "$TMP_MOUNT"
 
 echo "  Installing to /Applications..."
 if [ -d "${INSTALL_DIR}/${APP_NAME}.app" ]; then
   rm -rf "${INSTALL_DIR}/${APP_NAME}.app"
 fi
-cp -R "${MOUNT_POINT}/${APP_NAME}.app" "${INSTALL_DIR}/"
+
+if [ ! -d "${TMP_MOUNT}/${APP_NAME}.app" ]; then
+  echo "  Error: ${APP_NAME}.app not found in disk image."
+  hdiutil detach "$TMP_MOUNT" -quiet 2>/dev/null || true
+  exit 1
+fi
+
+cp -R "${TMP_MOUNT}/${APP_NAME}.app" "${INSTALL_DIR}/"
 
 echo "  Unmounting..."
-hdiutil detach "$MOUNT_POINT" -quiet
+hdiutil detach "$TMP_MOUNT" -quiet 2>/dev/null || true
+rm -rf "$TMP_MOUNT"
 rm -f "$TMP_DMG"
 
-echo "  Removing macOS security restriction..."
+echo "  Removing macOS quarantine flag..."
 xattr -cr "${INSTALL_DIR}/${APP_NAME}.app" 2>/dev/null || true
 
-echo "  Applying signature..."
-codesign --force --deep --sign - "${INSTALL_DIR}/${APP_NAME}.app" 2>/dev/null || true
+echo "  Applying ad-hoc code signature..."
+# Sign innermost frameworks first, then the outer app bundle
+find "${INSTALL_DIR}/${APP_NAME}.app" \
+  -name "*.framework" -o -name "*.dylib" -o -name "*.so" 2>/dev/null \
+  | sort -r \
+  | xargs -I{} codesign --force --sign - {} 2>/dev/null || true
+codesign --force --sign - "${INSTALL_DIR}/${APP_NAME}.app" 2>/dev/null || true
 
 echo ""
 echo "  Vinexus installed successfully!"
