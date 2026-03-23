@@ -26,6 +26,7 @@ jobs:
       - name: Prepare native modules (macOS)
         working-directory: vm-ide/desktop
         run: |
+          rm -rf node_modules/cpu-features
           find node_modules/app-builder-bin -type f ! -name "*.js" ! -name "*.json" ! -name "*.md" ! -name "*.txt" | xargs chmod +x 2>/dev/null || true
           find node_modules/app-builder-bin -type f -exec xattr -d com.apple.quarantine {} \; 2>/dev/null || true
 
@@ -71,6 +72,11 @@ jobs:
         working-directory: vm-ide/desktop
         run: npm install --ignore-scripts
 
+      - name: Prepare native modules (Windows)
+        working-directory: vm-ide/desktop
+        shell: bash
+        run: rm -rf node_modules/cpu-features
+
       - name: Build renderer (Vite)
         working-directory: vm-ide/desktop
         run: npx vite build
@@ -114,10 +120,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libgtk-3-dev \
-            libwebkit2gtk-4.0-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
-            rpm \
             python3 \
             make \
             g++ \
@@ -131,6 +135,7 @@ jobs:
       - name: Prepare native modules (Linux)
         working-directory: vm-ide/desktop
         run: |
+          rm -rf node_modules/cpu-features
           find node_modules/app-builder-bin -type f ! -name "*.js" ! -name "*.json" ! -name "*.md" ! -name "*.txt" | xargs chmod +x 2>/dev/null || true
 
       - name: Build renderer (Vite)
