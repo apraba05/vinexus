@@ -66,9 +66,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token?.id) {
         session.user.id = token.id as string;
 
-        const dbUser = await prisma.user.findUnique({
+        let dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
         });
+
+        // Auto-promote the owner email to "owner" role if not already set
+        const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+        if (dbUser && adminEmail && dbUser.email?.toLowerCase().trim() === adminEmail && dbUser.role !== "owner") {
+          dbUser = await prisma.user.update({
+            where: { id: dbUser.id },
+            data: { role: "owner" },
+          });
+        }
 
         (session as any).role = dbUser?.role || "user";
         (session as any).emailVerified = dbUser?.emailVerified || null;

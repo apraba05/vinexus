@@ -42,8 +42,8 @@ export default function NavBar() {
     <nav style={{
       position: "sticky",
       top: 0,
-      zIndex: 50,
-      height: 56,
+      zIndex: 100,
+      height: 44,
       background: scrolled
         ? (isDark ? "rgba(13,17,23,0.92)" : "rgba(249,249,255,0.92)")
         : D.surfaceContainerLow,
@@ -54,11 +54,12 @@ export default function NavBar() {
       <div style={{
         maxWidth: 1200,
         margin: "0 auto",
-        padding: "0 24px",
+        padding: "0 20px",
         height: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        gap: 16,
       }}>
         {/* Logo */}
         <Link href={session ? "/dashboard" : "/"} style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
@@ -71,7 +72,7 @@ export default function NavBar() {
         </Link>
 
         {/* Nav links */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, justifyContent: "center" }}>
           {session ? (
             <>
               <NavLink href="/dashboard" color={D.onSurfaceVariant}>Home</NavLink>
@@ -79,7 +80,7 @@ export default function NavBar() {
               <NavLink href="/pricing" color={D.onSurfaceVariant}>Pricing</NavLink>
               <NavLink href="/docs" color={D.onSurfaceVariant}>Docs</NavLink>
               <NavLink href="/account" color={D.onSurfaceVariant}>Account</NavLink>
-              {(session as any).role === "admin" && (
+              {((session as any).role === "admin" || (session as any).role === "owner") && (
                 <NavLink href="/admin" color="#eab308">Admin</NavLink>
               )}
             </>
@@ -93,13 +94,13 @@ export default function NavBar() {
         </div>
 
         {/* Right actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <button
             onClick={toggle}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             style={{
-              width: 30, height: 30, borderRadius: 6,
-              border: `1px solid ${D.outlineVariant}`,
+              width: 28, height: 28, borderRadius: 4,
+              border: "none",
               background: "transparent", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               color: D.onSurfaceVariant, fontFamily: "inherit",
@@ -112,9 +113,9 @@ export default function NavBar() {
             <>
               {!isPro && (
                 <Link href="/pricing" style={{
-                  padding: "6px 14px", borderRadius: 9999,
-                  background: `${D.primary}20`, border: `1px solid ${D.primary}50`,
-                  color: D.primary, fontSize: 13, fontWeight: 600, textDecoration: "none",
+                  padding: "6px 14px", borderRadius: 4,
+                  background: D.primary, color: "#fff",
+                  fontSize: 13, fontWeight: 600, textDecoration: "none",
                 }}>
                   Upgrade
                 </Link>
@@ -122,11 +123,11 @@ export default function NavBar() {
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 style={{
-                  padding: "6px 16px",
+                  padding: "6px 14px",
                   background: "transparent",
                   color: D.onSurfaceVariant,
-                  border: `1px solid ${D.outlineVariant}`,
-                  borderRadius: 9999,
+                  border: "none",
+                  borderRadius: 4,
                   fontSize: 13, fontWeight: 500, cursor: "pointer",
                   fontFamily: "inherit",
                 }}
@@ -137,16 +138,16 @@ export default function NavBar() {
           ) : (
             <>
               <Link href="/login" style={{
-                padding: "6px 16px", borderRadius: 9999,
+                padding: "6px 14px", borderRadius: 4,
                 color: D.onSurfaceVariant, fontSize: 13, fontWeight: 500,
-                textDecoration: "none", border: `1px solid ${D.outlineVariant}`,
+                textDecoration: "none",
               }}>
                 Sign In
               </Link>
               <Link href="/download" style={{
-                padding: "6px 16px", borderRadius: 9999,
+                padding: "6px 14px", borderRadius: 4,
                 background: D.primary, color: "#ffffff",
-                fontSize: 13, fontWeight: 700, textDecoration: "none",
+                fontSize: 13, fontWeight: 600, textDecoration: "none",
               }}>
                 Download
               </Link>
@@ -161,9 +162,9 @@ export default function NavBar() {
 function NavLink({ href, children, color }: { href: string; children: React.ReactNode; color?: string }) {
   return (
     <Link href={href} style={{
-      padding: "7px 14px", fontSize: 14, fontWeight: 500,
+      padding: "5px 10px", fontSize: 13, fontWeight: 500,
       color: color ?? "#8fa3c8", textDecoration: "none",
-      borderRadius: 8, transition: "color 0.15s",
+      borderRadius: 4, transition: "color 0.15s",
     }}>
       {children}
     </Link>
