@@ -15,31 +15,77 @@
   "private": true,
   "main": "electron/main.js",
   "build": {
-    "appId": "com.vinexus.desktop",
+    "appId": "com.vinexus.ide",
     "productName": "Vinexus",
-    "icon": "electron/assets/icon",
-    "artifactName": "${productName}-${os}.${ext}",
+    "copyright": "Copyright © 2025 Vinexus",
+    "asar": false,
     "directories": {
-      "output": "dist-electron"
+      "output": "dist-electron",
+      "buildResources": "electron/assets"
     },
+    "files": [
+      "electron/**/*",
+      "frontend/.next/standalone/**/*",
+      "backend/dist/**/*",
+      "backend/node_modules/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/node-pty/**/*",
+      "node_modules/ssh2/**/*"
+    ],
     "mac": {
       "icon": "electron/assets/icon.icns",
       "category": "public.app-category.developer-tools",
-      "artifactName": "Vinexus-mac.${ext}"
+      "gatekeeperAssess": false,
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ],
+      "protocols": [{ "name": "Vinexus", "schemes": ["vinexus"] }]
     },
     "dmg": {
-      "artifactName": "Vinexus-mac.dmg"
+      "title": "Vinexus ${version}",
+      "iconSize": 80,
+      "contents": [
+        { "x": 410, "y": 200, "type": "link", "path": "/Applications" },
+        { "x": 130, "y": 200, "type": "file" }
+      ]
     },
     "win": {
-      "icon": "electron/assets/icon.png",
-      "artifactName": "Vinexus-Setup.${ext}"
+      "icon": "electron/assets/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "protocols": [{ "name": "Vinexus", "schemes": ["vinexus"] }]
     },
     "nsis": {
-      "artifactName": "Vinexus-Setup.exe"
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Vinexus",
+      "license": "LICENSE"
     },
     "linux": {
       "icon": "electron/assets/icon.png",
-      "artifactName": "Vinexus.${ext}"
+      "category": "Development",
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "protocols": [{ "name": "Vinexus", "schemes": ["vinexus"] }]
+    },
+    "deb": {
+      "depends": ["libnotify4", "libxtst6", "libnss3"]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "apraba05",
+      "repo": "vinexus",
+      "releaseType": "release"
     }
   },
   "scripts": {
