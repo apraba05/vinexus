@@ -179,6 +179,7 @@ function getSavedWindowState() {
 }
 
 function saveWindowState(win) {
+  if (!win || win.isDestroyed()) return;
   if (win.isMaximized()) {
     windowStore.set("maximized", true);
   } else {
@@ -237,8 +238,8 @@ function createWindow() {
   });
 
   // Persist window state on close
-  mainWindow.on("close", () => {
-    saveWindowState(mainWindow);
+  mainWindow.on("close", function () {
+    saveWindowState(this);
     cleanupPty();
   });
 

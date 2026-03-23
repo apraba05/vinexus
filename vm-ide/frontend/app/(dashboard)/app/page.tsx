@@ -18,6 +18,7 @@ import ValidationBadge from "@/components/ValidationBadge";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import StatusBar from "@/components/StatusBar";
 import UpgradeBanner from "@/components/UpgradeBanner";
+import UpdateBanner from "@/components/UpdateBanner";
 import ProFeature from "@/components/ProFeature";
 import { useToast } from "@/lib/useToast";
 import { useCommands } from "@/hooks/useCommands";
@@ -541,6 +542,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
         </div>
       </div>
 
+      <UpdateBanner />
       <UpgradeBanner />
 
       {/* SSH Connection Bar */}

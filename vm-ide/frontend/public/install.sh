@@ -37,6 +37,12 @@ mkdir -p "$TMP_MOUNT"
 hdiutil attach "$TMP_DMG" -nobrowse -quiet -mountpoint "$TMP_MOUNT"
 
 echo "  Installing to /Applications..."
+# Quit any running Vinexus before replacing the app bundle
+if pgrep -x "Vinexus" &>/dev/null; then
+  echo "  Quitting running Vinexus..."
+  osascript -e 'quit app "Vinexus"' 2>/dev/null || pkill -x "Vinexus" 2>/dev/null || true
+  sleep 2
+fi
 if [ -d "${INSTALL_DIR}/${APP_NAME}.app" ]; then
   rm -rf "${INSTALL_DIR}/${APP_NAME}.app"
 fi
