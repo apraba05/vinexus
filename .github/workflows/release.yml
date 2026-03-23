@@ -31,11 +31,17 @@ jobs:
         working-directory: vm-ide/backend
         run: npm install --ignore-scripts
 
-      - name: Generate Prisma client
+      - name: Generate Prisma client (root)
         working-directory: vm-ide
         env:
           DATABASE_URL: postgresql://placeholder/placeholder
         run: npx prisma generate
+
+      - name: Generate Prisma client (backend)
+        working-directory: vm-ide/backend
+        env:
+          DATABASE_URL: postgresql://placeholder/placeholder
+        run: npx prisma generate --schema ../prisma/schema.prisma
 
       - name: Build frontend (Next.js standalone)
         working-directory: vm-ide/frontend
@@ -49,6 +55,22 @@ jobs:
       - name: Build backend
         working-directory: vm-ide/backend
         run: npm run build
+
+      - name: Prepare standalone assets and runtime config
+        working-directory: vm-ide
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          # Static files must live inside the standalone dir so server.js can find them
+          cp -r frontend/.next/static frontend/.next/standalone/.next/static
+          cp -r frontend/public frontend/.next/standalone/public
+          # Write runtime env — read by main.js at app startup
+          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
+            "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
+            > frontend/.next/standalone/runtime.env
 
       - name: Remove cpu-features (uses pure-JS fallback)
         working-directory: vm-ide
@@ -96,11 +118,17 @@ jobs:
         working-directory: vm-ide/backend
         run: npm install --ignore-scripts
 
-      - name: Generate Prisma client
+      - name: Generate Prisma client (root)
         working-directory: vm-ide
         env:
           DATABASE_URL: postgresql://placeholder/placeholder
         run: npx prisma generate
+
+      - name: Generate Prisma client (backend)
+        working-directory: vm-ide/backend
+        env:
+          DATABASE_URL: postgresql://placeholder/placeholder
+        run: npx prisma generate --schema ../prisma/schema.prisma
 
       - name: Build frontend (Next.js standalone)
         working-directory: vm-ide/frontend
@@ -114,6 +142,20 @@ jobs:
       - name: Build backend
         working-directory: vm-ide/backend
         run: npm run build
+
+      - name: Prepare standalone assets and runtime config
+        working-directory: vm-ide
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          cp -r frontend/.next/static frontend/.next/standalone/.next/static
+          cp -r frontend/public frontend/.next/standalone/public
+          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
+            "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
+            > frontend/.next/standalone/runtime.env
 
       - name: Remove cpu-features (uses pure-JS fallback)
         working-directory: vm-ide
@@ -169,11 +211,17 @@ jobs:
         working-directory: vm-ide/backend
         run: npm install --ignore-scripts
 
-      - name: Generate Prisma client
+      - name: Generate Prisma client (root)
         working-directory: vm-ide
         env:
           DATABASE_URL: postgresql://placeholder/placeholder
         run: npx prisma generate
+
+      - name: Generate Prisma client (backend)
+        working-directory: vm-ide/backend
+        env:
+          DATABASE_URL: postgresql://placeholder/placeholder
+        run: npx prisma generate --schema ../prisma/schema.prisma
 
       - name: Build frontend (Next.js standalone)
         working-directory: vm-ide/frontend
@@ -187,6 +235,20 @@ jobs:
       - name: Build backend
         working-directory: vm-ide/backend
         run: npm run build
+
+      - name: Prepare standalone assets and runtime config
+        working-directory: vm-ide
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          cp -r frontend/.next/static frontend/.next/standalone/.next/static
+          cp -r frontend/public frontend/.next/standalone/public
+          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
+            "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
+            > frontend/.next/standalone/runtime.env
 
       - name: Remove cpu-features (uses pure-JS fallback)
         working-directory: vm-ide

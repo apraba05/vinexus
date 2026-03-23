@@ -17,25 +17,24 @@ directories:
   buildResources: electron/assets
 
 # ── Files to include in the app package ─────────────────────────────────────
+# Only the Electron main-process code and its root node_modules go in the asar.
+# Frontend and backend servers are in extraResources so spawn() can reach them.
 files:
   - electron/**/*
-  - frontend/.next/standalone/**/*
-  - frontend/.next/static/**/*
-  - frontend/public/**/*
-  - backend/dist/**/*
   - node_modules/**/*
   - package.json
 
-# ── Extra Resources (copied outside the asar archive) ───────────────────────
+# ── Extra Resources (real filesystem, outside asar — required for spawn()) ───
+# Frontend:  standalone dir mapped to Resources/frontend/ so server.js, its
+#            node_modules, .next/static and public all land at predictable paths.
+# Backend:   dist + its own node_modules so require() resolves dependencies.
 extraResources:
   - from: frontend/.next/standalone
-    to: frontend/.next/standalone
-  - from: frontend/.next/static
-    to: frontend/.next/static
-  - from: frontend/public
-    to: frontend/public
+    to: frontend
   - from: backend/dist
     to: backend/dist
+  - from: backend/node_modules
+    to: backend/node_modules
 
 # ── macOS ─────────────────────────────────────────────────────────────────────
 mac:

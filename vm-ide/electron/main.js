@@ -42,6 +42,30 @@ const windowStore = new Store({
   encryptionKey: undefined, // window state doesn't need encryption
 });
 
+// ─── Runtime Config ───────────────────────────────────────────────────────────
+// In production, a runtime.env file is bundled alongside server.js.
+// It contains DATABASE_URL, NEXTAUTH_SECRET, ADMIN_EMAIL, etc.
+// The CI writes this file from GitHub Secrets at build time.
+function loadRuntimeConfig() {
+  if (DEV_MODE) return; // dev mode uses .env files loaded by Next.js directly
+  const fs = require("fs");
+  const envPath = path.join(process.resourcesPath, "frontend", "runtime.env");
+  try {
+    const lines = fs.readFileSync(envPath, "utf8").split("\n");
+    for (const line of lines) {
+      const eq = line.indexOf("=");
+      if (eq < 1) continue;
+      const key = line.slice(0, eq).trim();
+      const val = line.slice(eq + 1).trim();
+      if (key && !process.env[key]) process.env[key] = val;
+    }
+    log.info("Loaded runtime config from:", envPath);
+  } catch {
+    log.warn("No runtime.env found — some features may not work. Expected at:", envPath);
+  }
+}
+loadRuntimeConfig();
+
 // ─── Single Instance Lock ─────────────────────────────────────────────────────
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -77,7 +101,9 @@ function startFrontend() {
   }
 
   return new Promise((resolve, reject) => {
-    const serverPath = path.join(__dirname, "..", "frontend", ".next", "standalone", "server.js");
+    // process.resourcesPath points to Contents/Resources/ (outside the asar archive).
+    // spawn() cannot execute scripts from inside an asar — always use resourcesPath here.
+    const serverPath = path.join(process.resourcesPath, "frontend", "server.js");
     log.info("Starting Next.js standalone server:", serverPath);
 
     frontendProcess = spawn(process.execPath, [serverPath], {
@@ -86,6 +112,8 @@ function startFrontend() {
         PORT: String(FRONTEND_PORT),
         NODE_ENV: "production",
         HOSTNAME: "127.0.0.1",
+        NEXTAUTH_URL: `http://localhost:${FRONTEND_PORT}`,
+        NEXT_PUBLIC_APP_URL: `http://localhost:${FRONTEND_PORT}`,
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -128,7 +156,7 @@ function startBackend() {
   }
 
   return new Promise((resolve, reject) => {
-    const serverPath = path.join(__dirname, "..", "backend", "dist", "server.js");
+    const serverPath = path.join(process.resourcesPath, "backend", "dist", "server.js");
     log.info("Starting Express backend:", serverPath);
 
     backendProcess = spawn(process.execPath, [serverPath], {
