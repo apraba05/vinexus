@@ -20,7 +20,7 @@
     "icon": "electron/assets/icon",
     "artifactName": "${productName}-${os}.${ext}",
     "directories": {
-      "output": "dist"
+      "output": "dist-electron"
     },
     "mac": {
       "icon": "electron/assets/icon.icns",
