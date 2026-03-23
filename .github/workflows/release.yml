@@ -50,6 +50,10 @@ jobs:
         working-directory: vm-ide/backend
         run: npm run build
 
+      - name: Remove cpu-features (uses pure-JS fallback)
+        working-directory: vm-ide
+        run: rm -rf node_modules/cpu-features
+
       - name: Package with electron-builder (macOS)
         working-directory: vm-ide
         env:
@@ -110,6 +114,11 @@ jobs:
       - name: Build backend
         working-directory: vm-ide/backend
         run: npm run build
+
+      - name: Remove cpu-features (uses pure-JS fallback)
+        working-directory: vm-ide
+        shell: bash
+        run: rm -rf node_modules/cpu-features
 
       - name: Package with electron-builder (Windows)
         working-directory: vm-ide
@@ -178,6 +187,10 @@ jobs:
       - name: Build backend
         working-directory: vm-ide/backend
         run: npm run build
+
+      - name: Remove cpu-features (uses pure-JS fallback)
+        working-directory: vm-ide
+        run: rm -rf node_modules/cpu-features
 
       - name: Package with electron-builder (Linux)
         working-directory: vm-ide
