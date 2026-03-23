@@ -66,8 +66,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Vinexus",
-      "license": "LICENSE"
+      "shortcutName": "Vinexus"
     },
     "linux": {
       "icon": "electron/assets/icon.png",
