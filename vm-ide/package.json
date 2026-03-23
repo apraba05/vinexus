@@ -41,7 +41,7 @@
         "to": "app/frontend/.next/standalone/node_modules"
       },
       {
-        "from": "backend/node_modules/.prisma",
+        "from": "backend/prisma-runtime",
         "to": "app/backend/node_modules/.prisma"
       }
     ],

@@ -71,6 +71,9 @@ jobs:
           printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
             > frontend/.next/standalone/runtime.env
+          # electron-builder cannot copy dotfile directories as extraResources 'from' paths.
+          # Copy .prisma (Prisma generated client) to a non-dot-prefixed path so electron-builder includes it.
+          cp -r backend/node_modules/.prisma backend/prisma-runtime
 
       - name: Remove cpu-features (uses pure-JS fallback)
         working-directory: vm-ide
@@ -156,6 +159,7 @@ jobs:
           printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
             > frontend/.next/standalone/runtime.env
+          cp -r backend/node_modules/.prisma backend/prisma-runtime
 
       - name: Remove cpu-features (uses pure-JS fallback)
         working-directory: vm-ide
@@ -249,6 +253,7 @@ jobs:
           printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
             > frontend/.next/standalone/runtime.env
+          cp -r backend/node_modules/.prisma backend/prisma-runtime
 
       - name: Remove cpu-features (uses pure-JS fallback)
         working-directory: vm-ide

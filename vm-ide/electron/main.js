@@ -114,6 +114,7 @@ function startFrontend() {
         HOSTNAME: "127.0.0.1",
         NEXTAUTH_URL: `http://localhost:${FRONTEND_PORT}`,
         NEXT_PUBLIC_APP_URL: `http://localhost:${FRONTEND_PORT}`,
+        AUTH_TRUST_HOST: "1", // Auth.js v5 requires this for non-standard hosts like localhost
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
