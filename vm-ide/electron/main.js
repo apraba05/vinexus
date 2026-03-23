@@ -286,21 +286,33 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  // Handle deep-link navigations (vinexus://auth/callback)
+  // Handle navigations:
+  //  - OAuth provider redirects → open in system browser (not deep-link)
+  //  - /signup → redirect to /login (desktop users already have accounts)
+  //  - vinexus:// deep links → forward to auth handler
+  //  - other external URLs → block
   mainWindow.webContents.on("will-navigate", (event, url) => {
-    if (!url.startsWith("http://localhost") && !url.startsWith("http://127.0.0.1")) {
-      event.preventDefault();
+    const isLocal = url.startsWith("http://localhost") || url.startsWith("http://127.0.0.1");
+    if (isLocal) {
+      // Block navigation to /signup — desktop users sign up on the website
+      try {
+        const parsed = new URL(url);
+        if (parsed.pathname === "/signup" || parsed.pathname.startsWith("/signup")) {
+          event.preventDefault();
+          mainWindow.webContents.loadURL(`http://localhost:${FRONTEND_PORT}/login`);
+        }
+      } catch {}
+      return; // allow all other local navigations
+    }
+    event.preventDefault();
+    // OAuth provider redirects must open in the system browser
+    const oauthHosts = ["accounts.google.com", "github.com/login/oauth", "github.com/login/device"];
+    if (oauthHosts.some((h) => url.includes(h))) {
+      shell.openExternal(url);
+    } else {
+      // vinexus:// deep links and everything else
       handleDeepLink(url);
     }
-  });
-
-  log.info("Loading URL:", APP_URL);
-  mainWindow.loadURL(APP_URL).catch((err) => {
-    log.error("Failed to load URL:", err);
-    // Show an error page inline
-    mainWindow.webContents.loadURL(
-      `data:text/html,<h2 style="font-family:sans-serif;color:#fff;background:#0a0a0f;padding:40px">Vinexus could not connect to local servers. Please try restarting.</h2>`
-    );
   });
 
   return mainWindow;
@@ -328,6 +340,15 @@ app.whenReady().then(async () => {
   registerSshHandlers();
   registerPtyHandlers();
 
+  // Create the window immediately so the user sees the loading screen
+  // instead of waiting ~8 s on a blank desktop.
+  createWindow();
+
+  // Show the branded loading screen while servers start up
+  if (!DEV_MODE) {
+    mainWindow.webContents.loadFile(path.join(__dirname, "loading.html"));
+  }
+
   // Start servers (no-op in dev mode).
   // Backend failure is non-fatal — basic IDE features (SSH, terminal, file editing)
   // work via Electron IPC. Only Pro AI/deploy features need the backend.
@@ -336,7 +357,14 @@ app.whenReady().then(async () => {
     startFrontend(),
   ]);
 
-  createWindow();
+  // Navigate to the app once servers are ready
+  log.info("Servers ready — navigating to app");
+  mainWindow.loadURL(APP_URL).catch((err) => {
+    log.error("Failed to load app URL:", err);
+    mainWindow.webContents.loadURL(
+      `data:text/html,<h2 style="font-family:sans-serif;color:#fff;background:#0a0a0f;padding:40px">Vinexus could not connect to local servers. Please try restarting.</h2>`
+    );
+  });
 
   // Auto-updater (only in production)
   if (!DEV_MODE) {
