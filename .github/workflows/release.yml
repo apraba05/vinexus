@@ -63,21 +63,23 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          GH_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
+          GH_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           # Static files must live inside the standalone dir so server.js can find them
           cp -r frontend/.next/static frontend/.next/standalone/.next/static
           cp -r frontend/public frontend/.next/standalone/public
           # Write runtime env — read by main.js at app startup
-          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
+          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\nGITHUB_CLIENT_ID=%s\nGITHUB_CLIENT_SECRET=%s\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
+            "$GH_CLIENT_ID" "$GH_CLIENT_SECRET" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" \
             > frontend/.next/standalone/runtime.env
           # Prisma generates to root node_modules/.prisma (based on schema location).
-          # Backend's @prisma/client resolves .prisma/client from backend/node_modules/.prisma.
-          # Copy the root-generated client into the backend's node_modules so it can be found at runtime.
+          # Copy the root-generated client into backend/node_modules so it can be found at runtime.
           cp -r node_modules/.prisma backend/node_modules/.prisma
-          # electron-builder strips dotfile directories from extraResources 'from' paths.
-          # Use a non-dot-prefixed copy as the extraResources source.
-          cp -r node_modules/.prisma backend/node_modules/.prisma
+          # electron-builder strips dotfile 'from' paths — use a non-dot-prefixed copy.
           cp -r backend/node_modules/.prisma backend/prisma-runtime
 
       - name: Remove cpu-features (uses pure-JS fallback)
