@@ -62,60 +62,71 @@ function MacOSContent() {
   };
   return (
     <div>
-      {/* Download button */}
-      <div style={{ marginBottom: 32 }}>
-        <a
-          href="https://github.com/apraba05/vinexus/releases/latest/download/Vinexus-mac.dmg"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "13px 24px",
-            background: D.primary,
-            color: "#fff",
-            borderRadius: 6,
-            fontSize: 14,
-            fontWeight: 600,
-            textDecoration: "none",
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          Download for macOS
-        </a>
-        <div style={{ marginTop: 8, fontSize: 12, color: D.onSurfaceVariant }}>
-          macOS 12 (Monterey) or later · Apple Silicon &amp; Intel · ~95 MB
+
+      {/* Install script — recommended */}
+      <div style={{ marginBottom: 36 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: D.onSurfaceVariant, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>
+          Recommended
+        </div>
+        <div style={{ padding: "20px 22px", background: D.surfaceContainerLow, border: `1px solid ${D.outlineVariant}`, borderRadius: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={D.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 600, color: D.inverseSurface }}>One-line install — no Gatekeeper dialogs</span>
+          </div>
+          <p style={{ fontSize: 13, color: D.onSurfaceVariant, margin: "0 0 14px", lineHeight: 1.65 }}>
+            Paste this into Terminal. It downloads Vinexus, installs it to /Applications, removes the quarantine flag, and opens it — all in one step.
+          </p>
+          <Code>{`/bin/bash -c "$(curl -fsSL https://vinexus.space/install.sh)"`}</Code>
+          <div style={{ marginTop: 10, fontSize: 12, color: D.onSurfaceVariant }}>
+            macOS 12 (Monterey) or later · Apple Silicon &amp; Intel · ~175 MB download
+          </div>
         </div>
       </div>
 
-      <Step n={1} title="Open the .dmg file">
-        Double-click the downloaded <code style={ic}>Vinexus-mac.dmg</code> file. A Finder window will open showing the Vinexus app and your Applications folder.
+      {/* DMG — manual */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: D.onSurfaceVariant, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>
+          Manual install (DMG)
+        </div>
+        <a
+          href="https://github.com/apraba05/vinexus/releases/latest/download/Vinexus-mac.dmg"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 10,
+            padding: "11px 20px", background: D.surfaceContainerHigh,
+            color: D.onSurface, border: `1px solid ${D.outlineVariant}`,
+            borderRadius: 6, fontSize: 14, fontWeight: 600, textDecoration: "none",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          Download .dmg
+        </a>
+        <div style={{ marginTop: 8, fontSize: 12, color: D.onSurfaceVariant }}>
+          macOS 12 (Monterey) or later · Apple Silicon &amp; Intel · ~175 MB
+        </div>
+      </div>
+
+      <Step n={1} title="Open the .dmg and drag to Applications">
+        Double-click <code style={ic}>Vinexus-mac.dmg</code>, then drag Vinexus into the Applications shortcut.
       </Step>
 
-      <Step n={2} title="Drag to Applications">
-        Drag the Vinexus icon to the Applications folder shortcut in the Finder window. Wait for the copy to finish, then eject the disk image.
+      <Step n={2} title="Try to open Vinexus">
+        Double-click Vinexus in Applications. macOS will show a security block — click <strong style={{ color: D.onSurface }}>Done</strong>.
       </Step>
 
-      <Step n={3} title="Open Vinexus (bypass Gatekeeper)">
+      <Step n={3} title="Allow it in Privacy &amp; Security">
         <div>
-          macOS will block the app on first launch since it was downloaded from the internet. To open it:
-          <ol style={{ paddingLeft: 20, marginTop: 8, lineHeight: 2.1, color: D.onSurfaceVariant }}>
-            <li>Open <strong style={{ color: D.onSurface }}>Finder → Applications</strong></li>
-            <li>Right-click (or Control-click) on Vinexus</li>
-            <li>Click <strong style={{ color: D.onSurface }}>Open</strong> in the context menu</li>
-            <li>Click <strong style={{ color: D.onSurface }}>Open</strong> again in the confirmation dialog</li>
-          </ol>
-          <div style={{ marginTop: 10, fontSize: 13, color: D.onSurfaceVariant }}>
-            You only need to do this once. After the first launch, Vinexus opens normally.
-          </div>
+          Open <strong style={{ color: D.onSurface }}>System Settings → Privacy &amp; Security</strong>, scroll down, and click <strong style={{ color: D.onSurface }}>Open Anyway</strong> next to Vinexus. You only do this once.
           <div style={{ marginTop: 12, fontSize: 13, color: D.onSurfaceVariant }}>
-            Or, remove the quarantine flag in Terminal:
+            Or skip straight to it from Terminal:
           </div>
-          <Code>{`xattr -dr com.apple.quarantine /Applications/Vinexus.app`}</Code>
+          <Code>{`xattr -cr /Applications/Vinexus.app && codesign --force --deep --sign - /Applications/Vinexus.app && open /Applications/Vinexus.app`}</Code>
         </div>
       </Step>
 
       <Step n={4} title="Connect to your VM">
-        Vinexus will open to the connection screen. Enter your VM&apos;s IP address, SSH username, and your private key file (or password) and click Connect.
+        Enter your VM&apos;s IP, SSH username, and private key (or password) and click Connect.
       </Step>
     </div>
   );
