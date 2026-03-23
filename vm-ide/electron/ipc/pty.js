@@ -1,7 +1,7 @@
 /**
  * electron/ipc/pty.js
  *
- * Vela Desktop — PTY IPC Handlers (Main Process)
+ * Vinexus Desktop — PTY IPC Handlers (Main Process)
  *
  * Creates interactive terminal sessions over SSH using node-pty.
  * Each PTY is tied to an SSH session and streams data bidirectionally

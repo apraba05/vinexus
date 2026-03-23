@@ -1,13 +1,13 @@
 /**
  * electron/main.js
  *
- * Vela Desktop — Main Electron Process
+ * Vinexus Desktop — Main Electron Process
  *
  * Responsibilities:
  *  - Create and manage the BrowserWindow
  *  - Enforce single-instance lock
  *  - Spawn and manage child processes: Next.js frontend server + Express backend
- *  - Register the vela:// deep-link protocol for OAuth callbacks
+ *  - Register the vinexus:// deep-link protocol for OAuth callbacks
  *  - Register all IPC handlers (auth, ssh, pty, updater)
  *  - Persist window state (size/position) via electron-store
  */
@@ -27,18 +27,18 @@ const { registerPtyHandlers, cleanupPty } = require("./ipc/pty");
 // ─── Logging ──────────────────────────────────────────────────────────────────
 log.transports.file.level = "info";
 log.transports.console.level = "debug";
-log.info("Vela Desktop starting", { version: app.getVersion(), pid: process.pid });
+log.info("Vinexus Desktop starting", { version: app.getVersion(), pid: process.pid });
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FRONTEND_PORT = 3000;
 const BACKEND_PORT = 4000;
 const DEV_MODE = !app.isPackaged;
 const APP_URL = `http://localhost:${FRONTEND_PORT}`;
-const DEEP_LINK_PROTOCOL = "vela";
+const DEEP_LINK_PROTOCOL = "vinexus";
 
 // ─── Electron Store (window state) ────────────────────────────────────────────
 const windowStore = new Store({
-  name: "vela-window-state",
+  name: "vinexus-window-state",
   encryptionKey: undefined, // window state doesn't need encryption
 });
 
@@ -204,7 +204,7 @@ function createWindow() {
     y: state.y,
     minWidth: 1024,
     minHeight: 700,
-    title: "Vela",
+    title: "Vinexus",
     backgroundColor: "#0a0a0f",
     // Show traffic lights but let our web title bar handle the visual style
     titleBarStyle: "hidden",
@@ -255,7 +255,7 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  // Handle deep-link navigations (vela://auth/callback)
+  // Handle deep-link navigations (vinexus://auth/callback)
   mainWindow.webContents.on("will-navigate", (event, url) => {
     if (!url.startsWith("http://localhost") && !url.startsWith("http://127.0.0.1")) {
       event.preventDefault();
@@ -268,7 +268,7 @@ function createWindow() {
     log.error("Failed to load URL:", err);
     // Show an error page inline
     mainWindow.webContents.loadURL(
-      `data:text/html,<h2 style="font-family:sans-serif;color:#fff;background:#0a0a0f;padding:40px">Vela could not connect to local servers. Please try restarting.</h2>`
+      `data:text/html,<h2 style="font-family:sans-serif;color:#fff;background:#0a0a0f;padding:40px">Vinexus could not connect to local servers. Please try restarting.</h2>`
     );
   });
 

@@ -1,7 +1,7 @@
 /**
  * electron/preload.js
  *
- * Vela Desktop — Preload Script (Context Bridge)
+ * Vinexus Desktop — Preload Script (Context Bridge)
  *
  * Exposes safe, typed IPC channels from Electron's main process to the
  * renderer (React/Next.js). All Node.js / native operations must go

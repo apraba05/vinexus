@@ -1,7 +1,7 @@
 /**
  * electron/ipc/auth.js
  *
- * Vela Desktop — Auth IPC Handlers
+ * Vinexus Desktop — Auth IPC Handlers
  *
  * Manages secure token and credential storage using electron-store with
  * AES-256 encryption. The renderer never touches Node.js / file system
@@ -28,19 +28,19 @@ const log = require("electron-log");
 
 /** Stores auth tokens (NextAuth session, backend JWT, OAuth tokens) */
 const tokenStore = new Store({
-  name: "vela-auth",
-  encryptionKey: "vela-auth-enc-key-v1", // TODO: derive from machine ID for production
+  name: "vinexus-auth",
+  encryptionKey: "vinexus-auth-enc-key-v1", // TODO: derive from machine ID for production
 });
 
 /** Stores saved VM connection credentials */
 const credStore = new Store({
-  name: "vela-vm-creds",
-  encryptionKey: "vela-vm-creds-enc-key-v1",
+  name: "vinexus-vm-creds",
+  encryptionKey: "vinexus-vm-creds-enc-key-v1",
 });
 
 /** Stores non-sensitive UI preferences (panel sizes, etc.) */
 const prefsStore = new Store({
-  name: "vela-prefs",
+  name: "vinexus-prefs",
 });
 
 // ─── IPC Handler Registration ─────────────────────────────────────────────────

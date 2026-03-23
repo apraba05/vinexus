@@ -1,7 +1,7 @@
 /**
  * lib/electron.ts
  *
- * Vela Desktop — Electron Bridge
+ * Vinexus Desktop — Electron Bridge
  *
  * Detects whether the app is running in Electron and provides
  * a unified API that works in both Electron (desktop) and browser (web).

@@ -1,4 +1,4 @@
-# Deploying Vela to AWS (~$21/month)
+# Deploying Vinexus to AWS (~$21/month)
 
 Single EC2 instance running everything via Docker Compose with Caddy for automatic HTTPS.
 
@@ -27,7 +27,7 @@ Internet → Caddy (port 80/443) → Next.js frontend (:3000)
 
 - EC2 instance launched and running (Ubuntu 24.04 recommended)
 - SSH access to your instance
-- Domain name purchased (e.g., `vela.dev`)
+- Domain name purchased (e.g., `vinexus.dev`)
 
 ---
 
@@ -45,9 +45,9 @@ You need a **static IP address** so your domain always points to the same place.
 
 ---
 
-## Step 2: Point Your Domain (vela.dev) to EC2
+## Step 2: Point Your Domain (vinexus.dev) to EC2
 
-You need to create a **DNS A Record** that tells the internet "vela.dev → your EC2 IP."
+You need to create a **DNS A Record** that tells the internet "vinexus.dev → your EC2 IP."
 
 ### Option A: Using AWS Route 53 (recommended — most reliable)
 
@@ -55,7 +55,7 @@ You need to create a **DNS A Record** that tells the internet "vela.dev → your
 
 1. Go to **AWS Console → Route 53 → Hosted zones**
 2. Click **"Create hosted zone"**
-   - Domain name: `vela.dev`
+   - Domain name: `vinexus.dev`
    - Type: **Public hosted zone**
    - Click **"Create hosted zone"**
 3. Route 53 will show you **4 nameservers** (NS records) that look like:
@@ -65,12 +65,12 @@ You need to create a **DNS A Record** that tells the internet "vela.dev → your
    ns-890.awsdns-56.co.uk
    ns-12.awsdns-78.com
    ```
-4. **Go to your domain registrar** (wherever you bought `vela.dev`) and update the nameservers to the 4 Route 53 nameservers above. This is usually under "DNS Settings" or "Nameservers" in your registrar's dashboard.
+4. **Go to your domain registrar** (wherever you bought `vinexus.dev`) and update the nameservers to the 4 Route 53 nameservers above. This is usually under "DNS Settings" or "Nameservers" in your registrar's dashboard.
 5. **Back in Route 53**, click into your hosted zone and create records:
 
    **Record 1 — Root domain:**
    - Click **"Create record"**
-   - Record name: *(leave blank for root `vela.dev`)*
+   - Record name: *(leave blank for root `vinexus.dev`)*
    - Record type: **A**
    - Value: **Your Elastic IP** (e.g., `54.210.123.45`)
    - TTL: 300
@@ -80,7 +80,7 @@ You need to create a **DNS A Record** that tells the internet "vela.dev → your
    - Click **"Create record"**
    - Record name: `www`
    - Record type: **CNAME**
-   - Value: `vela.dev`
+   - Value: `vinexus.dev`
    - TTL: 300
    - Click **"Create records"**
 
@@ -89,14 +89,14 @@ You need to create a **DNS A Record** that tells the internet "vela.dev → your
 If you don't want the extra $0.50/month for Route 53, set DNS directly at your registrar.
 
 1. Log into your domain registrar (GoDaddy, Namecheap, Cloudflare, Porkbun, etc.)
-2. Go to **DNS Management** for `vela.dev`
+2. Go to **DNS Management** for `vinexus.dev`
 3. **Delete any existing A or CNAME records** for `@` or `www`
 4. Create these records:
 
    | Type | Name/Host | Value | TTL |
    |------|-----------|-------|-----|
    | A | `@` (or blank) | `YOUR_ELASTIC_IP` | 300 |
-   | CNAME | `www` | `vela.dev` | 300 |
+   | CNAME | `www` | `vinexus.dev` | 300 |
 
    > **Note:** Different registrars use different names. `@` means the root domain. Some registrars use a blank field instead.
 
@@ -106,10 +106,10 @@ DNS changes can take **5 minutes to 48 hours** (usually 5-15 minutes).
 
 ```bash
 # Check from your local machine:
-dig vela.dev +short
+dig vinexus.dev +short
 # Should return your Elastic IP
 
-nslookup vela.dev
+nslookup vinexus.dev
 # Should show your Elastic IP
 
 # Or use a web tool: https://dnschecker.org
@@ -206,8 +206,8 @@ In the `nano` editor, update these values:
 
 ```bash
 # Set your domain
-DOMAIN=vela.dev
-NEXTAUTH_URL=https://vela.dev
+DOMAIN=vinexus.dev
+NEXTAUTH_URL=https://vinexus.dev
 
 # Paste the passwords you generated above
 POSTGRES_PASSWORD=<paste-db-password-here>
@@ -226,7 +226,7 @@ Also update the **Caddyfile** to use your domain:
 # The Caddyfile uses the $DOMAIN env var automatically, but verify it looks correct:
 cat Caddyfile
 # The first line should show: {$DOMAIN} {
-# This will resolve to vela.dev from your .env
+# This will resolve to vinexus.dev from your .env
 ```
 
 ---
@@ -236,9 +236,9 @@ cat Caddyfile
 1. Go to **[github.com/settings/developers](https://github.com/settings/developers)**
 2. Click **"OAuth Apps"** → **"New OAuth App"**
 3. Fill in:
-   - **Application name**: `Vela`
-   - **Homepage URL**: `https://vela.dev`
-   - **Authorization callback URL**: `https://vela.dev/api/auth/callback/github`
+   - **Application name: Vinexus`
+   - **Homepage URL**: `https://vinexus.dev`
+   - **Authorization callback URL**: `https://vinexus.dev/api/auth/callback/github`
 4. Click **"Register application"**
 5. Copy the **Client ID** shown on the next page
 6. Click **"Generate a new client secret"** → copy the secret
@@ -298,15 +298,15 @@ docker compose -f docker-compose.prod.yml exec frontend npx prisma db seed
 docker compose -f docker-compose.prod.yml ps
 
 # 2. Test HTTPS (may take 1-2 minutes for Caddy to get the SSL cert)
-curl -I https://vela.dev
+curl -I https://vinexus.dev
 # Should return: HTTP/2 200 with valid TLS
 
 # 3. If curl fails, check Caddy logs:
 docker compose -f docker-compose.prod.yml logs caddy
 ```
 
-Open **https://vela.dev** in your browser. You should see:
-- ✅ The Vela landing page with HTTPS (lock icon)
+Open **https://vinexus.dev** in your browser. You should see:
+- ✅ The Vinexus landing page with HTTPS (lock icon)
 - ✅ Login page with "Continue with GitHub" button
 - ✅ GitHub OAuth login working end-to-end
 
@@ -327,13 +327,13 @@ docker compose -f docker-compose.prod.yml logs backend
 ```
 
 ### Caddy can't get SSL certificate
-- Make sure DNS is propagated: `dig vela.dev +short` should return your IP
+- Make sure DNS is propagated: `dig vinexus.dev +short` should return your IP
 - Make sure ports 80 AND 443 are open in security group
 - Check Caddy logs: `docker compose -f docker-compose.prod.yml logs caddy`
 
 ### GitHub OAuth "redirect_uri mismatch"
-- Verify the callback URL in GitHub is exactly: `https://vela.dev/api/auth/callback/github`
-- Verify `NEXTAUTH_URL` in `.env` is exactly: `https://vela.dev` (no trailing slash)
+- Verify the callback URL in GitHub is exactly: `https://vinexus.dev/api/auth/callback/github`
+- Verify `NEXTAUTH_URL` in `.env` is exactly: `https://vinexus.dev` (no trailing slash)
 
 ### Database connection errors
 ```bash

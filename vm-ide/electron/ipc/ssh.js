@@ -1,7 +1,7 @@
 /**
  * electron/ipc/ssh.js
  *
- * Vela Desktop — SSH IPC Handlers (Main Process)
+ * Vinexus Desktop — SSH IPC Handlers (Main Process)
  *
  * All SSH and SFTP operations run in the main process — never in the renderer.
  * The renderer calls these via window.electronAPI.ssh.* through the preload bridge.

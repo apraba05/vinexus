@@ -1,6 +1,6 @@
-# Vela Desktop — Setup Guide
+# Vinexus Desktop — Setup Guide
 
-Vela is an IDE for managing and editing code on virtual machines, packaged as a cross-platform desktop app with Electron.
+Vinexus is an IDE for managing and editing code on virtual machines, packaged as a cross-platform desktop app with Electron.
 
 ---
 
@@ -60,7 +60,7 @@ cd ..
 # Frontend
 cp frontend/.env.example frontend/.env.local
 # Edit frontend/.env.local:
-#   DATABASE_URL=postgresql://user:password@localhost:5432/vela
+#   DATABASE_URL=postgresql://user:password@localhost:5432/vinexus
 #   NEXTAUTH_URL=http://localhost:3000
 #   NEXTAUTH_SECRET=<generate: openssl rand -base64 32>
 #   GITHUB_CLIENT_ID=<your GitHub OAuth app client ID>
@@ -142,14 +142,14 @@ Place your icon files in `electron/assets/`:
 
 ### Auto-updater
 
-Vela uses `electron-updater` publishing to GitHub Releases.
+Vinexus uses `electron-updater` publishing to GitHub Releases.
 
 1. Edit `electron-builder.yml`:
    ```yaml
    publish:
      provider: github
      owner: your-github-org
-     repo: vela
+     repo: vinexus
    ```
 2. Create a GitHub Personal Access Token with `repo` scope
 3. Set `GH_TOKEN=<your token>` in your CI environment
@@ -206,7 +206,7 @@ When running in a browser (not Electron), use the **Connect Form** overlay that 
 
 1. **On first launch**: you see the full-screen login page inside the Electron window
 2. **Sign in** with email + password, or click GitHub/Google OAuth
-3. **OAuth flow**: your system browser opens for OAuth; on success it redirects to `vela://auth/callback` which the app handles
+3. **OAuth flow**: your system browser opens for OAuth; on success it redirects to `vinexus://auth/callback` which the app handles
 4. **Token storage**: the session token is stored in `electron-store` (encrypted)
 5. **On subsequent launches**: token is loaded automatically, you go straight to the IDE
 
@@ -225,7 +225,7 @@ For GitHub OAuth to work in the desktop app, your GitHub OAuth app needs:
 - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
 
 For production desktop builds, also register the deep link:
-- **Authorization callback URL**: `vela://auth/callback`
+- **Authorization callback URL**: `vinexus://auth/callback`
 
 ---
 
@@ -325,7 +325,7 @@ npx electron-rebuild -f -w node-pty
 
 - Verify the VM allows SSH from your IP (check security groups)
 - Test with `ssh username@host -p port` in terminal first
-- Check `electron-log` output: `~/.config/Vela/logs/main.log` (Linux), `~/Library/Logs/Vela/main.log` (macOS)
+- Check `electron-log` output: `~/.config/Vinexus/logs/main.log` (Linux), `~/Library/Logs/Vinexus/main.log` (macOS)
 
 ### Database errors
 
@@ -336,12 +336,12 @@ npm run db:push       # push schema without migration (dev only)
 
 ### OAuth deep links not working (macOS)
 
-Register the app as the `vela://` protocol handler by building and installing the app:
+Register the app as the `vinexus://` protocol handler by building and installing the app:
 ```bash
 npm run electron:build:mac
-open dist-electron/Vela-*.dmg
+open dist-electron/Vinexus-*.dmg
 ```
-Then drag Vela.app to Applications.
+Then drag Vinexus.app to Applications.
 
 ### Build fails: icon files missing
 

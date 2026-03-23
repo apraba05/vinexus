@@ -1,10 +1,10 @@
 /**
  * electron/menu.js
  *
- * Vela Desktop — Native Application Menu
+ * Vinexus Desktop — Native Application Menu
  *
  * Builds a VS Code–style IDE menu bar:
- *   Vela | File | Edit | View | Terminal | VM | Help
+ *   Vinexus | File | Edit | View | Terminal | VM | Help
  *
  * All keyboard shortcuts use standard OS conventions.
  */
@@ -221,11 +221,11 @@ function buildTemplate(mainWindow) {
       submenu: [
         {
           label: "Documentation",
-          click: () => shell.openExternal("https://vela.dev/docs"),
+          click: () => shell.openExternal("https://vinexus.dev/docs"),
         },
         {
           label: "Report an Issue",
-          click: () => shell.openExternal("https://github.com/your-org/vela/issues"),
+          click: () => shell.openExternal("https://github.com/apraba05/vinexus/issues"),
         },
         { type: "separator" },
         {
@@ -238,7 +238,7 @@ function buildTemplate(mainWindow) {
         ...(!isMac
           ? [
               { type: "separator" },
-              { label: "About Vela", role: "about" },
+              { label: "About Vinexus", role: "about" },
             ]
           : []),
       ],
