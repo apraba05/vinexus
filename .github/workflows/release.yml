@@ -71,8 +71,13 @@ jobs:
           printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
             > frontend/.next/standalone/runtime.env
-          # electron-builder cannot copy dotfile directories as extraResources 'from' paths.
-          # Copy .prisma (Prisma generated client) to a non-dot-prefixed path so electron-builder includes it.
+          # Prisma generates to root node_modules/.prisma (based on schema location).
+          # Backend's @prisma/client resolves .prisma/client from backend/node_modules/.prisma.
+          # Copy the root-generated client into the backend's node_modules so it can be found at runtime.
+          cp -r node_modules/.prisma backend/node_modules/.prisma
+          # electron-builder strips dotfile directories from extraResources 'from' paths.
+          # Use a non-dot-prefixed copy as the extraResources source.
+          cp -r node_modules/.prisma backend/node_modules/.prisma
           cp -r backend/node_modules/.prisma backend/prisma-runtime
 
       - name: Remove cpu-features (uses pure-JS fallback)
@@ -159,6 +164,7 @@ jobs:
           printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
             > frontend/.next/standalone/runtime.env
+          cp -r node_modules/.prisma backend/node_modules/.prisma
           cp -r backend/node_modules/.prisma backend/prisma-runtime
 
       - name: Remove cpu-features (uses pure-JS fallback)
@@ -253,6 +259,7 @@ jobs:
           printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
             > frontend/.next/standalone/runtime.env
+          cp -r node_modules/.prisma backend/node_modules/.prisma
           cp -r backend/node_modules/.prisma backend/prisma-runtime
 
       - name: Remove cpu-features (uses pure-JS fallback)
