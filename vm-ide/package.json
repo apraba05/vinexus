@@ -35,6 +35,16 @@
       "node_modules/node-pty/**/*",
       "node_modules/ssh2/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "frontend/.next/standalone/node_modules",
+        "to": "app/frontend/.next/standalone/node_modules"
+      },
+      {
+        "from": "backend/node_modules/.prisma",
+        "to": "app/backend/node_modules/.prisma"
+      }
+    ],
     "mac": {
       "icon": "electron/assets/icon.icns",
       "category": "public.app-category.developer-tools",
