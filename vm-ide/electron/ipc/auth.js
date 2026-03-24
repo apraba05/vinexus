@@ -81,15 +81,38 @@ function validateStore(store, name) {
   }
 }
 
+/**
+ * Create an electron-store with the given options.
+ * If construction fails (e.g. existing file was written by an older unencrypted
+ * version and can't be decrypted), delete the corrupted file and try once more.
+ */
+function safeStore(options) {
+  try {
+    return new Store(options);
+  } catch (err) {
+    log.warn(`Store "${options.name}" failed to open (likely unencrypted legacy file) — clearing and retrying:`, err.message);
+    try {
+      // electron-store stores files in app.getPath("userData")
+      const { app } = require("electron");
+      const fs = require("fs");
+      const storeFile = require("path").join(app.getPath("userData"), `${options.name}.json`);
+      if (fs.existsSync(storeFile)) fs.unlinkSync(storeFile);
+    } catch (delErr) {
+      log.error("Failed to delete legacy store file:", delErr.message);
+    }
+    return new Store(options);
+  }
+}
+
 /** Initialize stores once, after app is ready (safeStorage requires app ready) */
 function initStores() {
   if (tokenStore) return;
   const authKey = getOrCreateKey("auth-enc-key");
   const credsKey = getOrCreateKey("creds-enc-key");
-  tokenStore = new Store({ name: "vinexus-auth", encryptionKey: authKey });
-  credStore  = new Store({ name: "vinexus-vm-creds", encryptionKey: credsKey });
-  prefsStore = new Store({ name: "vinexus-prefs" });
-  // Migrate: if stores were encrypted with old hardcoded keys, clear them gracefully
+  tokenStore = safeStore({ name: "vinexus-auth", encryptionKey: authKey });
+  credStore  = safeStore({ name: "vinexus-vm-creds", encryptionKey: credsKey });
+  prefsStore = safeStore({ name: "vinexus-prefs" });
+  // Validate: if stores were encrypted with old keys, clear them gracefully
   validateStore(tokenStore, "vinexus-auth");
   validateStore(credStore, "vinexus-vm-creds");
   log.info("Encrypted stores initialized via OS keychain");
