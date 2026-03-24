@@ -230,10 +230,14 @@ export default function LoginPage() {
 
         {/* Footer links */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 24 }}>
-          {["SECURITY", "CONTACT", "STATUS"].map((label, i) => (
+          {[
+            { label: "PRIVACY", href: "https://vinexus.space/privacy" },
+            { label: "TERMS", href: "https://vinexus.space/terms" },
+            { label: "CONTACT", href: "https://vinexus.space/contact" },
+          ].map(({ label, href }, i) => (
             <React.Fragment key={label}>
               {i > 0 && <span style={{ width: 3, height: 3, borderRadius: "50%", background: D.onSurfaceVariant, display: "inline-block" }} />}
-              <a href="#" style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: D.onSurfaceVariant, textDecoration: "none" }}>{label}</a>
+              <a href={href} style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", color: D.onSurfaceVariant, textDecoration: "none" }}>{label}</a>
             </React.Fragment>
           ))}
         </div>

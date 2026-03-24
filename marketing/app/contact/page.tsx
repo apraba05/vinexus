@@ -9,12 +9,29 @@ export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate form submission
-    await new Promise((r) => setTimeout(r, 1000));
-    setSent(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to send. Please try again.");
+      } else {
+        setSent(true);
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    }
+
     setLoading(false);
   };
 
@@ -101,6 +118,11 @@ export default function ContactPage() {
                 style={{ resize: "vertical", minHeight: 120 }}
               />
             </div>
+            {error && (
+              <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 13, color: "#ef4444" }}>
+                {error}
+              </div>
+            )}
             <button className="btn btn-primary" style={{ width: "100%", padding: "13px 0", marginTop: 4 }} type="submit" disabled={loading}>
               {loading ? "Sending..." : "Send Message"}
             </button>
@@ -115,7 +137,7 @@ export default function ContactPage() {
         <div style={{ display: "flex", justifyContent: "center", gap: 32 }}>
           <div>
             <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 4 }}>Email</div>
-            <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>support@vinexus.dev</div>
+            <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>support@vinexus.space</div>
           </div>
           <div>
             <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 4 }}>Response time</div>

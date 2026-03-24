@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 
-const APP_URL = "https://app.vinexus.space";
+const APP_URL = "https://vinexus.space";
 
 function SunIcon() {
   return (

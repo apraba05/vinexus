@@ -19,7 +19,7 @@ const sections = [
   },
   {
     title: "Subscription Plans",
-    content: `Vinexus offers a Free plan and a Pro plan ($10/month). The Free plan includes access to the Monaco editor, integrated terminal, and file management. The Pro plan additionally includes one-click deploy, server commands, and AI-powered insights.
+    content: `Vinexus offers the following plans: Free (no cost), Premium ($19/month), Max ($49/month), and Enterprise (custom pricing). Higher plans unlock additional VM connections, AI-powered features, and priority support.
 
 Subscriptions are billed monthly through Stripe. You may cancel your subscription at any time, and access will continue until the end of the current billing period. Refunds are not provided for partial billing periods.`,
   },

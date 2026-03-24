@@ -11,11 +11,15 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
 
-    await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // Network error — still show the same message to prevent enumeration
+    }
 
     setSent(true);
     setLoading(false);
