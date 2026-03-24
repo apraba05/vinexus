@@ -151,14 +151,27 @@ export default function AppPage() {
   }, []); // stable — uses functional update, no external deps
 
   useEffect(() => {
+    // Force dark theme immediately so CSS vars are correct before any content renders
+    document.documentElement.setAttribute("data-theme", "dark");
+
     const isEl = isElectron();
     setElectron(isEl);
     if (isEl) {
       const ea = (window as any).electronAPI;
-      ea?.auth.getSession().then((res: any) => {
+      // Timeout guard: if IPC never resolves (e.g. handler not registered), unblock after 3s
+      const timer = setTimeout(() => setChecked(true), 3000);
+      const finish = (res?: any) => {
+        clearTimeout(timer);
         if (res?.user) setUser(res.user);
         setChecked(true);
-      }).catch(() => setChecked(true));
+      };
+      try {
+        Promise.resolve(ea?.auth?.getSession?.())
+          .then(finish)
+          .catch(() => finish());
+      } catch {
+        finish();
+      }
     } else {
       setChecked(true);
     }
@@ -189,7 +202,21 @@ export default function AppPage() {
     }
   }, [electron, syncPlan]);
 
-  if (!checked) return null;
+  if (!checked) return (
+    <div style={{
+      position: "fixed", inset: 0,
+      background: "#0d1117",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <div style={{
+        width: 20, height: 20, borderRadius: "50%",
+        border: "2px solid rgba(255,255,255,0.1)",
+        borderTopColor: "rgba(255,255,255,0.5)",
+        animation: "spin 0.8s linear infinite",
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
   if (!electron) return <DownloadPage />;
   if (!user) return <LoginScreen onLogin={(u) => { setUser(u); }} />;
   return <IDEView user={user} onLogout={() => setUser(null)} />;
