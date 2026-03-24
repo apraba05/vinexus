@@ -12,7 +12,7 @@
  *  - Persist window state (size/position) via electron-store
  */
 
-const { app, BrowserWindow, ipcMain, shell, protocol, session } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, protocol, session, dialog } = require("electron");
 const path = require("path");
 const { fork, spawn } = require("child_process");
 const log = require("electron-log");
@@ -457,4 +457,10 @@ autoUpdater.on("update-downloaded", (info) => {
 
 ipcMain.handle("updater:install-and-restart", () => {
   autoUpdater.quitAndInstall();
+});
+
+ipcMain.handle("app:showSaveDialog", async (_event, options) => {
+  const win = BrowserWindow.getFocusedWindow();
+  const result = await dialog.showSaveDialog(win || mainWindow, options || {});
+  return result;
 });

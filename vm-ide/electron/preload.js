@@ -25,6 +25,8 @@ function on(channel, callback) {
 contextBridge.exposeInMainWorld("electronAPI", {
   // ── Auth ──────────────────────────────────────────────────────────────────
   auth: {
+    /** Clear the stored desktop session (logout) */
+    logout: () => ipcRenderer.invoke("auth:logout"),
     /** Get a stored token by key */
     getToken: (key) => ipcRenderer.invoke("auth:getToken", key),
     /** Persist a token */
@@ -130,3 +132,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
     set: (key, value) => ipcRenderer.invoke("prefs:set", key, value),
   },
 });
+
+// ─── Menu IPC → DOM CustomEvent bridge ────────────────────────────────────────
+// menu.js sends events via webContents.send("menu:*") which are IPC events, not
+// DOM events. The renderer listens with window.addEventListener("menu:*") which
+// only fires for DOM events. Bridge them here so both sides work without changes.
+const MENU_CHANNELS = [
+  "menu:save", "menu:saveAll", "menu:newFile", "menu:newFolder", "menu:closeTab",
+  "menu:openSettings", "menu:find", "menu:replace", "menu:commandPalette",
+  "menu:toggleSidebar", "menu:toggleTerminal", "menu:toggleAI",
+  "menu:newTerminal", "menu:clearTerminal",
+  "menu:newConnection", "menu:disconnectVM",
+  "menu:deploy", "menu:runCommand", "menu:validate",
+];
+for (const channel of MENU_CHANNELS) {
+  ipcRenderer.on(channel, () => window.dispatchEvent(new CustomEvent(channel)));
+}

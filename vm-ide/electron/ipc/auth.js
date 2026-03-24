@@ -218,6 +218,16 @@ function registerAuthHandlers() {
   });
 
   // ── App Utilities ─────────────────────────────────────────────────────────
+  ipcMain.handle("auth:logout", () => {
+    try {
+      tokenStore.clear();
+      return { ok: true };
+    } catch (err) {
+      log.error("auth:logout error:", err);
+      return { error: String(err.message) };
+    }
+  });
+
   ipcMain.handle("app:getVersion", () => app.getVersion());
 
   ipcMain.handle("app:openExternal", (_event, url) => {

@@ -221,7 +221,7 @@ function buildTemplate(mainWindow) {
       submenu: [
         {
           label: "Documentation",
-          click: () => shell.openExternal("https://vinexus.dev/docs"),
+          click: () => shell.openExternal("https://vinexus.space/docs"),
         },
         {
           label: "Report an Issue",
