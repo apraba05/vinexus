@@ -29,6 +29,9 @@ function AccountContent() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(upgradeSuccess);
   const [signingOut, setSigningOut] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -50,6 +53,21 @@ function AccountContent() {
       return () => clearTimeout(t);
     }
   }, [toast]);
+
+  async function handleSaveName() {
+    if (!nameInput.trim() || !user) return;
+    setSavingName(true);
+    const res = await fetch("/api/auth/update-profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: nameInput.trim() }),
+    });
+    if (res.ok) {
+      setUser({ ...user, name: nameInput.trim() });
+      setEditingName(false);
+    }
+    setSavingName(false);
+  }
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -103,9 +121,58 @@ function AccountContent() {
             Profile
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 13, color: D.onSurfaceVariant }}>Name</span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: D.onSurface }}>{user.name || "—"}</span>
+              {editingName ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    autoFocus
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") setEditingName(false); }}
+                    style={{
+                      fontSize: 14, fontWeight: 600, color: D.onSurface,
+                      background: D.surface, border: `1px solid ${D.primary}`,
+                      borderRadius: 4, padding: "2px 8px", outline: "none",
+                      width: 160, fontFamily: "inherit",
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveName}
+                    disabled={savingName}
+                    style={{
+                      fontSize: 12, fontWeight: 600, color: "#fff",
+                      background: D.primary, border: "none", borderRadius: 4,
+                      padding: "3px 10px", cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    {savingName ? "…" : "Save"}
+                  </button>
+                  <button
+                    onClick={() => setEditingName(false)}
+                    style={{
+                      fontSize: 12, color: D.onSurfaceVariant, background: "none",
+                      border: "none", cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: D.onSurface }}>{user.name || "—"}</span>
+                  <button
+                    onClick={() => { setNameInput(user.name || ""); setEditingName(true); }}
+                    style={{
+                      fontSize: 11, color: D.primary, background: "none",
+                      border: "none", cursor: "pointer", fontFamily: "inherit",
+                      padding: 0, textDecoration: "underline",
+                    }}
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
             </div>
             <div style={{ borderTop: `1px solid ${D.outlineVariant}` }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
