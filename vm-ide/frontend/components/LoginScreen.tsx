@@ -180,7 +180,6 @@ const styles: Record<string, any> = {
     height: 32,
     width: "auto",
     objectFit: "contain" as const,
-    mixBlendMode: "multiply" as const,
   },
   heading: {
     fontSize: 22,

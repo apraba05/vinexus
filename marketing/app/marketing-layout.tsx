@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 import PostHogProvider from "@/components/PostHogProvider";
 
-const APP_URL = "https://vinexus.space";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.vinexus.space";
 
 function SunIcon() {
   return (

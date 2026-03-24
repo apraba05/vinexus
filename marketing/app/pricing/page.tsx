@@ -1,8 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/ThemeContext";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.vinexus.space";
 
 // ── CAD prices ─────────────────────────────────────────────────────
 const CAD_PRICES: Record<string, { monthly: number; annual: number }> = {
@@ -179,38 +180,14 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 export default function PricingPage() {
   const { D } = useTheme();
-  const router = useRouter();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const isAnnual = billing === "annual";
 
-  async function handleCheckout(planKey: string) {
-    if (planKey === "free") { router.push("/download"); return; }
-    if (planKey === "enterprise") { router.push("/contact"); return; }
-    setLoadingPlan(planKey);
-    try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planKey, billing }),
-      });
-      if (res.status === 401) {
-        router.push(`/login?next=/pricing`);
-        return;
-      }
-      const data = await res.json();
-      if (data.upgraded) {
-        router.push("/app?upgrade=success");
-      } else if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data.error ?? "Something went wrong. Please try again.");
-      }
-    } catch {
-      alert("Network error. Please try again.");
-    } finally {
-      setLoadingPlan(null);
-    }
+  function handleCheckout(planKey: string) {
+    if (planKey === "free") { window.location.href = "/download"; return; }
+    if (planKey === "enterprise") { window.location.href = "/contact"; return; }
+    // Redirect to the app to sign in and complete checkout
+    window.location.href = `${APP_URL}/pricing?plan=${planKey}&billing=${billing}`;
   }
 
   return (
@@ -329,20 +306,18 @@ export default function PricingPage() {
 
                   <button
                     onClick={() => handleCheckout(plan.key)}
-                    disabled={loadingPlan === plan.key}
                     style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
                       padding: "7px 14px", borderRadius: 4, fontSize: 13, fontWeight: 600,
-                      cursor: loadingPlan === plan.key ? "wait" : "pointer",
+                      cursor: "pointer",
                       fontFamily: "inherit",
                       background: plan.highlight ? D.primary : "transparent",
                       color: plan.highlight ? "#ffffff" : D.onSurfaceVariant,
                       border: plan.highlight ? "none" : `1px solid ${D.outlineVariant}`,
-                      opacity: loadingPlan === plan.key ? 0.7 : 1,
                       transition: "opacity 0.15s",
                     }}
                   >
-                    {loadingPlan === plan.key ? "Loading…" : plan.cta}
+                    {plan.cta}
                   </button>
                 </div>
               );

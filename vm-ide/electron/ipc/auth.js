@@ -67,6 +67,20 @@ function getOrCreateKey(keyName) {
   return newKey;
 }
 
+/**
+ * Validate a store is readable with the current key.
+ * If decryption fails (old encryption key from a previous install), clear the file so
+ * the store starts fresh. Users will need to log in again but the app won't crash.
+ */
+function validateStore(store, name) {
+  try {
+    store.get("__probe__", null);
+  } catch (err) {
+    log.warn(`Store "${name}" appears corrupted or was encrypted with an old key — clearing. Users must re-login.`, err.message);
+    try { store.clear(); } catch (clearErr) { log.error(`Failed to clear store "${name}":`, clearErr.message); }
+  }
+}
+
 /** Initialize stores once, after app is ready (safeStorage requires app ready) */
 function initStores() {
   if (tokenStore) return;
@@ -75,6 +89,9 @@ function initStores() {
   tokenStore = new Store({ name: "vinexus-auth", encryptionKey: authKey });
   credStore  = new Store({ name: "vinexus-vm-creds", encryptionKey: credsKey });
   prefsStore = new Store({ name: "vinexus-prefs" });
+  // Migrate: if stores were encrypted with old hardcoded keys, clear them gracefully
+  validateStore(tokenStore, "vinexus-auth");
+  validateStore(credStore, "vinexus-vm-creds");
   log.info("Encrypted stores initialized via OS keychain");
 }
 
