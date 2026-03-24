@@ -1,11 +1,14 @@
 "use client";
 import { SessionProvider } from "next-auth/react";
 import { PlanProvider } from "@/contexts/PlanContext";
+import PostHogProvider from "@/components/PostHogProvider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <PlanProvider>{children}</PlanProvider>
+      <PlanProvider>
+        <PostHogProvider>{children}</PostHogProvider>
+      </PlanProvider>
     </SessionProvider>
   );
 }

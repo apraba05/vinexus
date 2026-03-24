@@ -218,7 +218,7 @@ export default function LandingPage() {
 
       {/* ── HERO ──────────────────────────────────────────────── */}
       <section style={{ padding: "72px 24px 80px" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 64, alignItems: "center" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 440px), 1fr))", gap: 64, alignItems: "center" }}>
 
           {/* Left */}
           <div>
@@ -294,7 +294,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 16 }}>
             {[
               { num: "01", title: "Download Vinexus Desktop", desc: "Install the native app on macOS or Windows. No configuration required — just download and open." },
               { num: "02", title: "Connect Your VM via SSH", desc: "Enter your VM's IP, username, and SSH key or password. Vinexus connects directly — no proxy, no agents." },
@@ -331,7 +331,7 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 12 }}>
             {FEATURES.map((f) => (
               <div key={f.title} style={{
                 background: D.surfaceLowest,
@@ -371,7 +371,7 @@ export default function LandingPage() {
         borderBottom: `1px solid ${D.outlineVariant}`,
         padding: "80px 24px",
       }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 440px), 1fr))", gap: 64, alignItems: "center" }}>
           <div>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -455,7 +455,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12 }}>
             {PLANS.map((plan) => (
               <div key={plan.name} style={{
                 background: plan.highlight ? D.surfaceLowest : D.surfaceContainerLow,

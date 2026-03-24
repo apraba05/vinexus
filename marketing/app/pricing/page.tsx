@@ -267,7 +267,7 @@ export default function PricingPage() {
       {/* ── Plan cards ─────────────────────────────────────────── */}
       <section style={{ padding: "56px 24px 72px" }}>
         <div style={{ maxWidth: 1300, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 14 }}>
             {PLANS.map((plan) => {
               const cadPrices  = CAD_PRICES[plan.key];
               const cadMonthly = cadPrices?.monthly ?? 0;

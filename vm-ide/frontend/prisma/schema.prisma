@@ -105,6 +105,23 @@ model Subscription {
   @@index([status])
 }
 
+/// Persists deployment pipeline results for history and auditing.
+model Deployment {
+  id           String    @id @default(cuid())
+  sshSessionId String
+  projectName  String
+  status       String    // "completed" | "failed" | "cancelled"
+  startedAt    DateTime
+  completedAt  DateTime?
+  steps        Json
+  filesChanged Int       @default(0)
+  createdAt    DateTime  @default(now())
+
+  @@index([sshSessionId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model AiUsage {
   id        String   @id @default(cuid())
   userId    String

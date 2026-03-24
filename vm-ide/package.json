@@ -1,6 +1,6 @@
 {
   "name": "vinexus",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "productName": "Vinexus",
   "description": "Desktop IDE for managing and editing code on virtual machines",
   "homepage": "https://vinexus.space",
@@ -50,26 +50,71 @@
       "category": "public.app-category.developer-tools",
       "gatekeeperAssess": false,
       "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] },
-        { "target": "zip", "arch": ["x64", "arm64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
-      "protocols": [{ "name": "Vinexus", "schemes": ["vinexus"] }]
+      "protocols": [
+        {
+          "name": "Vinexus",
+          "schemes": [
+            "vinexus"
+          ]
+        }
+      ]
     },
     "dmg": {
       "title": "Vinexus ${version}",
       "iconSize": 80,
       "contents": [
-        { "x": 410, "y": 200, "type": "link", "path": "/Applications" },
-        { "x": 130, "y": 200, "type": "file" }
+        {
+          "x": 410,
+          "y": 200,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 200,
+          "type": "file"
+        }
       ]
     },
     "win": {
       "icon": "electron/assets/icon.ico",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
-      "protocols": [{ "name": "Vinexus", "schemes": ["vinexus"] }]
+      "protocols": [
+        {
+          "name": "Vinexus",
+          "schemes": [
+            "vinexus"
+          ]
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -82,13 +127,34 @@
       "icon": "electron/assets/icon.png",
       "category": "Development",
       "target": [
-        { "target": "AppImage", "arch": ["x64"] },
-        { "target": "deb", "arch": ["x64"] }
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
-      "protocols": [{ "name": "Vinexus", "schemes": ["vinexus"] }]
+      "protocols": [
+        {
+          "name": "Vinexus",
+          "schemes": [
+            "vinexus"
+          ]
+        }
+      ]
     },
     "deb": {
-      "depends": ["libnotify4", "libxtst6", "libnss3"]
+      "depends": [
+        "libnotify4",
+        "libxtst6",
+        "libnss3"
+      ]
     },
     "publish": {
       "provider": "github",
@@ -120,7 +186,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-ec2": "3.1012.0",
-    "@prisma/client": "^6.19.2",
+    "@prisma/client": "6.19.2",
     "bcryptjs": "^3.0.3",
     "electron-log": "5.4.3",
     "electron-store": "8.2.0",

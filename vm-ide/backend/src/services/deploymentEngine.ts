@@ -16,6 +16,9 @@ import {
 } from "../types";
 import crypto from "crypto";
 import path from "path";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 interface DeployContext {
   deployId: string;
@@ -191,7 +194,25 @@ export class DeploymentEngine {
       }
     } finally {
       activeDeployments.delete(lockKey);
+      // Persist deployment record — non-fatal if DB is unavailable
+      this.persistDeployment(ctx).catch((err) =>
+        console.warn("[deploy] Failed to persist deployment record:", err.message)
+      );
     }
+  }
+
+  private async persistDeployment(ctx: DeployContext): Promise<void> {
+    await prisma.deployment.create({
+      data: {
+        sshSessionId: ctx.sessionId,
+        projectName: ctx.config.project.name,
+        status: ctx.state === "completed" ? "completed" : "failed",
+        startedAt: new Date(ctx.startedAt),
+        completedAt: (ctx as any).completedAt ? new Date((ctx as any).completedAt) : null,
+        steps: ctx.steps as any,
+        filesChanged: ctx.files.length,
+      },
+    });
   }
 
   private async stepSave(ctx: DeployContext): Promise<void> {

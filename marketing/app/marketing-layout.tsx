@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
+import PostHogProvider from "@/components/PostHogProvider";
 
 const APP_URL = "https://vinexus.space";
 
@@ -132,7 +133,9 @@ function Inner({ children }: { children: React.ReactNode }) {
 export function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <Inner>{children}</Inner>
+      <PostHogProvider>
+        <Inner>{children}</Inner>
+      </PostHogProvider>
     </ThemeProvider>
   );
 }

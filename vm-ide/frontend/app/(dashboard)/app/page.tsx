@@ -251,7 +251,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
       window.addEventListener(name, wrapped[name]);
     }
     return () => { for (const [name, fn] of Object.entries(wrapped)) window.removeEventListener(name, fn); };
-  });
+  }, [activeFile, handleSaveWithPreview, handleNewFile, handleNewFolder, handleDeploy, setBottomTab]);
 
   const handleVmConnect = useCallback(async (params: any) => {
     if (!isElectron()) return;
@@ -347,6 +347,22 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const deployment = useDeployment(sessionId);
   const { config: projectConfig } = useProjectConfig(sessionId);
   const [connInfo, setConnInfo] = useState<{ host: string; username: string } | null>(null);
+
+  // ── First-run onboarding ─────────────────────────────────────────────────
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  useEffect(() => {
+    const ea = isElectron() ? (window as any).electronAPI : null;
+    if (!ea) return;
+    ea.prefs.get("onboarding_done", false).then((res: any) => {
+      if (!res?.value) setShowOnboarding(true);
+    }).catch(() => {});
+  }, []);
+  const finishOnboarding = useCallback(async () => {
+    setShowOnboarding(false);
+    const ea = isElectron() ? (window as any).electronAPI : null;
+    await ea?.prefs.set("onboarding_done", true);
+  }, []);
 
   const handleCommandResult = useCallback((result: CommandResult) => {
     if (result.exitCode === 0) setSoftRefreshKey((k) => k + 1);
@@ -518,8 +534,51 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
     document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onUp);
   }, [bottomPanelHeight]);
 
+  const ONBOARDING_STEPS = [
+    {
+      title: "Welcome to Vinexus",
+      icon: "⚡",
+      body: "Vinexus is a desktop IDE built for managing and editing code directly on remote virtual machines over SSH — no sync, no latency.",
+    },
+    {
+      title: "Connect your first VM",
+      icon: "🖥️",
+      body: "Click the + button in the SSH bar at the top, enter your host, username, and password or private key. Vinexus will open a live terminal and file tree on your VM.",
+    },
+    {
+      title: "Edit, Deploy, Repeat",
+      icon: "🚀",
+      body: "Open files directly from your VM, edit with Monaco, and push changes instantly. Use the Deploy panel or AI assistant to ship faster.",
+    },
+  ];
+
   return (
     <div style={styles.root}>
+      {/* First-run onboarding modal */}
+      {showOnboarding && (
+        <div style={ob.overlay} onClick={(e) => e.target === e.currentTarget && finishOnboarding()}>
+          <div style={ob.modal}>
+            <div style={ob.stepIcon}>{ONBOARDING_STEPS[onboardingStep].icon}</div>
+            <div style={ob.stepNum}>{onboardingStep + 1} / {ONBOARDING_STEPS.length}</div>
+            <div style={ob.title}>{ONBOARDING_STEPS[onboardingStep].title}</div>
+            <div style={ob.body}>{ONBOARDING_STEPS[onboardingStep].body}</div>
+            <div style={ob.dots}>
+              {ONBOARDING_STEPS.map((_, i) => (
+                <span key={i} style={{ ...ob.dot, ...(i === onboardingStep ? ob.dotActive : {}) }} />
+              ))}
+            </div>
+            <div style={ob.actions}>
+              {onboardingStep < ONBOARDING_STEPS.length - 1 ? (
+                <button style={ob.primaryBtn} onClick={() => setOnboardingStep(s => s + 1)}>Next</button>
+              ) : (
+                <button style={ob.primaryBtn} onClick={finishOnboarding}>Connect your first VM</button>
+              )}
+              <button style={ob.skipBtn} onClick={finishOnboarding}>Skip</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Title Bar */}
       <div style={styles.titleBar}>
         <div style={{ width: 72, flexShrink: 0 }} />
@@ -818,6 +877,21 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
     </div>
   );
 }
+
+const ob: Record<string, React.CSSProperties> = {
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" },
+  modal: { background: "var(--bg-elevated, #13131a)", border: "1px solid var(--border, #2a2a35)", borderRadius: 16, padding: "40px 36px 32px", maxWidth: 420, width: "90%", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 },
+  stepIcon: { fontSize: 40, lineHeight: 1, marginBottom: 4 },
+  stepNum: { fontSize: 11, color: "var(--text-muted, #666)", letterSpacing: "0.08em", textTransform: "uppercase" as const },
+  title: { fontSize: 22, fontWeight: 700, color: "var(--text-bright, #fff)", letterSpacing: "-0.02em" },
+  body: { fontSize: 14, color: "var(--text-secondary, #aaa)", lineHeight: 1.65, maxWidth: 340 },
+  dots: { display: "flex", gap: 6, marginTop: 4 },
+  dot: { width: 6, height: 6, borderRadius: "50%", background: "var(--border, #2a2a35)" },
+  dotActive: { background: "var(--accent, #0053db)" },
+  actions: { display: "flex", flexDirection: "column" as const, gap: 8, width: "100%", marginTop: 8 },
+  primaryBtn: { padding: "11px 0", background: "var(--accent, #0053db)", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%" },
+  skipBtn: { padding: "8px 0", background: "transparent", color: "var(--text-muted, #666)", border: "none", fontSize: 13, cursor: "pointer" },
+};
 
 const styles: Record<string, any> = {
   root: {

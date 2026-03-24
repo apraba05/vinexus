@@ -11,6 +11,7 @@ import { AgentTools, checkToolPermission } from "./agentTools";
 import { AgentAI, EventEmitter } from "./agentAI";
 import { getSession } from "../sessionStore";
 import { sftpReadFile, sftpStat } from "../types";
+import { sshExecutor } from "./sshExecutor";
 
 // ─── Constants ───────────────────────────────────────────────────
 
@@ -467,6 +468,29 @@ export class AgentOrchestrator {
         }
 
         parts.push(`Workspace root: ${context.workspaceRoot}`);
+
+        // Enrich with live VM context (non-fatal — each is best-effort)
+        const execQuiet = (cmd: string) =>
+            sshExecutor.exec({ sessionId: sshSessionId, command: cmd, timeout: 8_000 })
+                .catch(() => ({ stdout: "", stderr: "", exitCode: 1 }));
+
+        const [gitStatus, recentLogs, processes] = await Promise.all([
+            execQuiet(`cd ${context.workspaceRoot} && git status --short 2>/dev/null`),
+            execQuiet(`journalctl -n 50 --no-pager -q 2>/dev/null || tail -n 50 /var/log/syslog 2>/dev/null || echo ""`),
+            execQuiet(`ps aux --no-header --sort=-%cpu 2>/dev/null | head -20`),
+        ]);
+
+        if (gitStatus.stdout.trim()) {
+            parts.push(`Git status (${context.workspaceRoot}):\n\`\`\`\n${gitStatus.stdout.trim()}\n\`\`\``);
+        }
+
+        if (recentLogs.stdout.trim()) {
+            parts.push(`Recent system logs (last 50 lines):\n\`\`\`\n${recentLogs.stdout.trim()}\n\`\`\``);
+        }
+
+        if (processes.stdout.trim()) {
+            parts.push(`Running processes (top 20 by CPU):\n\`\`\`\n${processes.stdout.trim()}\n\`\`\``);
+        }
 
         return parts.join("\n\n");
     }

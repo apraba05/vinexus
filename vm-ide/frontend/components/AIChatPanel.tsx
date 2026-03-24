@@ -40,7 +40,7 @@ export default function AIChatPanel({ sessionId, plan = "free", userId = "anonym
     if (!text || loading) return;
 
     if (!isPaidPlan) {
-      onError("AI chat requires Premium or above. Upgrade at vinexus.dev/pricing");
+      onError("AI chat requires Premium or above. Upgrade at vinexus.space/pricing");
       return;
     }
 
@@ -104,7 +104,7 @@ export default function AIChatPanel({ sessionId, plan = "free", userId = "anonym
           Upgrade to Premium or Max to access the AI assistant.<br/>
           Ask questions, debug code, and get instant help from Claude.
         </div>
-        <a href="http://localhost:3000/pricing" target="_blank" rel="noreferrer" style={S.upgradeBtn}>
+        <a href="https://vinexus.space/pricing" target="_blank" rel="noreferrer" style={S.upgradeBtn}>
           View Plans
         </a>
       </div>

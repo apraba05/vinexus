@@ -107,11 +107,7 @@ function registerSshHandlers() {
         const sessionId = uuidv4();
         const conn = new SSH2Client();
 
-        const sessionInfo = { host, port, username, label, authMethod };
-        sessions.set(sessionId, { conn, sftp: null, info: sessionInfo, status: "connecting" });
-        broadcastStatus();
-
-        // Build connect config
+        // Build connect config (also stored for auto-reconnect)
         const connectConfig = {
           host,
           port,
@@ -126,30 +122,82 @@ function registerSshHandlers() {
           connectConfig.password = password;
         }
 
-        conn.on("ready", () => {
-          log.info(`SSH connected: ${username}@${host}:${port} [${sessionId}]`);
-          sessions.get(sessionId).status = "connected";
+        const sessionInfo = { host, port, username, label, authMethod };
+        sessions.set(sessionId, {
+          conn,
+          sftp: null,
+          info: sessionInfo,
+          connectConfig,
+          status: "connecting",
+          reconnectAttempts: 0,
+          reconnectTimer: null,
+          explicitDisconnect: false,
+        });
+        broadcastStatus();
+
+        /** Attempt reconnect with exponential backoff (2s, 4s, 8s, 16s, 32s — max 5 attempts) */
+        function scheduleReconnect(sessionId) {
+          const session = sessions.get(sessionId);
+          if (!session || session.explicitDisconnect) return;
+          if (session.reconnectAttempts >= 5) {
+            log.warn(`SSH auto-reconnect exhausted for [${sessionId}]`);
+            session.status = "error";
+            broadcastStatus();
+            return;
+          }
+          const delay = Math.pow(2, session.reconnectAttempts + 1) * 1000;
+          session.reconnectAttempts += 1;
+          session.status = "connecting";
           broadcastStatus();
-          resolve({ sessionId, host, username, port });
-        });
+          log.info(`SSH reconnect attempt ${session.reconnectAttempts}/5 in ${delay}ms [${sessionId}]`);
+          session.reconnectTimer = setTimeout(() => {
+            if (!sessions.has(sessionId) || session.explicitDisconnect) return;
+            const newConn = new SSH2Client();
+            session.conn = newConn;
+            session.sftp = null;
+            attachConnHandlers(newConn, sessionId, false);
+            newConn.connect(session.connectConfig);
+          }, delay);
+        }
 
-        conn.on("error", (err) => {
-          log.error(`SSH error [${sessionId}]:`, err.message);
-          if (sessions.has(sessionId)) {
-            sessions.get(sessionId).status = "error";
+        function attachConnHandlers(c, sid, isInitial) {
+          c.on("ready", () => {
+            const s = sessions.get(sid);
+            if (!s) return;
+            log.info(`SSH connected: ${username}@${host}:${port} [${sid}]`);
+            s.status = "connected";
+            s.reconnectAttempts = 0;
             broadcastStatus();
-          }
-          resolve({ error: err.message });
-        });
+            if (isInitial) resolve({ sessionId: sid, host, username, port });
+          });
 
-        conn.on("close", () => {
-          log.info(`SSH connection closed [${sessionId}]`);
-          if (sessions.has(sessionId)) {
-            sessions.get(sessionId).status = "disconnected";
-            broadcastStatus();
-          }
-        });
+          c.on("error", (err) => {
+            log.error(`SSH error [${sid}]:`, err.message);
+            const s = sessions.get(sid);
+            if (!s) return;
+            if (isInitial) {
+              s.status = "error";
+              broadcastStatus();
+              resolve({ error: err.message });
+            } else {
+              scheduleReconnect(sid);
+            }
+          });
 
+          c.on("close", () => {
+            log.info(`SSH connection closed [${sid}]`);
+            const s = sessions.get(sid);
+            if (!s) return;
+            if (!s.explicitDisconnect) {
+              scheduleReconnect(sid);
+            } else {
+              s.status = "disconnected";
+              broadcastStatus();
+            }
+          });
+        }
+
+        attachConnHandlers(conn, sessionId, true);
         conn.connect(connectConfig);
       } catch (err) {
         log.error("ssh:connect error:", err);
@@ -163,6 +211,8 @@ function registerSshHandlers() {
     try {
       const session = sessions.get(sessionId);
       if (!session) return { ok: true };
+      session.explicitDisconnect = true;
+      if (session.reconnectTimer) { clearTimeout(session.reconnectTimer); session.reconnectTimer = null; }
       session.conn.end();
       sessions.delete(sessionId);
       broadcastStatus();

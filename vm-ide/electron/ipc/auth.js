@@ -20,33 +20,62 @@
  *   app:openExternal      — open a URL in the system browser
  */
 
-const { ipcMain, app, shell } = require("electron");
+const { ipcMain, app, shell, safeStorage } = require("electron");
 const Store = require("electron-store");
+const crypto = require("crypto");
 const log = require("electron-log");
 const http = require("http");
 
-// ─── Encrypted Stores ─────────────────────────────────────────────────────────
+// ─── Key Management via OS Keychain ───────────────────────────────────────────
+// Keys are generated randomly on first run, then encrypted with the OS keychain
+// (macOS Keychain, Windows DPAPI, Linux libsecret) via safeStorage.
+// The encrypted blobs are stored in a plain electron-store file.
 
-/** Stores auth tokens (NextAuth session, backend JWT, OAuth tokens) */
-const tokenStore = new Store({
-  name: "vinexus-auth",
-  encryptionKey: "vinexus-auth-enc-key-v1", // TODO: derive from machine ID for production
-});
+/** Plain store that only holds safeStorage-encrypted key blobs */
+const keyStore = new Store({ name: "vinexus-keys" });
 
-/** Stores saved VM connection credentials */
-const credStore = new Store({
-  name: "vinexus-vm-creds",
-  encryptionKey: "vinexus-vm-creds-enc-key-v1",
-});
+let tokenStore = null;
+let credStore = null;
+let prefsStore = null;
 
-/** Stores non-sensitive UI preferences (panel sizes, etc.) */
-const prefsStore = new Store({
-  name: "vinexus-prefs",
-});
+function getOrCreateKey(keyName) {
+  if (!safeStorage.isEncryptionAvailable()) {
+    // Fallback for headless/CI environments without a keychain
+    log.warn("safeStorage unavailable — using fallback key for:", keyName);
+    return "vinexus-fallback-" + keyName;
+  }
+  const storedBlob = keyStore.get(keyName);
+  if (storedBlob) {
+    try {
+      return safeStorage.decryptString(Buffer.from(storedBlob, "base64"));
+    } catch (err) {
+      log.warn("Failed to decrypt key blob, generating fresh key:", keyName, err.message);
+    }
+  }
+  // First run: generate a cryptographically random 64-char key
+  const newKey = crypto.randomBytes(32).toString("hex");
+  const encrypted = safeStorage.encryptString(newKey);
+  keyStore.set(keyName, encrypted.toString("base64"));
+  log.info("Generated and stored new encryption key for:", keyName);
+  return newKey;
+}
+
+/** Initialize stores once, after app is ready (safeStorage requires app ready) */
+function initStores() {
+  if (tokenStore) return;
+  const authKey = getOrCreateKey("auth-enc-key");
+  const credsKey = getOrCreateKey("creds-enc-key");
+  tokenStore = new Store({ name: "vinexus-auth", encryptionKey: authKey });
+  credStore  = new Store({ name: "vinexus-vm-creds", encryptionKey: credsKey });
+  prefsStore = new Store({ name: "vinexus-prefs" });
+  log.info("Encrypted stores initialized via OS keychain");
+}
 
 // ─── IPC Handler Registration ─────────────────────────────────────────────────
 
 function registerAuthHandlers() {
+  initStores();
+
   // ── Token Storage ─────────────────────────────────────────────────────────
   ipcMain.handle("auth:getToken", (_event, key) => {
     try {
@@ -221,6 +250,7 @@ function registerAuthHandlers() {
   ipcMain.handle("auth:logout", () => {
     try {
       tokenStore.clear();
+      credStore.clear();
       return { ok: true };
     } catch (err) {
       log.error("auth:logout error:", err);
@@ -247,6 +277,7 @@ function registerAuthHandlers() {
  * Called from main.js when a vinexus:// deep-link OAuth callback arrives.
  */
 function storeUser(user) {
+  initStores();
   try {
     tokenStore.set("user", user);
     log.info("OAuth user stored via deep-link:", user?.email);
