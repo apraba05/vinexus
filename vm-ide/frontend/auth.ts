@@ -86,38 +86,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session as any).role = dbUser?.role || "user";
         (session as any).emailVerified = dbUser?.emailVerified || null;
 
-        // Admin always gets AI Pro for free
-        if (isAdmin) {
-          (session as any).plan = "ai-pro";
-          (session as any).features = {
-            ide: true,
-            terminal: true,
-            files: true,
-            deploy: true,
-            commands: true,
-            ai: true,
-          };
-        } else {
-          // Fetch subscription info for regular users
-          const subscription = await prisma.subscription.findFirst({
-            where: {
-              userId: token.id as string,
-              status: { in: ["active", "trialing"] },
-            },
-            include: { plan: true },
-            orderBy: { createdAt: "desc" },
-          });
-
-          (session as any).plan = subscription?.plan?.name || "free";
-          (session as any).features = subscription?.plan?.features || {
-            ide: true,
-            terminal: true,
-            files: true,
-            deploy: false,
-            commands: false,
-            ai: false,
-          };
-        }
+        // Read plan directly from user record
+        const planName = (dbUser as any)?.plan ?? "free";
+        const planRecord = await prisma.plan.findUnique({ where: { name: planName } });
+        (session as any).plan = planName;
+        (session as any).features = planRecord?.features ?? {
+          ide: true,
+          terminal: true,
+          files: true,
+          deploy: false,
+          commands: false,
+          ai: false,
+        };
       }
       return session;
     },

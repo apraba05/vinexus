@@ -40,27 +40,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
-  // Get subscription/plan
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
-  const isAdmin = !!(adminEmail && user.email?.toLowerCase().trim() === adminEmail);
-
-  let plan = "free";
-  let features = DEFAULT_FEATURES;
-
-  if (isAdmin) {
-    plan = "ai-pro";
-    features = { ide: true, terminal: true, files: true, deploy: true, commands: true, ai: true };
-  } else {
-    const sub = await prisma.subscription.findFirst({
-      where: { userId: user.id, status: { in: ["active", "trialing"] } },
-      include: { plan: true },
-      orderBy: { createdAt: "desc" },
-    });
-    if (sub?.plan) {
-      plan = sub.plan.name;
-      features = (sub.plan.features as any) ?? DEFAULT_FEATURES;
-    }
-  }
+  // Read plan directly from user record
+  const planName = (user as any).plan ?? "free";
+  const planRecord = await prisma.plan.findUnique({ where: { name: planName } });
+  const plan = planName;
+  const features = planRecord ? (planRecord.features as any) : (planName === "free" ? DEFAULT_FEATURES : { ide: true, terminal: true, files: true, deploy: true, commands: true, ai: true });
 
   return NextResponse.json({
     user: {

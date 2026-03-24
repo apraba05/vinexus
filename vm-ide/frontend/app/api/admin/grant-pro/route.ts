@@ -24,43 +24,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId is required" }, { status: 400 });
   }
 
-  const targetUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (!targetUser) {
+  const body2 = body as { userId: string; plan?: string };
+  const planName = body2.plan ?? "ai-pro";
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { plan: planName } as any,
+  });
+
+  if (!updated) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Find Pro plan
-  const proPlan = await prisma.plan.findUnique({ where: { name: "pro" } });
-  if (!proPlan) {
-    return NextResponse.json({ error: "Pro plan not found" }, { status: 500 });
-  }
-
-  // Check for existing active subscription
-  const existing = await prisma.subscription.findFirst({
-    where: {
-      userId,
-      status: { in: ["active", "trialing"] },
-    },
-  });
-
-  if (existing) {
-    // Update to Pro if not already
-    await prisma.subscription.update({
-      where: { id: existing.id },
-      data: { planId: proPlan.id, status: "active" },
-    });
-  } else {
-    // Create new subscription
-    await prisma.subscription.create({
-      data: {
-        userId,
-        planId: proPlan.id,
-        status: "active",
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-      },
-    });
-  }
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, plan: planName });
 }

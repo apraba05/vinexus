@@ -24,26 +24,21 @@ export async function GET() {
       name: true,
       image: true,
       role: true,
+      plan: true,
       createdAt: true,
-      subscriptions: {
-        where: { status: { in: ["active", "trialing"] } },
-        include: { plan: true },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
+    } as any,
     orderBy: { createdAt: "desc" },
   });
 
-  const result = users.map((u: any) => ({
+  const result = (users as any[]).map((u) => ({
     id: u.id,
     email: u.email,
     name: u.name,
     image: u.image,
     role: u.role,
     createdAt: u.createdAt.toISOString(),
-    plan: u.subscriptions[0]?.plan?.name || "free",
-    subscriptionStatus: u.subscriptions[0]?.status || null,
+    plan: u.plan ?? "free",
+    subscriptionStatus: null,
   }));
 
   return NextResponse.json({ users: result });

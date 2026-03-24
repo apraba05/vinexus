@@ -24,16 +24,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId is required" }, { status: 400 });
   }
 
-  // Cancel all active subscriptions for this user
-  await prisma.subscription.updateMany({
-    where: {
-      userId,
-      status: { in: ["active", "trialing"] },
-    },
-    data: {
-      status: "canceled",
-      canceledAt: new Date(),
-    },
+  await prisma.user.update({
+    where: { id: userId },
+    data: { plan: "free" } as any,
   });
 
   return NextResponse.json({ ok: true });
