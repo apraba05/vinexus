@@ -40,9 +40,16 @@ let prefsStore = null;
 
 function getOrCreateKey(keyName) {
   if (!safeStorage.isEncryptionAvailable()) {
-    // Fallback for headless/CI environments without a keychain
-    log.warn("safeStorage unavailable — using fallback key for:", keyName);
-    return "vinexus-fallback-" + keyName;
+    // OS keychain is unavailable (headless / some Linux environments).
+    // Generate a random key per-install stored in plaintext as a best-effort measure.
+    // This does NOT provide OS-level protection but avoids a hardcoded/predictable key.
+    const fallbackKey = "fallback-raw-" + keyName;
+    const existing = keyStore.get(fallbackKey);
+    if (existing) return existing;
+    const newKey = crypto.randomBytes(32).toString("hex");
+    keyStore.set(fallbackKey, newKey);
+    log.warn("safeStorage unavailable — storing raw key for:", keyName, "(no OS keychain protection)");
+    return newKey;
   }
   const storedBlob = keyStore.get(keyName);
   if (storedBlob) {
@@ -52,7 +59,7 @@ function getOrCreateKey(keyName) {
       log.warn("Failed to decrypt key blob, generating fresh key:", keyName, err.message);
     }
   }
-  // First run: generate a cryptographically random 64-char key
+  // First run: generate a cryptographically random 64-char key, encrypted by OS keychain
   const newKey = crypto.randomBytes(32).toString("hex");
   const encrypted = safeStorage.encryptString(newKey);
   keyStore.set(keyName, encrypted.toString("base64"));

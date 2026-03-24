@@ -101,8 +101,9 @@ function registerSshHandlers() {
         if (port < 1 || port > 65535) {
           return resolve({ error: "Invalid port" });
         }
-        // Allow localhost for dev/testing — only block in production checks
-        // (Desktop app users legitimately connect to local VMs in dev)
+        if (isBlockedHost(host)) {
+          return resolve({ error: "Connection to internal/private hosts is not allowed" });
+        }
 
         const sessionId = uuidv4();
         const conn = new SSH2Client();

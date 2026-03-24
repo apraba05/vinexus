@@ -201,6 +201,17 @@ export class DeploymentEngine {
     }
   }
 
+  private sanitizeSteps(steps: DeployStepResult[]): DeployStepResult[] {
+    // Redact credential-like patterns from command output before persisting to DB.
+    const REDACT_RE = /(\b(?:password|passwd|secret|token|api[_-]?key|auth(?:orization)?|bearer|private[_-]?key|access[_-]?key)\s*[=:]\s*)\S+/gi;
+    const redact = (s: string | undefined) => s?.replace(REDACT_RE, "$1[REDACTED]");
+    return steps.map((s) => ({
+      ...s,
+      output: redact(s.output),
+      error: redact(s.error),
+    }));
+  }
+
   private async persistDeployment(ctx: DeployContext): Promise<void> {
     await prisma.deployment.create({
       data: {
@@ -209,7 +220,7 @@ export class DeploymentEngine {
         status: ctx.state === "completed" ? "completed" : "failed",
         startedAt: new Date(ctx.startedAt),
         completedAt: (ctx as any).completedAt ? new Date((ctx as any).completedAt) : null,
-        steps: ctx.steps as any,
+        steps: this.sanitizeSteps(ctx.steps) as any,
         filesChanged: ctx.files.length,
       },
     });
@@ -356,6 +367,15 @@ export class DeploymentEngine {
     // Restart primary service
     const primaryService = ctx.config.services[0];
     if (primaryService) {
+      // Validate unit name before interpolating into shell command.
+      // Only allow safe systemd unit name characters: letters, digits, ., _, @, -, and .service suffix.
+      const SAFE_UNIT_RE = /^[a-zA-Z0-9._@\-]+(?:\.service|\.socket|\.timer|\.target)?$/;
+      if (primaryService.unit && !SAFE_UNIT_RE.test(primaryService.unit)) {
+        this.addStep(ctx, "deploy_service", "deploying", false, undefined,
+          `Invalid service unit name: "${primaryService.unit}"`);
+        this.transitionState(ctx, "failed", "deploy_service");
+        return;
+      }
       const restartCmd =
         primaryService.restartCommand ||
         `systemctl restart ${primaryService.unit}`;
@@ -412,6 +432,14 @@ export class DeploymentEngine {
 
     // Wait a moment for the service to stabilize
     await sleep(2000);
+
+    const SAFE_UNIT_RE = /^[a-zA-Z0-9._@\-]+(?:\.service|\.socket|\.timer|\.target)?$/;
+    if (primaryService.unit && !SAFE_UNIT_RE.test(primaryService.unit)) {
+      this.addStep(ctx, "check_status", "checking_status", false, undefined,
+        `Invalid service unit name: "${primaryService.unit}"`);
+      this.transitionState(ctx, "failed", "check_status");
+      return;
+    }
 
     const statusCmd =
       primaryService.statusCommand ||

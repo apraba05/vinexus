@@ -470,26 +470,35 @@ export class AgentOrchestrator {
         parts.push(`Workspace root: ${context.workspaceRoot}`);
 
         // Enrich with live VM context (non-fatal — each is best-effort)
+        // Shell-escape a path: wrap in single quotes and escape any embedded single quotes.
+        // Prevents injection if workspaceRoot contains shell metacharacters.
+        const escapedRoot = "'" + context.workspaceRoot.replace(/'/g, "'\\''") + "'";
+
         const execQuiet = (cmd: string) =>
             sshExecutor.exec({ sessionId: sshSessionId, command: cmd, timeout: 8_000 })
                 .catch(() => ({ stdout: "", stderr: "", exitCode: 1 }));
 
         const [gitStatus, recentLogs, processes] = await Promise.all([
-            execQuiet(`cd ${context.workspaceRoot} && git status --short 2>/dev/null`),
+            execQuiet(`cd ${escapedRoot} && git status --short 2>/dev/null`),
             execQuiet(`journalctl -n 50 --no-pager -q 2>/dev/null || tail -n 50 /var/log/syslog 2>/dev/null || echo ""`),
             execQuiet(`ps aux --no-header --sort=-%cpu 2>/dev/null | head -20`),
         ]);
+
+        // Redact credential-like patterns before sending to AI model.
+        // Covers common patterns: password=X, token=X, key=X, secret=X, authorization headers.
+        const REDACT_RE = /(\b(?:password|passwd|secret|token|api[_-]?key|auth(?:orization)?|bearer|private[_-]?key|access[_-]?key)\s*[=:]\s*)\S+/gi;
+        const redact = (s: string) => s.replace(REDACT_RE, "$1[REDACTED]");
 
         if (gitStatus.stdout.trim()) {
             parts.push(`Git status (${context.workspaceRoot}):\n\`\`\`\n${gitStatus.stdout.trim()}\n\`\`\``);
         }
 
         if (recentLogs.stdout.trim()) {
-            parts.push(`Recent system logs (last 50 lines):\n\`\`\`\n${recentLogs.stdout.trim()}\n\`\`\``);
+            parts.push(`Recent system logs (last 50 lines):\n\`\`\`\n${redact(recentLogs.stdout.trim())}\n\`\`\``);
         }
 
         if (processes.stdout.trim()) {
-            parts.push(`Running processes (top 20 by CPU):\n\`\`\`\n${processes.stdout.trim()}\n\`\`\``);
+            parts.push(`Running processes (top 20 by CPU):\n\`\`\`\n${redact(processes.stdout.trim())}\n\`\`\``);
         }
 
         return parts.join("\n\n");
