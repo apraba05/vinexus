@@ -16,6 +16,7 @@ model User {
   image            String?
   passwordHash     String?
   role             String         @default("user")
+  plan             String         @default("free")
   stripeCustomerId String?        @unique
   accounts         Account[]
   sessions         Session[]

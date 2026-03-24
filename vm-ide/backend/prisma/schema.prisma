@@ -18,6 +18,7 @@ model User {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   role             String         @default("user")
+  plan             String         @default("free")
   accounts         Account[]
   aiUsage          AiUsage[]
   sessions         Session[]
