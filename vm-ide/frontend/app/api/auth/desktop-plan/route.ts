@@ -26,6 +26,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "email required" }, { status: 400 });
   }
 
+  // Admin always gets ai-pro
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+  if (adminEmail && email === adminEmail) {
+    return NextResponse.json({
+      planKey: "ai-pro",
+      planName: "AI Pro",
+      features: { ide: true, terminal: true, files: true, deploy: true, commands: true, ai: true },
+    });
+  }
+
   const user = await prisma.user.findUnique({
     where: { email },
     select: { id: true },

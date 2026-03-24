@@ -93,7 +93,7 @@ export default function LoginScreen({ onLogin }: Props) {
               <input
                 style={{ ...styles.input, paddingRight: 40 }}
                 type={showPassword ? "text" : "password"}
-                placeholder={mode === "login" ? "Your password" : "At least 6 characters"}
+                placeholder={mode === "login" ? "Your password" : "At least 8 characters"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

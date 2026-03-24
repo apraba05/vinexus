@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/ThemeContext";
@@ -182,7 +182,14 @@ export default function PricingPage() {
   const router = useRouter();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState<string | null>(null);
   const isAnnual = billing === "annual";
+
+  useEffect(() => {
+    fetch("/api/auth/me").then(r => r.json()).then(data => {
+      if (data.user?.plan) setUserPlan(data.user.plan);
+    }).catch(() => {});
+  }, []);
 
   async function handleCheckout(planKey: string) {
     if (planKey === "free") { window.location.href = "/download"; return; }
@@ -288,15 +295,26 @@ export default function PricingPage() {
               const subLabel   = isAnnual && plan.annualMonthly ? monthlyEquiv : "";
               const savings    = isAnnual && plan.annualSavings  ? plan.annualSavings  : "";
               const periodLabel = plan.key === "enterprise" ? "" : isAnnual && plan.key !== "free" ? "/year" : plan.key !== "free" ? "/month" : "";
+              const isCurrent  = userPlan === plan.key;
 
               return (
                 <div key={plan.key} style={{
                   background: plan.highlight ? D.surfaceLowest : D.surfaceContainerLow,
-                  border: plan.highlight ? `1px solid ${D.primary}` : `1px solid ${D.outlineVariant}`,
+                  border: isCurrent ? `2px solid ${D.primary}` : plan.highlight ? `1px solid ${D.primary}` : `1px solid ${D.outlineVariant}`,
                   borderRadius: 8, padding: "28px 20px",
                   display: "flex", flexDirection: "column", position: "relative",
                 }}>
-                  {plan.badge && (
+                  {isCurrent && (
+                    <div style={{
+                      position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
+                      background: D.primary, color: "#fff",
+                      fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
+                      padding: "3px 12px", borderRadius: 4, whiteSpace: "nowrap",
+                    }}>
+                      YOUR PLAN
+                    </div>
+                  )}
+                  {!isCurrent && plan.badge && (
                     <div style={{
                       position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
                       background: D.primary, color: "#fff",
@@ -338,21 +356,21 @@ export default function PricingPage() {
                   </div>
 
                   <button
-                    onClick={() => handleCheckout(plan.key)}
-                    disabled={checkoutLoading === plan.key}
+                    onClick={() => !isCurrent && handleCheckout(plan.key)}
+                    disabled={isCurrent || checkoutLoading === plan.key}
                     style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
                       padding: "7px 14px", borderRadius: 4, fontSize: 13, fontWeight: 600,
-                      cursor: checkoutLoading === plan.key ? "default" : "pointer",
+                      cursor: isCurrent || checkoutLoading === plan.key ? "default" : "pointer",
                       opacity: checkoutLoading === plan.key ? 0.7 : 1,
                       fontFamily: "inherit",
-                      background: plan.highlight ? D.primary : "transparent",
-                      color: plan.highlight ? "#ffffff" : D.onSurfaceVariant,
-                      border: plan.highlight ? "none" : `1px solid ${D.outlineVariant}`,
+                      background: isCurrent ? D.surfaceContainerHigh : plan.highlight ? D.primary : "transparent",
+                      color: isCurrent ? D.onSurfaceVariant : plan.highlight ? "#ffffff" : D.onSurfaceVariant,
+                      border: isCurrent ? `1px solid ${D.outlineVariant}` : plan.highlight ? "none" : `1px solid ${D.outlineVariant}`,
                       transition: "opacity 0.15s",
                     }}
                   >
-                    {checkoutLoading === plan.key ? "Loading…" : plan.cta}
+                    {checkoutLoading === plan.key ? "Loading…" : isCurrent ? "Current Plan" : plan.cta}
                   </button>
                 </div>
               );
