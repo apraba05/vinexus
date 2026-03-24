@@ -20,6 +20,7 @@ model User {
   accounts         Account[]
   sessions         Session[]
   subscriptions    Subscription[]
+  aiUsage          AiUsage[]
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 }
@@ -101,4 +102,36 @@ model Subscription {
 
   @@index([userId])
   @@index([status])
+}
+
+model Deployment {
+  id           String    @id @default(cuid())
+  sshSessionId String
+  projectName  String
+  status       String    // "completed" | "failed" | "cancelled"
+  startedAt    DateTime
+  completedAt  DateTime?
+  steps        Json
+  filesChanged Int       @default(0)
+  createdAt    DateTime  @default(now())
+
+  @@index([sshSessionId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// One row per user × day × model — tracks AI API usage for billing/abuse dashboards.
+model AiUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String
+  model     String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, model])
+  @@index([userId])
+  @@index([date])
 }
