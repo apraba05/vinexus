@@ -4,11 +4,41 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+// Maps planKey + billing to the env var that holds the Stripe price ID.
+// Add the corresponding env vars in Vercel for each plan.
+function getPriceId(planKey: string, billing: string): string | undefined {
+  const annual = billing === "annual";
+  const map: Record<string, string | undefined> = {
+    premium: annual
+      ? process.env.STRIPE_PREMIUM_ANNUAL_PRICE_ID
+      : process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
+    max: annual
+      ? process.env.STRIPE_MAX_ANNUAL_PRICE_ID
+      : process.env.STRIPE_MAX_MONTHLY_PRICE_ID,
+    "ai-pro": annual
+      ? process.env.STRIPE_AIPRO_ANNUAL_PRICE_ID
+      : process.env.STRIPE_AIPRO_MONTHLY_PRICE_ID,
+  };
+  return map[planKey];
+}
+
+export async function POST(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const planKey: string = body.planKey ?? "premium";
+    const billing: string = body.billing ?? "monthly";
+
+    const priceId = getPriceId(planKey, billing);
+    if (!priceId) {
+      return NextResponse.json(
+        { error: `No price configured for plan "${planKey}" (${billing}). Please contact support.` },
+        { status: 400 }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -42,15 +72,10 @@ export async function POST() {
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
-      line_items: [
-        {
-          price: process.env.STRIPE_PRO_PRICE_ID!,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.NEXTAUTH_URL}/dashboard?upgrade=success`,
       cancel_url: `${process.env.NEXTAUTH_URL}/pricing?upgrade=cancel`,
-      metadata: { userId: user.id },
+      metadata: { userId: user.id, planKey, billing },
     });
 
     return NextResponse.json({ url: checkoutSession.url });

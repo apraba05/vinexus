@@ -50,7 +50,10 @@ export default function DashboardPage() {
               </svg>
               <span style={{ fontSize: 13, color: "#ca8a04", flex: 1 }}>Please verify your email address. Check your inbox for a verification link.</span>
               <button
-                onClick={async () => { await fetch("/api/auth/resend-verification", { method: "POST" }); alert("Verification email sent!"); }}
+                onClick={async () => {
+                  const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+                  alert(res.ok ? "Verification email sent! Check your inbox." : "Failed to send — please try again.");
+                }}
                 style={{ padding: "3px 10px", background: "transparent", border: "1px solid rgba(234,179,8,0.3)", borderRadius: 4, fontSize: 12, color: "#ca8a04", cursor: "pointer", fontFamily: "inherit" }}
               >
                 Resend

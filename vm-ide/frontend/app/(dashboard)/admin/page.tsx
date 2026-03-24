@@ -3,11 +3,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-// Client-side owner check — mirrors server-side logic in adminGuard.ts
-function isOwnerEmail(email: string): boolean {
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-  if (!adminEmail || !email) return false;
-  return email.toLowerCase().trim() === adminEmail.toLowerCase().trim();
+// Client-side owner check — uses the role set server-side in auth.ts session callback
+function isOwnerEmail(_email: string, role?: string): boolean {
+  return role === "owner";
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
