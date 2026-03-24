@@ -47,9 +47,8 @@ export async function POST(request: Request) {
     }
 
     const Stripe = (await import("stripe")).default;
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2026-01-28.clover" as Parameters<typeof Stripe>[1]["apiVersion"],
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2026-01-28.clover" as any });
 
     let customerId = user.stripeCustomerId;
     if (!customerId) {
