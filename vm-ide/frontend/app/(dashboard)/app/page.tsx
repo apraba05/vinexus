@@ -235,24 +235,6 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
     return unsubscribe;
   }, []);
 
-  useEffect(() => {
-    if (!isElectron() || typeof window === "undefined") return;
-    const handlers: Record<string, () => void> = {
-      "menu:save": () => activeFile && handleSaveWithPreview(activeFile),
-      "menu:newFile": () => handleNewFile(),
-      "menu:newFolder": () => handleNewFolder(),
-      "menu:toggleTerminal": () => setBottomTab("terminal"),
-      "menu:toggleAI": () => setBottomTab("ai"),
-      "menu:deploy": () => handleDeploy(),
-    };
-    const wrapped: Record<string, EventListener> = {};
-    for (const [name, fn] of Object.entries(handlers)) {
-      wrapped[name] = () => fn();
-      window.addEventListener(name, wrapped[name]);
-    }
-    return () => { for (const [name, fn] of Object.entries(wrapped)) window.removeEventListener(name, fn); };
-  }, [activeFile, handleSaveWithPreview, handleNewFile, handleNewFolder, handleDeploy, setBottomTab]);
-
   const handleVmConnect = useCallback(async (params: any) => {
     if (!isElectron()) return;
     setVmConnecting(true);
@@ -477,6 +459,24 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
     }
     runInTerminal("echo '--- Vinexus Deploy ---' && ls -la");
   }, [openFiles, runInTerminal]);
+
+  useEffect(() => {
+    if (!isElectron() || typeof window === "undefined") return;
+    const handlers: Record<string, () => void> = {
+      "menu:save": () => activeFile && handleSaveWithPreview(activeFile),
+      "menu:newFile": () => handleNewFile(),
+      "menu:newFolder": () => handleNewFolder(),
+      "menu:toggleTerminal": () => setBottomTab("terminal"),
+      "menu:toggleAI": () => setBottomTab("ai"),
+      "menu:deploy": () => handleDeploy(),
+    };
+    const wrapped: Record<string, EventListener> = {};
+    for (const [name, fn] of Object.entries(handlers)) {
+      wrapped[name] = () => fn();
+      window.addEventListener(name, wrapped[name]);
+    }
+    return () => { for (const [name, fn] of Object.entries(wrapped)) window.removeEventListener(name, fn); };
+  }, [activeFile, handleSaveWithPreview, handleNewFile, handleNewFolder, handleDeploy, setBottomTab]);
 
   const handleLogs = useCallback(() => {
     runInTerminal("sudo journalctl -xe --no-pager | tail -100");
