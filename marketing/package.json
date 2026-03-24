@@ -13,12 +13,18 @@
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "motion": "^12.34.3",
-    "resend": "^6.9.2"
+    "resend": "^6.9.2",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "stripe": "^17.0.0",
+    "jose": "^5.9.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "typescript": "^5"
+    "typescript": "^5",
+    "prisma": "^5.22.0",
+    "@types/bcryptjs": "^2.4.6"
   }
 }

@@ -1,9 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/ThemeContext";
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.vinexus.space";
 
 // ── CAD prices ─────────────────────────────────────────────────────
 const CAD_PRICES: Record<string, { monthly: number; annual: number }> = {
@@ -180,14 +179,48 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 export default function PricingPage() {
   const { D } = useTheme();
+  const router = useRouter();
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const isAnnual = billing === "annual";
 
-  function handleCheckout(planKey: string) {
+  async function handleCheckout(planKey: string) {
     if (planKey === "free") { window.location.href = "/download"; return; }
     if (planKey === "enterprise") { window.location.href = "/contact"; return; }
-    // Redirect to the app to sign in and complete checkout
-    window.location.href = `${APP_URL}/pricing?plan=${planKey}&billing=${billing}`;
+
+    setCheckoutLoading(planKey);
+    try {
+      // Check auth first
+      const meRes = await fetch("/api/auth/me");
+      const meData = await meRes.json();
+      if (!meData.user) {
+        router.push(`/login?next=/pricing`);
+        return;
+      }
+
+      // Create Stripe checkout session
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planKey, billing }),
+      });
+
+      if (res.status === 401) {
+        router.push(`/login?next=/pricing`);
+        return;
+      }
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Failed to start checkout. Please try again.");
+      }
+    } catch {
+      alert("Network error. Please try again.");
+    } finally {
+      setCheckoutLoading(null);
+    }
   }
 
   return (
@@ -306,10 +339,12 @@ export default function PricingPage() {
 
                   <button
                     onClick={() => handleCheckout(plan.key)}
+                    disabled={checkoutLoading === plan.key}
                     style={{
                       display: "flex", alignItems: "center", justifyContent: "center",
                       padding: "7px 14px", borderRadius: 4, fontSize: 13, fontWeight: 600,
-                      cursor: "pointer",
+                      cursor: checkoutLoading === plan.key ? "default" : "pointer",
+                      opacity: checkoutLoading === plan.key ? 0.7 : 1,
                       fontFamily: "inherit",
                       background: plan.highlight ? D.primary : "transparent",
                       color: plan.highlight ? "#ffffff" : D.onSurfaceVariant,
@@ -317,7 +352,7 @@ export default function PricingPage() {
                       transition: "opacity 0.15s",
                     }}
                   >
-                    {plan.cta}
+                    {checkoutLoading === plan.key ? "Loading…" : plan.cta}
                   </button>
                 </div>
               );

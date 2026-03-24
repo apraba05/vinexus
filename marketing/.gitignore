@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# Next.js
+.next/
+out/
+
+# environment / secrets
+.env
+.env.*
+!.env.example
+
+# misc
+.DS_Store
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db

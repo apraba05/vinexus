@@ -1,10 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 import PostHogProvider from "@/components/PostHogProvider";
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.vinexus.space";
 
 function SunIcon() {
   return (
@@ -28,13 +27,32 @@ function MoonIcon() {
 
 function Nav() {
   const { D, isDark, toggle } = useTheme();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+  const [authUser, setAuthUser] = useState<{ name: string; email: string } | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
   }, []);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        setAuthUser(data.user ?? null);
+        setAuthChecked(true);
+      })
+      .catch(() => setAuthChecked(true));
+  }, []);
+
+  async function handleSignOut() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setAuthUser(null);
+    router.push("/");
+  }
 
   return (
     <nav style={{
@@ -65,9 +83,22 @@ function Nav() {
           <button onClick={toggle} style={{ width: 28, height: 28, borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: D.onSurfaceVariant }} aria-label="Toggle theme">
             {isDark ? <SunIcon /> : <MoonIcon />}
           </button>
-          <a href={`${APP_URL}/login`} style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
-            Sign In
-          </a>
+          {authChecked && (
+            authUser ? (
+              <>
+                <Link href="/account" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
+                  Account
+                </Link>
+                <button onClick={handleSignOut} style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, background: "transparent", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}>
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link href="/login" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
+                Sign In
+              </Link>
+            )
+          )}
           <Link href="/download" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 600, color: "#fff", textDecoration: "none", background: D.primary, borderRadius: 4 }}>
             Download
           </Link>
@@ -96,7 +127,7 @@ function Footer() {
             {[{ href: "/#features", label: "Features" }, { href: "/pricing", label: "Pricing" }, { href: "/download", label: "Get Started" }].map((l) => (
               <Link key={l.href} href={l.href} style={{ fontSize: 12, color: D.onSurfaceVariant, textDecoration: "none" }}>{l.label}</Link>
             ))}
-            <a href={`${APP_URL}/login`} style={{ fontSize: 12, color: D.onSurfaceVariant, textDecoration: "none" }}>Sign In</a>
+            <Link href="/login" style={{ fontSize: 12, color: D.onSurfaceVariant, textDecoration: "none" }}>Sign In</Link>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <span style={{ fontSize: 11, fontWeight: 600, color: D.onSurface, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Docs</span>
