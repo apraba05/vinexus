@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "@/lib/ThemeContext";
@@ -19,7 +19,7 @@ const PLAN_LABELS: Record<string, string> = {
   enterprise: "Enterprise",
 };
 
-export default function AccountPage() {
+function AccountContent() {
   const { D } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -160,5 +160,13 @@ export default function AccountPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={null}>
+      <AccountContent />
+    </Suspense>
   );
 }
