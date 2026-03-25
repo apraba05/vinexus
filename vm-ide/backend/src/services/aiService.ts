@@ -1,9 +1,4 @@
-import {
-  BedrockRuntimeClient,
-  ConverseCommand,
-  type Message,
-  type ContentBlock,
-} from "@aws-sdk/client-bedrock-runtime";
+import Anthropic from "@anthropic-ai/sdk";
 import { AIExplanation, AIAnalysis } from "../types";
 
 // Secrets pattern to strip before sending to AI
@@ -16,15 +11,15 @@ const SECRET_PATTERNS = [
 const MAX_CONTENT_CHARS = 12_000; // ~3K tokens budget for file content
 
 export class AIService {
-  private client: BedrockRuntimeClient;
+  private client: Anthropic;
   private modelId: string;
 
   constructor() {
-    this.client = new BedrockRuntimeClient({
-      region: process.env.AWS_REGION || "us-east-1",
+    this.client = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
     });
     this.modelId =
-      process.env.BEDROCK_MODEL_ID || "anthropic.claude-sonnet-4-20250514-v1:0";
+      process.env.ANTHROPIC_MODEL_ID || "claude-haiku-4-5-20251001";
   }
 
   /**
@@ -36,12 +31,8 @@ export class AIService {
   ): Promise<AIExplanation> {
     const sanitized = this.sanitize(content);
 
-    const response = await this.chat([
-      {
-        role: "user",
-        content: [
-          {
-            text: `You are a senior DevOps/SRE engineer. Analyze the following file and provide a JSON response.
+    const response = await this.chat(
+      `You are a senior DevOps/SRE engineer. Analyze the following file and provide a JSON response.
 
 File: ${filePath}
 
@@ -58,11 +49,8 @@ Respond with ONLY valid JSON in this exact format:
   "lineNotes": [{"line": 1, "note": "explanation for this line"}]
 }
 
-Keep lineNotes to the 5 most important lines. If everything looks good, return empty arrays for risks/misconfigurations.`,
-          },
-        ],
-      },
-    ]);
+Keep lineNotes to the 5 most important lines. If everything looks good, return empty arrays for risks/misconfigurations.`
+    );
 
     return this.parseJSON<AIExplanation>(response, {
       summary: "Unable to analyze file",
@@ -107,9 +95,7 @@ ${sanitizedLogs}
   "severity": "low|medium|high|critical"
 }`;
 
-    const response = await this.chat([
-      { role: "user", content: [{ text: prompt }] },
-    ]);
+    const response = await this.chat(prompt);
 
     return this.parseJSON<AIAnalysis>(response, {
       rootCause: "Unable to determine root cause",
@@ -129,12 +115,8 @@ ${sanitizedLogs}
   ): Promise<{ explanation: string; suggestions: string[] }> {
     const sanitized = this.sanitize(fileContent).slice(0, 6000);
 
-    const response = await this.chat([
-      {
-        role: "user",
-        content: [
-          {
-            text: `You are a senior DevOps engineer. A validation check failed for a file.
+    const response = await this.chat(
+      `You are a senior DevOps engineer. A validation check failed for a file.
 
 File: ${filePath}
 
@@ -152,11 +134,8 @@ Respond with ONLY valid JSON:
 {
   "explanation": "plain-english explanation of what's wrong",
   "suggestions": ["specific fix 1", "specific fix 2"]
-}`,
-          },
-        ],
-      },
-    ]);
+}`
+    );
 
     return this.parseJSON(response, {
       explanation: "Unable to analyze validation error",
@@ -166,37 +145,22 @@ Respond with ONLY valid JSON:
 
   // ─── Internal ──────────────────────────────────────────────────
 
-  private async chat(messages: Message[]): Promise<string> {
-    const command = new ConverseCommand({
-      modelId: this.modelId,
-      messages,
-      system: [
-        {
-          text: "You are an expert DevOps and systems engineer. Always respond with valid JSON only, no markdown fences, no extra text.",
-        },
-      ],
-      inferenceConfig: {
-        maxTokens: 2048,
-        temperature: 0.2,
-      },
+  private async chat(userMessage: string): Promise<string> {
+    const response = await this.client.messages.create({
+      model: this.modelId,
+      max_tokens: 2048,
+      temperature: 0.2,
+      system:
+        "You are an expert DevOps and systems engineer. Always respond with valid JSON only, no markdown fences, no extra text.",
+      messages: [{ role: "user", content: userMessage }],
     });
 
-    const response = await this.client.send(command);
-
-    const outputContent = response.output?.message?.content;
-    if (!outputContent || outputContent.length === 0) {
-      throw new Error("Empty response from Bedrock");
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("No text in AI response");
     }
 
-    // Extract text from content blocks
-    const textBlock = outputContent.find(
-      (block: ContentBlock) => "text" in block
-    );
-    if (!textBlock || !("text" in textBlock)) {
-      throw new Error("No text in Bedrock response");
-    }
-
-    return textBlock.text!;
+    return textBlock.text;
   }
 
   private sanitize(content: string): string {

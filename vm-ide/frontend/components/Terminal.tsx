@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useRef } from "react";
 import { getTerminalWsUrl } from "@/lib/api";
+import { electronPty, isElectron } from "@/lib/electron";
 
 interface Props {
   sessionId: string | null;
@@ -15,6 +16,7 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
   const termRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const fitAddonRef = useRef<any>(null);
+  const ptyIdRef = useRef<string | null>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -57,49 +59,87 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
         }
       }, 100);
 
-      // Connect WebSocket
-      const url = getTerminalWsUrl(sessionId);
-      ws = new WebSocket(url);
-      wsRef.current = ws;
-
-      ws.binaryType = "arraybuffer";
-
-      ws.onopen = () => {
-        // Send initial size
-        ws.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
-      };
-
-      ws.onmessage = (event) => {
-        // Check for JSON messages (CWD changes from PROMPT_COMMAND)
-        if (typeof event.data === "string") {
-          try {
-            const msg = JSON.parse(event.data);
-            if (msg.type === "cwd" && msg.path) {
-              onCwdChange?.(msg.path);
-              return; // Don't write CWD messages to terminal
-            }
-          } catch {
-            // Not JSON, treat as terminal data
-          }
-        }
-        const data = event.data instanceof ArrayBuffer
-          ? new Uint8Array(event.data)
-          : event.data;
-        term.write(data);
-      };
-
-      ws.onerror = () => {
-        onError("Terminal WebSocket error");
-      };
-
-      ws.onclose = () => {
-        term.write("\r\n[Connection closed]\r\n");
-      };
-
       let activityTimer: ReturnType<typeof setTimeout> | null = null;
 
+      let cleanupTransport = () => {};
+
+      if (isElectron()) {
+        const createRes = await electronPty.create(sessionId, term.cols, term.rows);
+        if (createRes.error || !createRes.ptyId) {
+          onError(createRes.error || "Failed to start terminal");
+          return;
+        }
+
+        const ptyId = createRes.ptyId;
+        ptyIdRef.current = ptyId;
+
+        const offData = electronPty.onData((incomingPtyId, data) => {
+          if (incomingPtyId !== ptyId) return;
+          term.write(data);
+        });
+
+        const offExit = electronPty.onExit((incomingPtyId) => {
+          if (incomingPtyId !== ptyId) return;
+          term.write("\r\n[Connection closed]\r\n");
+        });
+
+        cleanupTransport = () => {
+          offData();
+          offExit();
+          if (ptyIdRef.current) {
+            electronPty.destroy(ptyIdRef.current).catch(() => {});
+            ptyIdRef.current = null;
+          }
+        };
+      } else {
+        // Connect WebSocket
+        const url = getTerminalWsUrl(sessionId);
+        ws = new WebSocket(url);
+        wsRef.current = ws;
+
+        ws.binaryType = "arraybuffer";
+
+        ws.onopen = () => {
+          // Send initial size
+          ws.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+        };
+
+        ws.onmessage = (event) => {
+          // Check for JSON messages (CWD changes from PROMPT_COMMAND)
+          if (typeof event.data === "string") {
+            try {
+              const msg = JSON.parse(event.data);
+              if (msg.type === "cwd" && msg.path) {
+                onCwdChange?.(msg.path);
+                return; // Don't write CWD messages to terminal
+              }
+            } catch {
+              // Not JSON, treat as terminal data
+            }
+          }
+          const data = event.data instanceof ArrayBuffer
+            ? new Uint8Array(event.data)
+            : event.data;
+          term.write(data);
+        };
+
+        ws.onerror = () => {
+          onError("Terminal WebSocket error");
+        };
+
+        ws.onclose = () => {
+          term.write("\r\n[Connection closed]\r\n");
+        };
+
+        cleanupTransport = () => {
+          ws.close();
+        };
+      }
+
       term.onData((data: string) => {
-        if (ws.readyState === WebSocket.OPEN) {
+        if (ptyIdRef.current) {
+          electronPty.write(ptyIdRef.current, data);
+        } else if (ws.readyState === WebSocket.OPEN) {
           ws.send(data);
         }
         // Detect Enter key — a command was likely submitted
@@ -112,7 +152,9 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
       });
 
       term.onResize(({ cols, rows }: { cols: number; rows: number }) => {
-        if (ws.readyState === WebSocket.OPEN) {
+        if (ptyIdRef.current) {
+          electronPty.resize(ptyIdRef.current, cols, rows);
+        } else if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "resize", cols, rows }));
         }
       });
@@ -130,7 +172,7 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
       // Store cleanup ref
       (containerRef.current as any).__cleanup = () => {
         window.removeEventListener("resize", handleResize);
-        ws.close();
+        cleanupTransport();
         term.dispose();
       };
     };
@@ -148,10 +190,16 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
   // Auto cd when explorer path changes
   const prevCdPath = useRef<string | null>(null);
   useEffect(() => {
-    if (!cdPath || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    // Send cd if path actually changed
+    if (!cdPath) return;
     if (cdPath !== prevCdPath.current) {
-      wsRef.current.send(`cd ${cdPath}\r`);
+      if (ptyIdRef.current) {
+        electronPty.write(ptyIdRef.current, `cd ${cdPath}\r`);
+      } else if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(`cd ${cdPath}\r`);
+      } else {
+        return;
+      }
+      onCwdChange?.(cdPath);
     }
     prevCdPath.current = cdPath;
   }, [cdPath]);

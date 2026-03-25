@@ -49,6 +49,7 @@
       "icon": "electron/assets/icon.icns",
       "category": "public.app-category.developer-tools",
       "gatekeeperAssess": false,
+      "artifactName": "Vinexus-mac.${ext}",
       "target": [
         {
           "target": "dmg",
@@ -93,15 +94,10 @@
     },
     "win": {
       "icon": "electron/assets/icon.ico",
+      "artifactName": "Vinexus-Setup-win.${ext}",
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "portable",
           "arch": [
             "x64"
           ]
@@ -126,6 +122,7 @@
     "linux": {
       "icon": "electron/assets/icon.png",
       "category": "Development",
+      "artifactName": "Vinexus-linux.${ext}",
       "target": [
         {
           "target": "AppImage",

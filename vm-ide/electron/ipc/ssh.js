@@ -26,17 +26,15 @@ const log = require("electron-log");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 
-// ─── SSRF Protection ──────────────────────────────────────────────────────────
+// ─── Host Safety Checks ───────────────────────────────────────────────────────
+// The desktop app is explicitly meant to connect to user-managed VMs, including
+// RFC1918/private-network instances. Only reject obvious local-loopback and
+// unspecified targets that would bounce back into the user's own machine.
 const BLOCKED_HOSTS = [
   /^localhost$/i,
   /^127\./,
   /^0\.0\.0\.0$/,
-  /^10\./,
-  /^172\.(1[6-9]|2\d|3[01])\./,
-  /^192\.168\./,
-  /^169\.254\./,
-  /\.local$/i,
-  /\.internal$/i,
+  /^::1$/,
 ];
 
 function isBlockedHost(host) {

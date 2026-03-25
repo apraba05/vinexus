@@ -90,14 +90,47 @@ let frontendProcess = null;
 let backendProcess = null;
 
 /**
+ * Poll a URL until it returns any HTTP response or the timeout elapses.
+ * Used to wait for servers to be genuinely ready, not just port-open.
+ */
+function waitForUrl(url, timeoutMs = 30000, perRequestTimeoutMs = 3000) {
+  const http = require("http");
+  return new Promise((resolve, reject) => {
+    const deadline = Date.now() + timeoutMs;
+    function attempt() {
+      const req = http.get(url, (res) => {
+        res.resume(); // consume body so socket closes cleanly
+        resolve();
+      });
+      // perRequestTimeoutMs should be long enough to survive Next.js on-demand
+      // compilation (which holds the connection open until the page is built).
+      req.setTimeout(perRequestTimeoutMs, () => req.destroy());
+      req.on("error", () => {
+        if (Date.now() >= deadline) {
+          reject(new Error(`Server at ${url} did not respond within ${timeoutMs / 1000}s`));
+        } else {
+          setTimeout(attempt, 500);
+        }
+      });
+    }
+    attempt();
+  });
+}
+
+/**
  * Spawn the Next.js standalone server (frontend).
  * In dev mode, we assume `npm run dev` is already running.
  * In production, we launch the built standalone server.
  */
 function startFrontend() {
   if (DEV_MODE) {
-    log.info("Dev mode: assuming Next.js dev server is already running on port", FRONTEND_PORT);
-    return Promise.resolve();
+    // Poll the EXACT app URL, not just the root. Next.js compiles pages on-demand,
+    // so localhost:3000 might respond while localhost:3000/app is still compiling.
+    // A 20s per-request timeout keeps the loading screen visible during compilation
+    // (Next.js holds the connection open until the page is built), then resolves
+    // immediately so loadURL navigates to an already-compiled page.
+    log.info("Dev mode: waiting for Next.js to compile and serve", APP_URL);
+    return waitForUrl(APP_URL, 120000, 20000);
   }
 
   return new Promise((resolve, reject) => {
@@ -120,11 +153,7 @@ function startFrontend() {
     });
 
     frontendProcess.stdout.on("data", (data) => {
-      const msg = data.toString().trim();
-      log.info("[frontend]", msg);
-      if (msg.includes("Ready") || msg.includes("started server") || msg.includes(String(FRONTEND_PORT))) {
-        resolve();
-      }
+      log.info("[frontend]", data.toString().trim());
     });
 
     frontendProcess.stderr.on("data", (data) => {
@@ -140,8 +169,8 @@ function startFrontend() {
       log.info("Frontend process exited with code:", code);
     });
 
-    // Resolve after 8 seconds even if no "Ready" log (some builds don't log it)
-    setTimeout(resolve, 8000);
+    // Poll the server directly — more reliable than log parsing across Next.js versions.
+    waitForUrl(`http://localhost:${FRONTEND_PORT}`, 30000).then(resolve).catch(reject);
   });
 }
 
@@ -172,11 +201,7 @@ function startBackend() {
     });
 
     backendProcess.stdout.on("data", (data) => {
-      const msg = data.toString().trim();
-      log.info("[backend]", msg);
-      if (msg.includes("listening") || msg.includes(String(BACKEND_PORT))) {
-        resolve();
-      }
+      log.info("[backend]", data.toString().trim());
     });
 
     backendProcess.stderr.on("data", (data) => {
@@ -192,8 +217,7 @@ function startBackend() {
       log.info("Backend process exited with code:", code);
     });
 
-    // Resolve after 5 seconds even without log confirmation
-    setTimeout(resolve, 5000);
+    waitForUrl(`http://localhost:${BACKEND_PORT}/health`, 20000).then(resolve).catch(reject);
   });
 }
 
@@ -367,10 +391,10 @@ app.whenReady().then(async () => {
   // instead of waiting ~8 s on a blank desktop.
   createWindow();
 
-  // Show the branded loading screen while servers start up
-  if (!DEV_MODE) {
-    mainWindow.webContents.loadFile(path.join(__dirname, "loading.html"));
-  }
+  // Show the branded loading screen while servers start up (dev and production).
+  // Without this, the window background (#0a0a0f) shows as a black screen while
+  // Next.js compiles the first page in dev mode or starts up in production.
+  mainWindow.webContents.loadFile(path.join(__dirname, "loading.html"));
 
   // Start servers (no-op in dev mode).
   // Backend failure is non-fatal — basic IDE features (SSH, terminal, file editing)

@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef } from "react";
 import { DiffEditor } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
+import type { DiffOnMount } from "@monaco-editor/react";
 
 interface Props {
   originalContent: string;
@@ -24,7 +24,7 @@ export default function DiffView({
   onCancel,
   loading = false,
 }: Props) {
-  const diffRef = useRef<editor.IStandaloneDiffEditor | null>(null);
+  const diffRef = useRef<Parameters<DiffOnMount>[0] | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

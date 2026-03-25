@@ -30,6 +30,15 @@ export interface FileEntry {
   modifiedAt: number;
 }
 
+function getElectronApi() {
+  if (typeof window === "undefined") return null;
+  return (window as any).electronAPI ?? null;
+}
+
+function isElectronRuntime(): boolean {
+  return !!getElectronApi();
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -85,6 +94,19 @@ export async function listDir(
   sessionId: string,
   path: string
 ): Promise<{ path: string; entries: FileEntry[] }> {
+  const ea = getElectronApi();
+  if (ea?.ssh) {
+    const res = await ea.ssh.readdir(sessionId, path);
+    if (res?.error) throw new Error(res.error);
+    const entries = (res?.entries ?? []).map((entry: any) => ({
+      name: entry.name,
+      path: entry.path,
+      type: entry.isDirectory ? "directory" : "file",
+      size: entry.size ?? 0,
+      modifiedAt: entry.mtime ?? 0,
+    })) as FileEntry[];
+    return { path, entries };
+  }
   return request(`/api/fs/list?sessionId=${encodeURIComponent(sessionId)}&path=${encodeURIComponent(path)}`);
 }
 
@@ -92,6 +114,13 @@ export async function readFile(
   sessionId: string,
   path: string
 ): Promise<{ path: string; content: string; size: number }> {
+  const ea = getElectronApi();
+  if (ea?.ssh) {
+    const res = await ea.ssh.readFile(sessionId, path);
+    if (res?.error) throw new Error(res.error);
+    const content = res?.content ?? "";
+    return { path: res?.path ?? path, content, size: new TextEncoder().encode(content).length };
+  }
   return request(`/api/fs/read?sessionId=${encodeURIComponent(sessionId)}&path=${encodeURIComponent(path)}`);
 }
 
@@ -107,6 +136,16 @@ export async function writeFile(
   backupPath?: string;
   previousSize?: number;
 }> {
+  const ea = getElectronApi();
+  if (ea?.ssh) {
+    const res = await ea.ssh.writeFile(sessionId, path, content);
+    if (res?.error) throw new Error(res.error);
+    return {
+      ok: true,
+      path: res?.path ?? path,
+      size: new TextEncoder().encode(content).length,
+    };
+  }
   return request("/api/fs/write", {
     method: "POST",
     body: JSON.stringify({
@@ -138,6 +177,9 @@ export async function diffFile(
   path: string,
   newContent: string
 ): Promise<DiffResult> {
+  if (isElectronRuntime()) {
+    throw new Error("Diff preview is not available in desktop mode yet");
+  }
   return request("/api/fs/diff", {
     method: "POST",
     body: JSON.stringify({ sessionId, path, newContent }),
@@ -175,6 +217,12 @@ export async function mkdir(
   sessionId: string,
   path: string
 ): Promise<{ ok: boolean }> {
+  const ea = getElectronApi();
+  if (ea?.ssh) {
+    const res = await ea.ssh.mkdir(sessionId, path);
+    if (res?.error) throw new Error(res.error);
+    return { ok: true };
+  }
   return request("/api/fs/mkdir", {
     method: "POST",
     body: JSON.stringify({ sessionId, path }),
@@ -186,6 +234,12 @@ export async function renameItem(
   oldPath: string,
   newPath: string
 ): Promise<{ ok: boolean }> {
+  const ea = getElectronApi();
+  if (ea?.ssh) {
+    const res = await ea.ssh.rename(sessionId, oldPath, newPath);
+    if (res?.error) throw new Error(res.error);
+    return { ok: true };
+  }
   return request("/api/fs/rename", {
     method: "POST",
     body: JSON.stringify({ sessionId, oldPath, newPath }),
@@ -197,6 +251,15 @@ export async function deleteItem(
   path: string,
   recursive: boolean = false
 ): Promise<{ ok: boolean }> {
+  const ea = getElectronApi();
+  if (ea?.ssh) {
+    if (recursive) {
+      throw new Error("Recursive delete is not available in desktop mode yet");
+    }
+    const res = await ea.ssh.delete(sessionId, path);
+    if (res?.error) throw new Error(res.error);
+    return { ok: true };
+  }
   return request("/api/fs/delete", {
     method: "POST",
     body: JSON.stringify({ sessionId, path, recursive }),
@@ -580,4 +643,3 @@ export async function deleteAgentSession(sessionId: string, sshSessionId: string
     method: "DELETE",
   });
 }
-

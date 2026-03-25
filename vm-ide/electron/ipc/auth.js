@@ -225,10 +225,27 @@ function registerAuthHandlers() {
           let data = "";
           res.on("data", (c) => { data += c; });
           res.on("end", () => {
-            try { resolve(JSON.parse(data)); } catch { resolve({}); }
+            const statusCode = res.statusCode || 500;
+            let parsed = {};
+            try {
+              parsed = data ? JSON.parse(data) : {};
+            } catch {
+              parsed = {
+                error: statusCode >= 500
+                  ? "Desktop auth server returned an invalid response"
+                  : `Request failed with status ${statusCode}`,
+              };
+            }
+            if (statusCode >= 400 && !parsed.error) {
+              parsed.error = `Request failed with status ${statusCode}`;
+            }
+            resolve(parsed);
           });
         }
       );
+      req.setTimeout(10000, () => {
+        req.destroy(new Error(`Request to ${path} timed out after 10s`));
+      });
       req.on("error", reject);
       req.write(payload);
       req.end();

@@ -26,13 +26,17 @@ export default function LoginScreen({ onLogin }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!ea?.auth) {
+      setError("Desktop auth bridge is unavailable. Please restart Vinexus.");
+      return;
+    }
     setLoading(true);
     try {
       let result;
       if (mode === "login") {
-        result = await ea?.auth.login({ email, password });
+        result = await ea.auth.login({ email, password });
       } else {
-        result = await ea?.auth.register({ email, name, password });
+        result = await ea.auth.register({ email, name, password });
       }
       if (result?.error) {
         setError(result.error);
@@ -132,14 +136,14 @@ export default function LoginScreen({ onLogin }: Props) {
           {mode === "login" ? (
             <>
               <span style={styles.switchText}>Don&apos;t have an account?</span>
-              <button style={styles.switchBtn} onClick={() => { setMode("register"); setError(""); }}>
+              <button type="button" style={styles.switchBtn} onClick={() => { setMode("register"); setError(""); }}>
                 Create one
               </button>
             </>
           ) : (
             <>
               <span style={styles.switchText}>Already have an account?</span>
-              <button style={styles.switchBtn} onClick={() => { setMode("login"); setError(""); }}>
+              <button type="button" style={styles.switchBtn} onClick={() => { setMode("login"); setError(""); }}>
                 Sign in
               </button>
             </>
@@ -180,6 +184,7 @@ const styles: Record<string, any> = {
     height: 32,
     width: "auto",
     objectFit: "contain" as const,
+    filter: "brightness(0) invert(1)",
   },
   heading: {
     fontSize: 22,

@@ -67,14 +67,16 @@ jobs:
           GH_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           # Static files must live inside the standalone dir so server.js can find them
           cp -r frontend/.next/static frontend/.next/standalone/.next/static
           cp -r frontend/public frontend/.next/standalone/public
           # Write runtime env — read by main.js at app startup
-          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\nGITHUB_CLIENT_ID=%s\nGITHUB_CLIENT_SECRET=%s\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\n' \
+          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\nGITHUB_CLIENT_ID=%s\nGITHUB_CLIENT_SECRET=%s\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nANTHROPIC_API_KEY=%s\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
             "$GH_CLIENT_ID" "$GH_CLIENT_SECRET" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" \
+            "$ANTHROPIC_API_KEY" \
             > frontend/.next/standalone/runtime.env
           # Prisma generates to root node_modules/.prisma (based on schema location).
           # Copy the root-generated client into backend/node_modules so it can be found at runtime.
@@ -93,17 +95,13 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npx electron-builder --mac --x64 --publish never
 
-      - name: Rename artifact
-        working-directory: vm-ide/dist-electron
-        run: |
-          DMG=$(ls *.dmg 2>/dev/null | head -1)
-          if [ -n "$DMG" ]; then mv "$DMG" Vinexus-mac.dmg; fi
-
-      - name: Upload macOS artifact
+      - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: mac-build
-          path: vm-ide/dist-electron/Vinexus-mac.dmg
+          path: |
+            vm-ide/dist-electron/Vinexus-mac.dmg
+            vm-ide/dist-electron/latest-mac.yml
           retention-days: 1
 
   # ── Windows ────────────────────────────────────────────────────────────────
@@ -160,11 +158,18 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          GH_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
+          GH_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           cp -r frontend/.next/static frontend/.next/standalone/.next/static
           cp -r frontend/public frontend/.next/standalone/public
-          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
+          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\nGITHUB_CLIENT_ID=%s\nGITHUB_CLIENT_SECRET=%s\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nANTHROPIC_API_KEY=%s\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
+            "$GH_CLIENT_ID" "$GH_CLIENT_SECRET" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" \
+            "$ANTHROPIC_API_KEY" \
             > frontend/.next/standalone/runtime.env
           cp -r node_modules/.prisma backend/node_modules/.prisma
           cp -r backend/node_modules/.prisma backend/prisma-runtime
@@ -180,18 +185,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --win --x64 --publish never
 
-      - name: Rename artifact
-        working-directory: vm-ide/dist-electron
-        shell: bash
-        run: |
-          EXE=$(ls *.exe 2>/dev/null | head -1)
-          if [ -n "$EXE" ]; then mv "$EXE" Vinexus-Setup-win.exe; fi
-
-      - name: Upload Windows artifact
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: win-build
-          path: vm-ide/dist-electron/Vinexus-Setup-win.exe
+          path: |
+            vm-ide/dist-electron/Vinexus-Setup-win.exe
+            vm-ide/dist-electron/latest.yml
           retention-days: 1
 
   # ── Linux ──────────────────────────────────────────────────────────────────
@@ -255,11 +255,18 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          GH_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
+          GH_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           cp -r frontend/.next/static frontend/.next/standalone/.next/static
           cp -r frontend/public frontend/.next/standalone/public
-          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\n' \
+          printf 'DATABASE_URL=%s\nNEXTAUTH_SECRET=%s\nADMIN_EMAIL=%s\nNEXT_PUBLIC_APP_URL=http://localhost:3000\nGITHUB_CLIENT_ID=%s\nGITHUB_CLIENT_SECRET=%s\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nANTHROPIC_API_KEY=%s\n' \
             "$DATABASE_URL" "$NEXTAUTH_SECRET" "$ADMIN_EMAIL" \
+            "$GH_CLIENT_ID" "$GH_CLIENT_SECRET" "$GOOGLE_CLIENT_ID" "$GOOGLE_CLIENT_SECRET" \
+            "$ANTHROPIC_API_KEY" \
             > frontend/.next/standalone/runtime.env
           cp -r node_modules/.prisma backend/node_modules/.prisma
           cp -r backend/node_modules/.prisma backend/prisma-runtime
@@ -274,14 +281,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --linux AppImage deb --publish never
 
-      - name: Rename artifacts
-        working-directory: vm-ide/dist-electron
-        run: |
-          APPIMAGE=$(ls *.AppImage 2>/dev/null | head -1)
-          if [ -n "$APPIMAGE" ]; then mv "$APPIMAGE" Vinexus-linux.AppImage; fi
-          DEB=$(ls *.deb 2>/dev/null | head -1)
-          if [ -n "$DEB" ]; then mv "$DEB" Vinexus-linux.deb; fi
-
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -289,6 +288,7 @@ jobs:
           path: |
             vm-ide/dist-electron/Vinexus-linux.AppImage
             vm-ide/dist-electron/Vinexus-linux.deb
+            vm-ide/dist-electron/latest-linux.yml
           retention-days: 1
 
   # ── GitHub Release ─────────────────────────────────────────────────────────
@@ -317,7 +317,14 @@ jobs:
             | Linux    | `Vinexus-linux.AppImage` · `Vinexus-linux.deb` |
 
             **First time?** Create an account at [vinexus.space](https://vinexus.space) before launching the app.
-          files: artifacts/**/*
+          files: |
+            artifacts/Vinexus-mac.dmg
+            artifacts/Vinexus-Setup-win.exe
+            artifacts/Vinexus-linux.AppImage
+            artifacts/Vinexus-linux.deb
+            artifacts/latest-mac.yml
+            artifacts/latest.yml
+            artifacts/latest-linux.yml
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

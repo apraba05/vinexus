@@ -3,11 +3,10 @@ import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.RESEND_FROM_EMAIL || "no-reply@vinexus.space";
-const TO = "support@vinexus.space";
-
 export async function POST(request: Request) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const FROM = process.env.RESEND_FROM_EMAIL || "no-reply@vinexus.space";
+  const TO = "support@vinexus.space";
   try {
     const { name, email, subject, message } = await request.json();
 

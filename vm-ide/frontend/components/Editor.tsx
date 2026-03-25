@@ -1,7 +1,6 @@
 "use client";
 import React, { useRef, useCallback } from "react";
 import MonacoEditor, { OnMount } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
 import { usePlan } from "@/contexts/PlanContext";
 
 interface OpenFile {
@@ -74,7 +73,7 @@ export default function Editor({
   onExplain,
   aiLoading = false,
 }: Props) {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const { features } = usePlan();
 
   const activeFileObj = openFiles.find((f) => f.path === activeFile);
