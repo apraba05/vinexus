@@ -57,8 +57,8 @@ export default function LoginScreen({ onLogin }: Props) {
     }
     setOauthLoading(provider);
     try {
-      const callbackUrl = encodeURIComponent("/desktop-callback");
-      const url = `${WEB_AUTH_ORIGIN}/api/auth/signin/${provider}?callbackUrl=${callbackUrl}`;
+      const url =
+        `${WEB_AUTH_ORIGIN}/login?desktop=1&provider=${encodeURIComponent(provider)}`;
       const result = await ea.app.openExternal(url);
       if (result?.error) {
         setError(result.error);

@@ -1,19 +1,29 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { getProviders, getSession, signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { useTheme } from "@/lib/ThemeContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+export default function LoginPageWrapper() {
+  return (
+    <Suspense fallback={<div style={{ background: "#070e1d", minHeight: "100vh" }} />}>
+      <LoginPage />
+    </Suspense>
+  );
+}
+
+function LoginPage() {
   const { D, isDark } = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [desktopOauthStarted, setDesktopOauthStarted] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [oauthProviders, setOauthProviders] = useState<Record<string, any> | null>(null);
@@ -32,6 +42,26 @@ export default function LoginPage() {
 
   const hasGoogle = !!oauthProviders?.google;
   const hasGitHub = !!oauthProviders?.github;
+  const isDesktopFlow = searchParams.get("desktop") === "1";
+  const desktopProvider = searchParams.get("provider");
+
+  useEffect(() => {
+    if (!isDesktopFlow || desktopOauthStarted) return;
+    if (!oauthProviders) return;
+    if (desktopProvider !== "google" && desktopProvider !== "github") return;
+
+    const isAvailable =
+      (desktopProvider === "google" && hasGoogle) ||
+      (desktopProvider === "github" && hasGitHub);
+
+    if (!isAvailable) {
+      setError(`${desktopProvider === "google" ? "Google" : "GitHub"} sign-in is not configured right now.`);
+      return;
+    }
+
+    setDesktopOauthStarted(true);
+    signIn(desktopProvider, { callbackUrl: "/desktop-callback" });
+  }, [desktopOauthStarted, desktopProvider, hasGitHub, hasGoogle, isDesktopFlow, oauthProviders]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +131,11 @@ export default function LoginPage() {
           />
         </Link>
         <p style={{ fontSize: 14, color: D.onSurfaceVariant, marginBottom: 36 }}>Sign in to your account</p>
+        {isDesktopFlow && (
+          <p style={{ fontSize: 12.5, color: D.onSurfaceVariant, margin: "0 0 20px", textAlign: "center" as const }}>
+            Completing desktop sign-in through your browser.
+          </p>
+        )}
 
         {/* Card */}
         <div style={{
@@ -114,7 +149,7 @@ export default function LoginPage() {
 
           {/* OAuth buttons */}
           <div style={{ display: "flex", flexDirection: "column" as const, gap: 10, marginBottom: 20 }}>
-            <button type="button" onClick={() => hasGoogle && signIn("google", { callbackUrl: "/dashboard" })} disabled={!hasGoogle} style={{
+            <button type="button" onClick={() => hasGoogle && signIn("google", { callbackUrl: isDesktopFlow ? "/desktop-callback" : "/dashboard" })} disabled={!hasGoogle} style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
               width: "100%", padding: "10px 16px",
               background: D.surfaceContainerHigh, color: D.onSurface,
@@ -130,7 +165,7 @@ export default function LoginPage() {
               </svg>
               {hasGoogle ? "Continue with Google" : "Google sign-in unavailable"}
             </button>
-            <button type="button" onClick={() => hasGitHub && signIn("github", { callbackUrl: "/dashboard" })} disabled={!hasGitHub} style={{
+            <button type="button" onClick={() => hasGitHub && signIn("github", { callbackUrl: isDesktopFlow ? "/desktop-callback" : "/dashboard" })} disabled={!hasGitHub} style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
               width: "100%", padding: "10px 16px",
               background: D.surfaceContainerHigh, color: D.onSurface,
