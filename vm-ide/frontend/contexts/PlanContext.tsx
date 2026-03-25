@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
 export interface PlanFeatures {
@@ -38,11 +38,65 @@ const PlanContext = createContext<PlanContextValue>({
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
+  const [desktopPlan, setDesktopPlan] = useState<string | null>(null);
+  const [desktopFeatures, setDesktopFeatures] = useState<PlanFeatures | null>(null);
+  const [desktopLoaded, setDesktopLoaded] = useState(false);
 
-  const plan = (session as any)?.plan || "free";
-  const features: PlanFeatures = (session as any)?.features || defaultFeatures;
-  const isPro = plan === "pro";
-  const isLoading = status === "loading";
+  useEffect(() => {
+    const ea = typeof window !== "undefined" ? (window as any).electronAPI : null;
+    if (!ea?.auth?.getSession) {
+      setDesktopLoaded(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    const refreshDesktopPlan = async () => {
+      try {
+        const res = await ea.auth.getSession();
+        if (cancelled) return;
+        const user = res?.user;
+        if (user) {
+          setDesktopPlan(typeof user.plan === "string" ? user.plan : "free");
+          setDesktopFeatures((user.features as PlanFeatures | undefined) ?? defaultFeatures);
+        } else {
+          setDesktopPlan(null);
+          setDesktopFeatures(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setDesktopPlan(null);
+          setDesktopFeatures(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setDesktopLoaded(true);
+        }
+      }
+    };
+
+    const handleWindowFocus = () => {
+      refreshDesktopPlan();
+    };
+
+    refreshDesktopPlan();
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleWindowFocus);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleWindowFocus);
+    };
+  }, []);
+
+  const sessionPlan = (session as any)?.plan as string | undefined;
+  const sessionFeatures = (session as any)?.features as PlanFeatures | undefined;
+
+  const plan = desktopPlan || sessionPlan || "free";
+  const features: PlanFeatures = desktopFeatures || sessionFeatures || defaultFeatures;
+  const isPro = plan !== "free";
+  const isLoading = status === "loading" || !desktopLoaded;
 
   return (
     <PlanContext.Provider value={{ plan, features, isPro, isLoading }}>
