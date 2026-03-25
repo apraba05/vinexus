@@ -2,7 +2,6 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ThemeProvider } from "@/lib/ThemeContext";
 
 function DashboardGuard({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
@@ -51,9 +50,5 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ThemeProvider>
-      <DashboardGuard>{children}</DashboardGuard>
-    </ThemeProvider>
-  );
+  return <DashboardGuard>{children}</DashboardGuard>;
 }

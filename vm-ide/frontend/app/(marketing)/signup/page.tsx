@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn, useSession } from "next-auth/react";
 import Link from "next/link";
-import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // ── Color tokens ──────────────────────────────────────────────────
 const C = {
@@ -67,6 +67,8 @@ export default function SignupPageWrapper() {
 }
 
 function SignupPage() {
+  const router = useRouter();
+  const { status } = useSession();
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan") as Plan | null;
 
@@ -86,6 +88,12 @@ function SignupPage() {
       setStep(2);
     }
   }, [planParam]);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+    }
+  }, [router, status]);
 
   const handlePlanSelect = (plan: Plan) => {
     if (plan === "enterprise") {
@@ -116,13 +124,20 @@ function SignupPage() {
         return;
       }
 
-      const result = await signIn("credentials", { email, password, redirect: false });
+      const result = await signIn("credentials", {
+        email,
+        password,
+        callbackUrl: "/dashboard",
+        redirect: false,
+      });
 
       if (result?.error) {
         setError("Account created but sign-in failed. Please log in.");
         setLoading(false);
       } else {
-        window.location.href = "/dashboard";
+        await getSession();
+        router.replace(result?.url ?? "/dashboard");
+        router.refresh();
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -171,13 +186,7 @@ function SignupPage() {
 
         {/* Logo */}
         <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", marginBottom: 10 }}>
-          <Image
-            src="/vinexus-wordmark.png"
-            alt="Vinexus"
-            width={110}
-            height={24}
-            style={{ filter: "brightness(0) invert(1)", objectFit: "contain" }}
-          />
+          <BrandLogo iconSize={28} textSize={26} textColor={C.textBright} muted />
         </Link>
         <p style={{ fontSize: 14, color: C.textMuted, marginBottom: 36 }}>
           {step === 1 ? "Choose a plan to get started" : "Create your account"}

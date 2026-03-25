@@ -40,10 +40,12 @@ import {
 } from "@/lib/api";
 import { normalizePath, joinPath } from "@/lib/pathUtils";
 import { isElectron, electronSsh } from "@/lib/electron";
+import { useTheme } from "@/lib/ThemeContext";
 
 import LoginScreen from "@/components/LoginScreen";
 import SearchPanel from "@/components/SearchPanel";
 import GitPanel from "@/components/GitPanel";
+import BrandLogo from "@/components/BrandLogo";
 const TerminalPanel = dynamic(() => import("@/components/Terminal"), { ssr: false });
 
 interface OpenFile {
@@ -133,6 +135,7 @@ const dl: Record<string, React.CSSProperties> = {
    MAIN EXPORT
    ═══════════════════════════════════════════════════════════ */
 export default function AppPage() {
+  const { isDark } = useTheme();
   const [electron, setElectron] = useState(false);
   const [checked, setChecked] = useState(false);
   const [user, setUser] = useState<AppUser | null>(null);
@@ -151,9 +154,6 @@ export default function AppPage() {
   }, []); // stable — uses functional update, no external deps
 
   useEffect(() => {
-    // Force dark theme immediately so CSS vars are correct before any content renders
-    document.documentElement.setAttribute("data-theme", "dark");
-
     const isEl = isElectron();
     setElectron(isEl);
     if (isEl) {
@@ -205,13 +205,13 @@ export default function AppPage() {
   if (!checked) return (
     <div style={{
       position: "fixed", inset: 0,
-      background: "#0d1117",
+      background: isDark ? "#0d1117" : "#f9f9ff",
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       <div style={{
         width: 20, height: 20, borderRadius: "50%",
-        border: "2px solid rgba(255,255,255,0.1)",
-        borderTopColor: "rgba(255,255,255,0.5)",
+        border: isDark ? "2px solid rgba(255,255,255,0.1)" : "2px solid rgba(25,49,93,0.12)",
+        borderTopColor: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,83,219,0.75)",
         animation: "spin 0.8s linear infinite",
       }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -226,6 +226,7 @@ export default function AppPage() {
    IDE VIEW
    ═══════════════════════════════════════════════════════════ */
 function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
+  const { isDark, toggle } = useTheme();
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const [vmSessions, setVmSessions] = useState<VmSession[]>([]);
@@ -295,6 +296,14 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
     const ea = isElectron() ? (window as any).electronAPI : null;
     await ea?.auth.logout();
     for (const s of vmSessions) await electronSsh.disconnect(s.id).catch(() => {});
+    setSettingsOpen(false);
+    setProfileOpen(false);
+    setActiveVmSessionId(null);
+    setSessionId(null);
+    setConnInfo(null);
+    setOpenFiles([]);
+    setActiveFile(null);
+    if (typeof window !== "undefined") localStorage.removeItem("vm-ide-session");
     onLogout();
   }, [vmSessions, onLogout]);
 
@@ -460,18 +469,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const [showCommands, setShowCommands] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [sidebarView, setSidebarView] = useState<"explorer" | "search" | "git">("explorer");
-
-  // Apply dark/light mode to root element
-  useEffect(() => {
-    const root = document.documentElement;
-    if (darkMode) {
-      root.setAttribute("data-theme", "dark");
-    } else {
-      root.setAttribute("data-theme", "light");
-    }
-  }, [darkMode]);
 
   const runInTerminal = useCallback((cmd: string) => {
     setBottomTab("terminal");
@@ -610,7 +608,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
       <div style={styles.titleBar}>
         <div style={{ width: 72, flexShrink: 0 }} />
         <div style={styles.titleCenter}>
-          <img src="/vinexus-wordmark.png" alt="Vinexus" style={styles.titleWordmark} />
+          <BrandLogo iconSize={18} textSize={15} textColor="var(--text-bright)" muted />
           {connInfo && (
             <span style={styles.titleConn}>
               <span style={{ opacity: 0.3 }}>—</span>
@@ -625,6 +623,10 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
               Disconnect
             </button>
           )}
+          <button onClick={handleLogout} style={styles.titleLogoutBtn} title="Log Out">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Log Out
+          </button>
         </div>
       </div>
 
@@ -819,11 +821,11 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
                   <div style={settingsStyles.rowDesc}>Switch between light and dark mode</div>
                 </div>
                 <button
-                  style={{ ...settingsStyles.toggle, ...(darkMode ? settingsStyles.toggleOn : {}) }}
-                  onClick={() => setDarkMode(!darkMode)}
+                  style={{ ...settingsStyles.toggle, ...(isDark ? settingsStyles.toggleOn : {}) }}
+                  onClick={toggle}
                   title="Toggle dark mode"
                 >
-                  <span style={{ ...settingsStyles.toggleThumb, ...(darkMode ? settingsStyles.toggleThumbOn : {}) }} />
+                  <span style={{ ...settingsStyles.toggleThumb, ...(isDark ? settingsStyles.toggleThumbOn : {}) }} />
                 </button>
               </div>
             </div>
@@ -838,6 +840,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
                 </div>
               </div>
               <button style={settingsStyles.upgradeBtn}>Upgrade to Pro</button>
+              <button style={settingsStyles.signOutBtn} onClick={handleLogout}>Log Out</button>
             </div>
 
             <div style={settingsStyles.section}>
@@ -949,20 +952,6 @@ const styles: Record<string, any> = {
     gap: 7,
     pointerEvents: "none" as const,
   },
-  titleLogoImg: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    objectFit: "cover" as const,
-    flexShrink: 0,
-  },
-  titleWordmark: {
-    height: 14,
-    width: "auto",
-    objectFit: "contain" as const,
-    filter: "brightness(0) invert(1)",
-    opacity: 0.85,
-  },
   titleConn: {
     fontSize: 11,
     color: "var(--text-secondary)",
@@ -989,6 +978,21 @@ const styles: Record<string, any> = {
     borderRadius: 6,
     fontSize: 11,
     fontWeight: 500,
+    cursor: "pointer",
+    fontFamily: "var(--font-sans)",
+    WebkitAppRegion: "no-drag" as any,
+  },
+  titleLogoutBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    padding: "3px 9px",
+    background: "rgba(185, 28, 28, 0.07)",
+    color: "var(--danger)",
+    border: "1px solid rgba(185, 28, 28, 0.18)",
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 600,
     cursor: "pointer",
     fontFamily: "var(--font-sans)",
     WebkitAppRegion: "no-drag" as any,
@@ -1247,6 +1251,19 @@ const settingsStyles: Record<string, React.CSSProperties> = {
     background: "var(--accent)",
     color: "#ffffff",
     border: "none",
+    borderRadius: 7,
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    fontFamily: "var(--font-sans)",
+  },
+  signOutBtn: {
+    width: "100%",
+    marginTop: 10,
+    padding: "8px 0",
+    background: "rgba(185, 28, 28, 0.07)",
+    color: "var(--danger)",
+    border: "1px solid rgba(185, 28, 28, 0.2)",
     borderRadius: 7,
     fontSize: 13,
     fontWeight: 600,

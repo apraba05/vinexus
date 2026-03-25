@@ -4,14 +4,9 @@
  * Endpoint used by the Electron desktop app to fetch a user's current plan.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getPlanStateByEmail } from "@/lib/planState";
 
 export const dynamic = "force-dynamic";
-
-const DEFAULT_FEATURES = {
-  ide: true, terminal: true, files: true,
-  deploy: false, commands: false, ai: false,
-};
 
 export async function POST(req: NextRequest) {
   let email: string;
@@ -26,21 +21,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "email required" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: { plan: true } as any,
-  });
-
-  if (!user) {
-    return NextResponse.json({ planKey: "free", planName: "Free", features: DEFAULT_FEATURES });
-  }
-
-  const planKey = (user as any).plan ?? "free";
-  const planRecord = await prisma.plan.findUnique({ where: { name: planKey } });
+  const { planKey, planName, features } = await getPlanStateByEmail(email);
 
   return NextResponse.json({
     planKey,
-    planName: planRecord?.displayName ?? planKey,
-    features: planRecord?.features ?? DEFAULT_FEATURES,
+    planName,
+    features,
   });
 }

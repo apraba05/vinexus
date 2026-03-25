@@ -8,13 +8,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { getPlanStateByEmail } from "@/lib/planState";
 
 export const dynamic = "force-dynamic";
-
-const DEFAULT_FEATURES = {
-  ide: true, terminal: true, files: true,
-  deploy: false, commands: false, ai: false,
-};
 
 export async function POST(req: NextRequest) {
   let email: string, password: string;
@@ -40,11 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
-  // Read plan directly from user record
-  const planName = (user as any).plan ?? "free";
-  const planRecord = await prisma.plan.findUnique({ where: { name: planName } });
-  const plan = planName;
-  const features = planRecord ? (planRecord.features as any) : (planName === "free" ? DEFAULT_FEATURES : { ide: true, terminal: true, files: true, deploy: true, commands: true, ai: true });
+  const { planKey: plan, features } = await getPlanStateByEmail(email);
 
   return NextResponse.json({
     user: {

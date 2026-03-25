@@ -1,29 +1,55 @@
 "use client";
-import React, { useState } from "react";
-import { signIn } from "next-auth/react";
+import React, { useEffect, useState } from "react";
+import { getProviders, getSession, signIn, useSession } from "next-auth/react";
 import Link from "next/link";
-import Image from "next/image";
+import BrandLogo from "@/components/BrandLogo";
 import { useTheme } from "@/lib/ThemeContext";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const { D, isDark } = useTheme();
+  const router = useRouter();
+  const { status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [oauthProviders, setOauthProviders] = useState<Record<string, any> | null>(null);
+
+  useEffect(() => {
+    getProviders()
+      .then((providers) => setOauthProviders(providers ?? {}))
+      .catch(() => setOauthProviders({}));
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+    }
+  }, [router, status]);
+
+  const hasGoogle = !!oauthProviders?.google;
+  const hasGitHub = !!oauthProviders?.github;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const result = await signIn("credentials", { email, password, redirect: false });
+    const result = await signIn("credentials", {
+      email,
+      password,
+      callbackUrl: "/dashboard",
+      redirect: false,
+    });
     if (result?.error) {
       setError("Invalid email or password.");
       setLoading(false);
     } else {
-      window.location.href = "/dashboard";
+      await getSession();
+      router.replace(result?.url ?? "/dashboard");
+      router.refresh();
     }
   };
 
@@ -67,12 +93,11 @@ export default function LoginPage() {
 
         {/* Logo */}
         <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", marginBottom: 10 }}>
-          <Image
-            src="/vinexus-wordmark.png"
-            alt="Vinexus"
-            width={110}
-            height={24}
-            style={{ filter: isDark ? "brightness(0) invert(1)" : "brightness(0)", objectFit: "contain" }}
+          <BrandLogo
+            iconSize={28}
+            textSize={26}
+            textColor={isDark ? D.inverseSurface : D.onSurface}
+            muted
           />
         </Link>
         <p style={{ fontSize: 14, color: D.onSurfaceVariant, marginBottom: 36 }}>Sign in to your account</p>
@@ -89,12 +114,13 @@ export default function LoginPage() {
 
           {/* OAuth buttons */}
           <div style={{ display: "flex", flexDirection: "column" as const, gap: 10, marginBottom: 20 }}>
-            <button type="button" onClick={() => signIn("google", { callbackUrl: "/dashboard" })} style={{
+            <button type="button" onClick={() => hasGoogle && signIn("google", { callbackUrl: "/dashboard" })} disabled={!hasGoogle} style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
               width: "100%", padding: "10px 16px",
               background: D.surfaceContainerHigh, color: D.onSurface,
               border: `1px solid ${D.outlineVariant}`, borderRadius: 9,
-              fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
+              fontSize: 13.5, fontWeight: 500, cursor: hasGoogle ? "pointer" : "not-allowed", fontFamily: "inherit",
+              opacity: hasGoogle ? 1 : 0.55,
             }}>
               <svg width="16" height="16" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -102,21 +128,35 @@ export default function LoginPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              Continue with Google
+              {hasGoogle ? "Continue with Google" : "Google sign-in unavailable"}
             </button>
-            <button type="button" onClick={() => signIn("github", { callbackUrl: "/dashboard" })} style={{
+            <button type="button" onClick={() => hasGitHub && signIn("github", { callbackUrl: "/dashboard" })} disabled={!hasGitHub} style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
               width: "100%", padding: "10px 16px",
               background: D.surfaceContainerHigh, color: D.onSurface,
               border: `1px solid ${D.outlineVariant}`, borderRadius: 9,
-              fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
+              fontSize: 13.5, fontWeight: 500, cursor: hasGitHub ? "pointer" : "not-allowed", fontFamily: "inherit",
+              opacity: hasGitHub ? 1 : 0.55,
             }}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
               </svg>
-              Continue with GitHub
+              {hasGitHub ? "Continue with GitHub" : "GitHub sign-in unavailable"}
             </button>
           </div>
+          {oauthProviders && !hasGoogle && !hasGitHub && (
+            <div style={{
+              marginBottom: 16,
+              padding: "10px 14px",
+              background: isDark ? "rgba(245,158,11,0.10)" : "rgba(245,158,11,0.08)",
+              border: "1px solid rgba(245,158,11,0.22)",
+              borderRadius: 8,
+              fontSize: 12.5,
+              color: D.onSurfaceVariant,
+            }}>
+              OAuth sign-in is not configured in this environment yet. Use email/password until Google and GitHub credentials are set.
+            </div>
+          )}
 
           {/* Divider */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>

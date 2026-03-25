@@ -20,7 +20,7 @@ const { autoUpdater } = require("electron-updater");
 const Store = require("electron-store");
 
 const menu = require("./menu");
-const { registerAuthHandlers, storeUser } = require("./ipc/auth");
+const { registerAuthHandlers, storeUser, exchangeDesktopToken } = require("./ipc/auth");
 const { registerSshHandlers } = require("./ipc/ssh");
 const { registerPtyHandlers, cleanupPty } = require("./ipc/pty");
 
@@ -35,6 +35,8 @@ const BACKEND_PORT = 4000;
 const DEV_MODE = !app.isPackaged;
 const APP_URL = `http://localhost:${FRONTEND_PORT}/app`;
 const DEEP_LINK_PROTOCOL = "vinexus";
+
+app.setName("Vinexus");
 
 // ─── Electron Store (window state) ────────────────────────────────────────────
 const windowStore = new Store({
@@ -66,8 +68,12 @@ function loadRuntimeConfig() {
 }
 loadRuntimeConfig();
 
+function getDesktopAuthOrigin() {
+  return process.env.DESKTOP_AUTH_ORIGIN || "https://vinexus.space";
+}
+
 // ─── Single Instance Lock ─────────────────────────────────────────────────────
-const gotLock = app.requestSingleInstanceLock();
+const gotLock = DEV_MODE ? true : app.requestSingleInstanceLock();
 if (!gotLock) {
   log.info("Another instance is already running — quitting.");
   app.quit();
@@ -261,9 +267,8 @@ function createWindow() {
     minHeight: 700,
     title: "Vinexus",
     backgroundColor: "#0a0a0f",
-    // Show traffic lights but let our web title bar handle the visual style
-    titleBarStyle: "hidden",
-    trafficLightPosition: { x: 14, y: 13 },
+    // Use a native inset title bar on macOS so the renderer stays fully interactive.
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -272,6 +277,7 @@ function createWindow() {
       webSecurity: true,
       allowRunningInsecureContent: false,
     },
+    acceptFirstMouse: true,
     show: false, // show after ready-to-show to avoid flash
   });
 
@@ -286,9 +292,9 @@ function createWindow() {
   // Show window once content is ready (avoids white flash)
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
-    if (DEV_MODE) {
-      mainWindow.webContents.openDevTools({ mode: "detach" });
-    }
+    app.focus({ steal: true });
+    mainWindow.focus();
+    mainWindow.moveTop();
   });
 
   // Persist window state on close
@@ -310,29 +316,59 @@ function createWindow() {
     return { action: "deny" };
   });
 
+  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    log.info("[renderer console]", { level, message, line, sourceId });
+  });
+
+  mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+    if (errorCode === -3) {
+      log.info("Navigation aborted during load", { validatedURL, isMainFrame });
+      return;
+    }
+    log.error("Renderer failed to load", { errorCode, errorDescription, validatedURL, isMainFrame });
+  });
+
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    log.error("Renderer process gone", details);
+  });
+
+  mainWindow.webContents.on("unresponsive", () => {
+    log.error("Renderer became unresponsive");
+  });
+
   // Handle navigations:
   //  - /signup → redirect to /login (desktop users already have accounts)
-  //  - NextAuth OAuth initiation (/api/auth/signin/google, /github) → open via vinexus.space
+  //  - NextAuth OAuth initiation (/api/auth/signin/google, /github) → open via hosted web auth
   //  - other external URLs → block
   mainWindow.webContents.on("will-navigate", (event, url) => {
     const isLocal = url.startsWith("http://localhost") || url.startsWith("http://127.0.0.1");
     if (isLocal) {
-      // Block navigation to /signup — desktop users sign up on the website
+      // Keep the desktop app inside /app so it cannot drift into browser-first routes.
       try {
         const parsed = new URL(url);
-        if (parsed.pathname === "/signup" || parsed.pathname.startsWith("/signup")) {
+        if (
+          parsed.pathname === "/" ||
+          parsed.pathname === "/login" ||
+          parsed.pathname === "/dashboard" ||
+          parsed.pathname === "/signup" ||
+          parsed.pathname.startsWith("/signup")
+        ) {
           event.preventDefault();
-          mainWindow.webContents.loadURL(`http://localhost:${FRONTEND_PORT}/login`);
+          mainWindow.webContents.loadURL(APP_URL).catch((err) => {
+            if (!isNavigationAbort(err)) {
+              log.warn("Failed to keep desktop app on /app:", err);
+            }
+          });
           return;
         }
-        // Intercept OAuth initiation — redirect through vinexus.space instead of localhost
-        // so Google/GitHub callback URLs (registered for vinexus.space) work correctly.
+        // Intercept OAuth initiation — redirect through the hosted web app instead of localhost
+        // so Google/GitHub callback URLs registered for production work correctly.
         const oauthProviders = ["google", "github"];
         for (const provider of oauthProviders) {
           if (parsed.pathname.startsWith(`/api/auth/signin/${provider}`)) {
             event.preventDefault();
-            const webSignInUrl = `https://vinexus.space/api/auth/signin/${provider}?callbackUrl=%2Fdesktop-callback`;
-            log.info(`OAuth initiation for ${provider} — opening via vinexus.space:`, webSignInUrl);
+            const webSignInUrl = `${getDesktopAuthOrigin()}/api/auth/signin/${provider}?callbackUrl=%2Fdesktop-callback`;
+            log.info(`OAuth initiation for ${provider} — opening via hosted auth origin:`, webSignInUrl);
             shell.openExternal(webSignInUrl);
             return;
           }
@@ -344,11 +380,38 @@ function createWindow() {
     log.info("Blocked external navigation:", url);
   });
 
+  mainWindow.webContents.on("did-navigate", (_event, url) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    try {
+      const parsed = new URL(url);
+      const isLocal = parsed.origin === `http://localhost:${FRONTEND_PORT}` || parsed.origin === `http://127.0.0.1:${FRONTEND_PORT}`;
+      if (!isLocal) return;
+      if (parsed.pathname === "/" || parsed.pathname === "/login" || parsed.pathname === "/dashboard") {
+        mainWindow.webContents.loadURL(APP_URL).catch((err) => {
+          if (!isNavigationAbort(err)) {
+            log.warn("Failed to restore desktop IDE route:", err);
+          }
+        });
+      }
+    } catch {}
+  });
+
+  mainWindow.webContents.on("did-finish-load", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    app.focus({ steal: true });
+    mainWindow.focus();
+    mainWindow.webContents.focus();
+  });
+
   return mainWindow;
 }
 
+function isNavigationAbort(err) {
+  return String(err?.message || err).includes("(-3)");
+}
+
 // ─── Deep Link Handler ────────────────────────────────────────────────────────
-function handleDeepLink(url) {
+async function handleDeepLink(url) {
   log.info("Deep link received:", url);
   if (!mainWindow) return;
 
@@ -356,10 +419,19 @@ function handleDeepLink(url) {
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.focus();
 
-  // Handle vinexus://auth/callback?user=BASE64_JSON — OAuth flow via vinexus.space
   try {
     const parsed = new URL(url);
     if (parsed.hostname === "auth" && parsed.pathname === "/callback") {
+      const token = parsed.searchParams.get("token");
+      const origin = parsed.searchParams.get("origin");
+      if (token && origin) {
+        log.info("OAuth deep-link callback — exchanging desktop token", { origin });
+        const user = await exchangeDesktopToken(token, origin);
+        log.info("OAuth desktop token exchange succeeded:", user?.email);
+        mainWindow.loadURL(APP_URL).catch((err) => log.error("Failed to navigate after OAuth:", err));
+        return;
+      }
+
       const encoded = parsed.searchParams.get("user");
       if (encoded) {
         const user = JSON.parse(Buffer.from(encoded, "base64").toString("utf8"));
@@ -381,6 +453,7 @@ function handleDeepLink(url) {
 // ─── App Events ───────────────────────────────────────────────────────────────
 app.whenReady().then(async () => {
   log.info("App ready");
+  app.setAccessibilitySupportEnabled(true);
 
   // Register IPC handlers before creating the window
   registerAuthHandlers();
@@ -394,7 +467,11 @@ app.whenReady().then(async () => {
   // Show the branded loading screen while servers start up (dev and production).
   // Without this, the window background (#0a0a0f) shows as a black screen while
   // Next.js compiles the first page in dev mode or starts up in production.
-  mainWindow.webContents.loadFile(path.join(__dirname, "loading.html"));
+  mainWindow.webContents.loadFile(path.join(__dirname, "loading.html")).catch((err) => {
+    if (!isNavigationAbort(err)) {
+      log.warn("Loading screen failed:", err);
+    }
+  });
 
   // Start servers (no-op in dev mode).
   // Backend failure is non-fatal — basic IDE features (SSH, terminal, file editing)
@@ -407,6 +484,10 @@ app.whenReady().then(async () => {
   // Navigate to the app once servers are ready
   log.info("Servers ready — navigating to app");
   mainWindow.loadURL(APP_URL).catch((err) => {
+    if (isNavigationAbort(err)) {
+      log.info("Initial navigation replaced a previous page load.");
+      return;
+    }
     log.error("Failed to load app URL:", err);
     mainWindow.webContents.loadURL(
       `data:text/html,<h2 style="font-family:sans-serif;color:#fff;background:#0a0a0f;padding:40px">Vinexus could not connect to local servers. Please try restarting.</h2>`

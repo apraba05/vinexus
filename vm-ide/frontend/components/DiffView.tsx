@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import { DiffEditor } from "@monaco-editor/react";
 import type { DiffOnMount } from "@monaco-editor/react";
+import { useTheme } from "@/lib/ThemeContext";
 
 interface Props {
   originalContent: string;
@@ -25,6 +26,7 @@ export default function DiffView({
   loading = false,
 }: Props) {
   const diffRef = useRef<Parameters<DiffOnMount>[0] | null>(null);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -74,7 +76,7 @@ export default function DiffView({
             original={originalContent}
             modified={modifiedContent}
             language={getLanguageFromPath(filePath)}
-            theme="vs-dark"
+            theme={isDark ? "vs-dark" : "light"}
             onMount={(editor) => {
               diffRef.current = editor;
             }}

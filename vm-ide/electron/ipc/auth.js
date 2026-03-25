@@ -25,6 +25,7 @@ const Store = require("electron-store");
 const crypto = require("crypto");
 const log = require("electron-log");
 const http = require("http");
+const https = require("https");
 
 // ─── Key Management via OS Keychain ───────────────────────────────────────────
 // Keys are generated randomly on first run, then encrypted with the OS keychain
@@ -216,40 +217,7 @@ function registerAuthHandlers() {
 
   /** Helper: POST JSON to a localhost Next.js API route */
   function localPost(path, body) {
-    return new Promise((resolve, reject) => {
-      const payload = JSON.stringify(body);
-      const req = http.request(
-        { hostname: "127.0.0.1", port: 3000, path, method: "POST",
-          headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) } },
-        (res) => {
-          let data = "";
-          res.on("data", (c) => { data += c; });
-          res.on("end", () => {
-            const statusCode = res.statusCode || 500;
-            let parsed = {};
-            try {
-              parsed = data ? JSON.parse(data) : {};
-            } catch {
-              parsed = {
-                error: statusCode >= 500
-                  ? "Desktop auth server returned an invalid response"
-                  : `Request failed with status ${statusCode}`,
-              };
-            }
-            if (statusCode >= 400 && !parsed.error) {
-              parsed.error = `Request failed with status ${statusCode}`;
-            }
-            resolve(parsed);
-          });
-        }
-      );
-      req.setTimeout(10000, () => {
-        req.destroy(new Error(`Request to ${path} timed out after 10s`));
-      });
-      req.on("error", reject);
-      req.write(payload);
-      req.end();
-    });
+    return postJson(`http://127.0.0.1:3000${path}`, body);
   }
 
   ipcMain.handle("auth:desktopLogin", async (_event, { email, password }) => {
@@ -350,4 +318,85 @@ function storeUser(user) {
   }
 }
 
-module.exports = { registerAuthHandlers, storeUser };
+function postJson(targetUrl, body) {
+  return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(targetUrl);
+    const client = parsedUrl.protocol === "https:" ? https : http;
+    const payload = JSON.stringify(body);
+    const req = client.request(
+      {
+        protocol: parsedUrl.protocol,
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
+        path: `${parsedUrl.pathname}${parsedUrl.search}`,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(payload),
+        },
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (c) => { data += c; });
+        res.on("end", () => {
+          const statusCode = res.statusCode || 500;
+          let parsed = {};
+          try {
+            parsed = data ? JSON.parse(data) : {};
+          } catch {
+            parsed = {
+              error: statusCode >= 500
+                ? "Desktop auth server returned an invalid response"
+                : `Request failed with status ${statusCode}`,
+            };
+          }
+          if (statusCode >= 400 && !parsed.error) {
+            parsed.error = `Request failed with status ${statusCode}`;
+          }
+          resolve(parsed);
+        });
+      }
+    );
+    req.setTimeout(10000, () => {
+      req.destroy(new Error(`Request to ${targetUrl} timed out after 10s`));
+    });
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+function isAllowedDesktopAuthOrigin(origin) {
+  try {
+    const parsed = new URL(origin);
+    if (parsed.protocol === "https:") return true;
+    if (
+      parsed.protocol === "http:" &&
+      (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")
+    ) {
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+async function exchangeDesktopToken(token, origin) {
+  initStores();
+  if (!token) {
+    throw new Error("Desktop auth token is missing");
+  }
+  if (!origin || !isAllowedDesktopAuthOrigin(origin)) {
+    throw new Error("Desktop auth origin is invalid");
+  }
+
+  const result = await postJson(`${origin}/api/auth/desktop-exchange`, { token });
+  if (result?.user) {
+    tokenStore.set("user", result.user);
+    log.info("OAuth user stored via desktop token exchange:", result.user?.email);
+    return result.user;
+  }
+
+  throw new Error(result?.error || "Desktop auth exchange failed");
+}
+
+module.exports = { registerAuthHandlers, storeUser, exchangeDesktopToken };

@@ -70,13 +70,14 @@ const ThemeContext = createContext<ThemeCtx>({
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(false);
 
-  // Read localStorage + system preference on mount
   useEffect(() => {
     const stored = localStorage.getItem("vinexus-theme");
     if (stored === "dark") {
       setIsDark(true);
-    } else if (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setIsDark(true);
+    } else if (stored === "light") {
+      setIsDark(false);
+    } else {
+      setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
     }
   }, []);
 

@@ -1,66 +1,74 @@
-# VM-IDE: Browser-Based VS Code for Your VM
+# Vinexus Workspace
 
-> **WARNING: This is an MVP — NOT production safe.**
-> See [Security Notes](#security-notes) below.
+This repository currently has two user-facing entrypoints:
+- Web app: Next.js UI in `frontend/` backed by the Express API in `backend/`
+- Desktop app: Electron shell in `electron/` that hosts the same UI and desktop-only SSH features
 
-A web app that connects to a Linux VM over SSH and provides:
-- File browsing (tree explorer)
-- Monaco code editor with tabs
-- File create/delete/rename/move
-- Interactive terminal (xterm.js over WebSockets)
-- Password and private key SSH authentication
+The active source of truth is:
+- UI: `frontend/`
+- API and WebSockets: `backend/`
+- Desktop shell: `electron/`
+
+The old duplicate Electron wrapper has been archived out of the main path so there is one desktop implementation to reason about.
 
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- A Linux VM with SSH enabled (password or key auth)
+- A Linux VM with SSH enabled if you want to test remote editing
+
+### Structure
+
+```text
+vm-ide/
+├── frontend/   # Next.js UI
+├── backend/    # Express API + WebSocket services
+├── electron/   # Electron main/preload/ipc for the desktop app
+└── docs/       # Supporting docs
+```
 
 ### 1. Clone & Install
 
 ```bash
 cd vm-ide
-
-# Install backend dependencies
-cd backend
-cp .env.example .env
-npm install
-
-# Install frontend dependencies
-cd ../frontend
 npm install
 ```
 
-### 2. Run Both Servers
+### 2. Run the Web App
 
 From the `vm-ide` directory:
 
 ```bash
-# Terminal 1: Backend (port 4000)
-cd backend && npm run dev
-
-# Terminal 2: Frontend (port 3000)
-cd frontend && npm run dev
+npm run api:dev
+npm run web:dev
 ```
 
-Or use the convenience script:
+Open [http://localhost:3000](http://localhost:3000).
+
+### 3. Run the Desktop App
 
 ```bash
-chmod +x run.sh
-./run.sh
+npm run desktop:dev
 ```
 
-### 3. Open Browser
+This starts:
+- Next.js on port `3000`
+- Express on port `4000`
+- Electron after both are ready
 
-Go to [http://localhost:3000](http://localhost:3000)
+If the web servers are already running, you can just open the desktop shell:
+
+```bash
+npm run desktop:open
+```
 
 ### 4. Connect to Your VM
 
 1. Enter your VM's IP/hostname, port (default 22), and username
 2. Choose "Password" or "Private Key" auth
 3. Enter credentials and click **Connect**
-4. Browse files in the left panel, edit in center, use terminal at bottom
+4. Browse files, edit code, and use the integrated terminal
 
 ### VM Setup Requirements
 
@@ -80,11 +88,11 @@ Your target Linux VM needs:
 | `PORT` | `4000` | Backend server port |
 | `SESSION_TIMEOUT_MINUTES` | `30` | Auto-expire idle sessions |
 | `MAX_FILE_SIZE` | `2097152` | Max file size in bytes (2MB) |
-| `FRONTEND_ORIGIN` | `http://localhost:3000` | CORS origin |
+| `FRONTEND_ORIGIN` | `http://localhost:3000` | Allowed frontend origin |
 
 ## Security Notes
 
-**This MVP is NOT production safe. Do NOT deploy to the public internet.**
+**This MVP is not production safe. Do not expose it directly to the public internet.**
 
 What needs to change for production:
 - [ ] Add HTTPS/TLS termination
@@ -100,20 +108,14 @@ What needs to change for production:
 - [ ] Add helmet.js and security headers
 - [ ] Consider SSH agent forwarding instead of key pasting
 
-## Testing Checklist
+## Useful Commands
 
-- [ ] Connect to VM with password auth
-- [ ] Connect to VM with private key auth
-- [ ] Browse directories in file tree
-- [ ] Open a file (click in tree)
-- [ ] Edit file content in Monaco editor
-- [ ] Save file (Ctrl+S or Save button) — verify on VM
-- [ ] Create a new file
-- [ ] Create a new folder
-- [ ] Rename a file/folder
-- [ ] Delete a file/folder
-- [ ] Terminal: type commands, see output
-- [ ] Terminal: resize by dragging the handle
-- [ ] Reconnect after page refresh (session persists in localStorage)
-- [ ] Disconnect and reconnect
-- [ ] Error toast on failed operations
+```bash
+npm run web:dev
+npm run api:dev
+npm run desktop:dev
+npm run desktop:open
+npm run frontend:build
+npm run backend:build
+npm run electron:build
+```

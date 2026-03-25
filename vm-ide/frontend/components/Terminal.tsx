@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import { getTerminalWsUrl } from "@/lib/api";
 import { electronPty, isElectron } from "@/lib/electron";
+import { useTheme } from "@/lib/ThemeContext";
 
 interface Props {
   sessionId: string | null;
@@ -18,6 +19,7 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
   const fitAddonRef = useRef<any>(null);
   const ptyIdRef = useRef<string | null>(null);
   const initialized = useRef(false);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (!sessionId || !containerRef.current) return;
@@ -36,11 +38,17 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
         cursorBlink: true,
         fontSize: 13,
         fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace",
-        theme: {
-          background: "#1e1e1e",
-          foreground: "#cccccc",
-          cursor: "#ffffff",
-        },
+        theme: isDark
+          ? {
+              background: "#0d1117",
+              foreground: "#c9d1d9",
+              cursor: "#f0f6fc",
+            }
+          : {
+              background: "#f8faff",
+              foreground: "#19315d",
+              cursor: "#0053db",
+            },
       });
       termRef.current = term;
 
@@ -185,7 +193,7 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
         (containerRef.current as any).__cleanup();
       }
     };
-  }, [sessionId, onError]);
+  }, [sessionId, onError, isDark]);
 
   // Auto cd when explorer path changes
   const prevCdPath = useRef<string | null>(null);
@@ -217,6 +225,22 @@ export default function TerminalPanel({ sessionId, onError, onActivity, cdPath, 
     }
   });
 
+  useEffect(() => {
+    if (!termRef.current) return;
+    termRef.current.options.theme = isDark
+      ? {
+          background: "#0d1117",
+          foreground: "#c9d1d9",
+          cursor: "#f0f6fc",
+        }
+      : {
+          background: "#f8faff",
+          foreground: "#19315d",
+          cursor: "#0053db",
+        };
+    termRef.current.refresh(0, termRef.current.rows - 1);
+  }, [isDark]);
+
   if (!sessionId) {
     return (
       <div style={styles.placeholder}>
@@ -232,7 +256,7 @@ const styles: Record<string, React.CSSProperties> = {
   terminal: {
     width: "100%",
     height: "100%",
-    background: "#1e1e1e",
+    background: "var(--bg-primary)",
   },
   placeholder: {
     display: "flex",

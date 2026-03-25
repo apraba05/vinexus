@@ -2,6 +2,7 @@
 import React, { useRef, useCallback } from "react";
 import MonacoEditor, { OnMount } from "@monaco-editor/react";
 import { usePlan } from "@/contexts/PlanContext";
+import { useTheme } from "@/lib/ThemeContext";
 
 interface OpenFile {
   path: string;
@@ -75,6 +76,7 @@ export default function Editor({
 }: Props) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const { features } = usePlan();
+  const { isDark } = useTheme();
 
   const activeFileObj = openFiles.find((f) => f.path === activeFile);
 
@@ -180,7 +182,7 @@ export default function Editor({
       <div style={styles.editorWrap}>
         {activeFileObj && (
           <MonacoEditor
-            theme="vs-dark"
+            theme={isDark ? "vs-dark" : "light"}
             language={getLanguage(activeFileObj.path)}
             value={activeFileObj.content}
             onChange={handleChange}

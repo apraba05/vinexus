@@ -6,23 +6,37 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./lib/prisma";
 import { authConfig } from "./auth.config";
+import { DEFAULT_FEATURES, getUserPlanState } from "./lib/planState";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  ...authConfig,
-  adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
-  providers: [
+const providers = [];
+
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+  providers.push(
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    }),
+    })
+  );
+}
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       authorization: {
         params: { prompt: "select_account" },
       },
-    }),
+    })
+  );
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
+  providers: [
+    ...providers,
     Credentials({
       name: "credentials",
       credentials: {
@@ -69,9 +83,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token?.id) {
         session.user.id = token.id as string;
 
-        let dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-        });
+        const planState = await getUserPlanState(token.id as string);
+        let dbUser = planState.user;
 
         // Auto-promote the owner email to "owner" role if not already set
         const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
@@ -85,19 +98,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         (session as any).role = dbUser?.role || "user";
         (session as any).emailVerified = dbUser?.emailVerified || null;
-
-        // Read plan directly from user record
-        const planName = (dbUser as any)?.plan ?? "free";
-        const planRecord = await prisma.plan.findUnique({ where: { name: planName } });
-        (session as any).plan = planName;
-        (session as any).features = planRecord?.features ?? {
-          ide: true,
-          terminal: true,
-          files: true,
-          deploy: false,
-          commands: false,
-          ai: false,
-        };
+        (session as any).plan = planState.planKey;
+        (session as any).features = planState.features;
       }
       return session;
     },

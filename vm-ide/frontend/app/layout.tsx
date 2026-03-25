@@ -6,6 +6,14 @@ import Providers from "@/components/Providers";
 export const metadata: Metadata = {
   title: "Vinexus",
   description: "Browser-based IDE for your Linux VMs — deploy, monitor, and manage infrastructure",
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/favicon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

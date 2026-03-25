@@ -9,8 +9,9 @@
  *   1. Desktop app opens browser → vinexus.space/api/auth/signin/[provider]?callbackUrl=/desktop-callback
  *   2. User authenticates with Google / GitHub
  *   3. NextAuth redirects back here with the session established
- *   4. This page reads the session and fires vinexus://auth/callback?user=BASE64_JSON
- *   5. Electron catches the deep link → stores user → navigates to the IDE
+ *   4. This page requests a short-lived one-time desktop auth token
+ *   5. It fires vinexus://auth/callback?token=...&origin=...
+ *   6. Electron exchanges the token with the web app, stores the user, and opens the IDE
  */
 
 import { useEffect, useState } from "react";
@@ -28,20 +29,36 @@ export default function DesktopCallbackPage() {
       return;
     }
 
-    const user = {
-      id: (session.user as { id?: string }).id ?? "",
-      name: session.user.name ?? "",
-      email: session.user.email ?? "",
-      image: session.user.image ?? null,
-      plan: (session.user as { plan?: string }).plan ?? "free",
+    let cancelled = false;
+
+    const completeDesktopSignIn = async () => {
+      try {
+        const response = await fetch("/api/auth/desktop-token", { method: "POST" });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data?.token) {
+          throw new Error(data?.error || "Failed to create desktop sign-in token");
+        }
+
+        const deepLink =
+          `vinexus://auth/callback?token=${encodeURIComponent(data.token)}` +
+          `&origin=${encodeURIComponent(window.location.origin)}`;
+
+        if (!cancelled) {
+          setState("redirecting");
+          window.location.href = deepLink;
+        }
+      } catch {
+        if (!cancelled) {
+          setState("error");
+        }
+      }
     };
 
-    const encoded = btoa(JSON.stringify(user));
-    const deepLink = `vinexus://auth/callback?user=${encodeURIComponent(encoded)}`;
+    completeDesktopSignIn();
 
-    setState("redirecting");
-    // Fire the deep link — Electron intercepts this via the registered protocol handler
-    window.location.href = deepLink;
+    return () => {
+      cancelled = true;
+    };
   }, [session, status]);
 
   return (
