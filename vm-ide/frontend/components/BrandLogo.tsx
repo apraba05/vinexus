@@ -16,7 +16,15 @@ export default function BrandLogo({
   textColor = "currentColor",
   muted = false,
 }: BrandLogoProps) {
-  const [iconSrc, setIconSrc] = useState("/brand-icon.png");
+  const [iconSrc, setIconSrc] = useState<string>("/favicon.png");
+
+  const handleIconError = () => {
+    setIconSrc((current) => {
+      if (current === "/favicon.png") return "/brand-icon.png";
+      if (current === "/brand-icon.png") return "/icon.png";
+      return current;
+    });
+  };
 
   return (
     <span
@@ -35,11 +43,7 @@ export default function BrandLogo({
         height={iconSize}
         priority
         unoptimized
-        onError={() => {
-          if (iconSrc !== "/icon.png") {
-            setIconSrc("/icon.png");
-          }
-        }}
+        onError={handleIconError}
         style={{
           width: iconSize,
           height: iconSize,
