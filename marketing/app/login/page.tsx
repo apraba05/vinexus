@@ -1,6 +1,7 @@
 "use client";
 import React, { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "@/lib/ThemeContext";
 
@@ -8,7 +9,7 @@ function LoginContent() {
   const { D } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/pricing";
+  const next = searchParams.get("next") || "/";
 
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,7 @@ function LoginContent() {
       const data = await r.json();
       if (data.user) router.replace(next);
     });
-  }, []);
+  }, [next, router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +47,8 @@ function LoginContent() {
         setError(data.error || "Login failed");
         return;
       }
-      router.push(next);
+      router.replace(next);
+      router.refresh();
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -69,7 +71,8 @@ function LoginContent() {
         setError(data.error || "Signup failed");
         return;
       }
-      router.push(next);
+      router.replace(next);
+      router.refresh();
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -132,7 +135,8 @@ function LoginContent() {
       }}>
         {/* Logo / back link */}
         <div style={{ marginBottom: 28, textAlign: "center" }}>
-          <Link href="/" style={{ textDecoration: "none" }}>
+          <Link href="/" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <Image src="/favicon.png" alt="Vinexus" width={24} height={24} unoptimized style={{ width: 24, height: 24, borderRadius: 6, display: "block" }} />
             <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.04em", color: D.inverseSurface }}>
               Vinexus
             </span>

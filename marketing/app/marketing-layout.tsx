@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { ThemeProvider, useTheme } from "@/lib/ThemeContext";
 import PostHogProvider from "@/components/PostHogProvider";
 
@@ -28,8 +29,9 @@ function MoonIcon() {
 function Nav() {
   const { D, isDark, toggle } = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [authUser, setAuthUser] = useState<{ name: string; email: string } | null>(null);
+  const [authUser, setAuthUser] = useState<{ name: string; email: string; plan?: string } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
@@ -39,14 +41,14 @@ function Nav() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         setAuthUser(data.user ?? null);
         setAuthChecked(true);
       })
       .catch(() => setAuthChecked(true));
-  }, []);
+  }, [pathname]);
 
   async function handleSignOut() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -63,7 +65,8 @@ function Nav() {
       transition: "background 0.2s",
     }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px", height: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0 }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flexShrink: 0 }}>
+          <Image src="/favicon.png" alt="Vinexus" width={22} height={22} unoptimized style={{ width: 22, height: 22, borderRadius: 6, display: "block" }} />
           <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-0.03em", color: D.inverseSurface }}>Vinexus</span>
         </Link>
 
@@ -86,6 +89,9 @@ function Nav() {
           {authChecked && (
             authUser ? (
               <>
+                <span style={{ fontSize: 12, color: D.onSurfaceVariant, maxWidth: 180, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {authUser.name || authUser.email}
+                </span>
                 <Link href="/account" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
                   Account
                 </Link>
@@ -94,9 +100,9 @@ function Nav() {
                 </button>
               </>
             ) : (
-              <Link href="/login" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
+            <Link href="/login" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
                 Sign In
-              </Link>
+            </Link>
             )
           )}
           <Link href="/download" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 600, color: "#fff", textDecoration: "none", background: D.primary, borderRadius: 4 }}>
@@ -115,7 +121,8 @@ function Footer() {
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 40, paddingBottom: 40 }}>
           <div>
-            <Link href="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none", marginBottom: 12 }}>
+            <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none", marginBottom: 12 }}>
+              <Image src="/favicon.png" alt="Vinexus" width={20} height={20} unoptimized style={{ width: 20, height: 20, borderRadius: 6, display: "block" }} />
               <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-0.03em", color: D.inverseSurface }}>Vinexus</span>
             </Link>
             <p style={{ fontSize: 12, color: D.onSurfaceVariant, lineHeight: 1.7, maxWidth: 240, margin: 0 }}>
