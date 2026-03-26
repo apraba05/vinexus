@@ -5,7 +5,6 @@
  * then redirects to /desktop-callback (desktop flow) or / (web flow).
  */
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE, signSession } from "@/lib/session";
 
@@ -117,14 +116,12 @@ export async function GET(request: NextRequest) {
 
     const token = await signSession({ userId: user.id, email: user.email, name: user.name ?? "" });
     const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
-    (await cookies()).set(SESSION_COOKIE, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: SESSION_MAX_AGE,
-      path: "/",
-    });
-    return NextResponse.redirect(`${origin}${next}`);
+    const secure = process.env.NODE_ENV === "production" ? "Secure; " : "";
+    const cookieStr = `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; ${secure}SameSite=Lax; Max-Age=${SESSION_MAX_AGE}; Path=/`;
+    return new Response(
+      `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${origin}${next}"></head><body></body></html>`,
+      { headers: { "Content-Type": "text/html", "Set-Cookie": cookieStr } }
+    );
   } catch (err) {
     console.error("GitHub OAuth callback error:", err);
     return NextResponse.redirect(`${origin}/login?error=server_error`);
