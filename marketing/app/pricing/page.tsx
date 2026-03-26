@@ -258,13 +258,12 @@ export default function PricingPage() {
       </section>
 
       {/* ── Plan cards ── */}
-      <section style={{ padding: "56px 24px 72px" }}>
-        <div style={{ maxWidth: 1300, margin: "0 auto" }}>
+      <section style={{ padding: "56px 0 72px", overflowX: "auto" }}>
+        <div style={{ minWidth: 1000, maxWidth: 1300, margin: "0 auto", padding: "20px 24px 0" }}>
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",
             gap: 12,
-            overflowX: "auto",
           }}>
             {TIERS.map((tier) => {
               const isCurrent = userPlan === tier.key;
