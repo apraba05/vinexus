@@ -51,22 +51,31 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
 
     let cancelled = false;
 
+    const applyDesktopUser = (user: any) => {
+      if (user) {
+        setDesktopPlan(typeof user.plan === "string" ? user.plan : "free");
+        setDesktopFeatures((user.features as PlanFeatures | undefined) ?? defaultFeatures);
+      } else {
+        setDesktopPlan(null);
+        setDesktopFeatures(null);
+      }
+    };
+
     const refreshDesktopPlan = async () => {
       try {
+        const synced = await ea.auth.syncPlan?.();
+        if (cancelled) return;
+        if (synced?.ok && synced.user) {
+          applyDesktopUser(synced.user);
+          return;
+        }
+
         const res = await ea.auth.getSession();
         if (cancelled) return;
-        const user = res?.user;
-        if (user) {
-          setDesktopPlan(typeof user.plan === "string" ? user.plan : "free");
-          setDesktopFeatures((user.features as PlanFeatures | undefined) ?? defaultFeatures);
-        } else {
-          setDesktopPlan(null);
-          setDesktopFeatures(null);
-        }
+        applyDesktopUser(res?.user);
       } catch {
         if (!cancelled) {
-          setDesktopPlan(null);
-          setDesktopFeatures(null);
+          applyDesktopUser(null);
         }
       } finally {
         if (!cancelled) {
@@ -79,12 +88,19 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       refreshDesktopPlan();
     };
 
+    const stopSessionListener = ea.auth.onSessionChanged?.((user: any) => {
+      if (cancelled) return;
+      applyDesktopUser(user);
+      setDesktopLoaded(true);
+    });
+
     refreshDesktopPlan();
     window.addEventListener("focus", handleWindowFocus);
     document.addEventListener("visibilitychange", handleWindowFocus);
 
     return () => {
       cancelled = true;
+      stopSessionListener?.();
       window.removeEventListener("focus", handleWindowFocus);
       document.removeEventListener("visibilitychange", handleWindowFocus);
     };

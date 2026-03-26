@@ -39,6 +39,23 @@ let tokenStore = null;
 let credStore = null;
 let prefsStore = null;
 
+function emitSessionChanged(target, user) {
+  try {
+    target?.send("auth:session-changed", user ?? null);
+  } catch (err) {
+    log.warn("Failed to emit auth:session-changed:", err.message);
+  }
+}
+
+function persistDesktopUser(user) {
+  if (!tokenStore) return;
+  if (user) {
+    tokenStore.set("user", user);
+  } else {
+    tokenStore.delete("user");
+  }
+}
+
 function getOrCreateKey(keyName) {
   if (!safeStorage.isEncryptionAvailable()) {
     // OS keychain is unavailable (headless / some Linux environments).
@@ -116,6 +133,8 @@ function initStores() {
   // Validate: if stores were encrypted with old keys, clear them gracefully
   validateStore(tokenStore, "vinexus-auth");
   validateStore(credStore, "vinexus-vm-creds");
+  // Desktop auth is intentionally per-launch so every fresh app open starts at login.
+  tokenStore.delete("user");
   log.info("Encrypted stores initialized via OS keychain");
 }
 
@@ -224,7 +243,8 @@ function registerAuthHandlers() {
     try {
       const result = await localPost("/api/auth/desktop-login", { email, password });
       if (result.user) {
-        tokenStore.set("user", result.user);
+        persistDesktopUser(result.user);
+        emitSessionChanged(_event.sender, result.user);
         return { user: result.user };
       }
       return { error: result.error || "Login failed" };
@@ -241,7 +261,8 @@ function registerAuthHandlers() {
       // Auto-login after registration
       const result = await localPost("/api/auth/desktop-login", { email, password });
       if (result.user) {
-        tokenStore.set("user", result.user);
+        persistDesktopUser(result.user);
+        emitSessionChanged(_event.sender, result.user);
         return { user: result.user };
       }
       return { error: "Registration succeeded but login failed — please sign in." };
@@ -268,8 +289,9 @@ function registerAuthHandlers() {
       const result = await localPost("/api/auth/desktop-plan", { email: user.email });
       if (result.planKey) {
         const updated = { ...user, plan: result.planKey, features: result.features };
-        tokenStore.set("user", updated);
-        return { ok: true, plan: result.planKey, features: result.features };
+        persistDesktopUser(updated);
+        emitSessionChanged(_event.sender, updated);
+        return { ok: true, user: updated, plan: result.planKey, features: result.features };
       }
       return { ok: false };
     } catch (err) {
@@ -279,10 +301,11 @@ function registerAuthHandlers() {
   });
 
   // ── App Utilities ─────────────────────────────────────────────────────────
-  ipcMain.handle("auth:logout", () => {
+  ipcMain.handle("auth:logout", (_event) => {
     try {
-      tokenStore.clear();
+      persistDesktopUser(null);
       credStore.clear();
+      emitSessionChanged(_event.sender, null);
       return { ok: true };
     } catch (err) {
       log.error("auth:logout error:", err);
@@ -311,7 +334,7 @@ function registerAuthHandlers() {
 function storeUser(user) {
   initStores();
   try {
-    tokenStore.set("user", user);
+    persistDesktopUser(user);
     log.info("OAuth user stored via deep-link:", user?.email);
   } catch (err) {
     log.error("storeUser error:", err);
@@ -391,7 +414,7 @@ async function exchangeDesktopToken(token, origin) {
 
   const result = await postJson(`${origin}/api/auth/desktop-exchange`, { token });
   if (result?.user) {
-    tokenStore.set("user", result.user);
+    persistDesktopUser(result.user);
     log.info("OAuth user stored via desktop token exchange:", result.user?.email);
     return result.user;
   }

@@ -43,6 +43,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     onDeepLink: (callback) => on("auth:deep-link", callback),
     /** Called by main process after a successful browser-based login — carries the user object */
     onUserLoggedIn: (callback) => on("auth:user-logged-in", callback),
+    /** Listen for any desktop auth session update */
+    onSessionChanged: (callback) => on("auth:session-changed", callback),
     /** Authenticate with email + password (desktop-only) */
     login: (creds) => ipcRenderer.invoke("auth:desktopLogin", creds),
     /** Register a new account then auto-login (desktop-only) */

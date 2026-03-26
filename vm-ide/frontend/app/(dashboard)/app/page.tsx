@@ -20,6 +20,7 @@ import StatusBar from "@/components/StatusBar";
 import UpgradeBanner from "@/components/UpgradeBanner";
 import UpdateBanner from "@/components/UpdateBanner";
 import ProFeature from "@/components/ProFeature";
+import { usePlan } from "@/contexts/PlanContext";
 import { useToast } from "@/lib/useToast";
 import { useCommands } from "@/hooks/useCommands";
 import { useDeployment } from "@/hooks/useDeployment";
@@ -151,7 +152,7 @@ export default function AppPage() {
     try {
       const result = await ea.auth.syncPlan();
       if (result?.ok) {
-        setUser((u) => u ? { ...u, plan: result.plan ?? u.plan } : u);
+        setUser((u) => u ? { ...u, ...(result.user ?? {}), plan: result.plan ?? u.plan } : u);
       }
     } catch { /* server may still be starting */ }
   }, []); // stable — uses functional update, no external deps
@@ -187,6 +188,16 @@ export default function AppPage() {
     if (!ea?.auth?.onUserLoggedIn) return;
     const unsub = ea.auth.onUserLoggedIn((user: AppUser) => {
       if (user) setUser(user);
+    });
+    return unsub;
+  }, [electron]);
+
+  useEffect(() => {
+    if (!electron) return;
+    const ea = (window as any).electronAPI;
+    if (!ea?.auth?.onSessionChanged) return;
+    const unsub = ea.auth.onSessionChanged((nextUser: AppUser | null) => {
+      setUser(nextUser);
     });
     return unsub;
   }, [electron]);
@@ -241,6 +252,7 @@ export default function AppPage() {
    ═══════════════════════════════════════════════════════════ */
 function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const { isDark, toggle } = useTheme();
+  const { plan: currentPlan } = usePlan();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [appVersion, setAppVersion] = useState<string | null>(null);
 
@@ -261,7 +273,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
       .catch(() => {});
   }, []);
 
-  const normalizedPlanKey = (user.plan || "free").toLowerCase();
+  const normalizedPlanKey = (currentPlan || user.plan || "free").toLowerCase();
   const isPaidPlan = normalizedPlanKey !== "free";
   const displayPlanName =
     normalizedPlanKey === "ai-pro"
@@ -880,7 +892,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
             </div>
             <div style={{ ...styles.panelContent, display: bottomTab === "ai" ? "flex" : "none" }}>
               <ErrorBoundary fallbackLabel="AI Chat">
-                <AIChatPanel sessionId={sessionId} plan={user.plan.toLowerCase()} userId={user.id} onError={handleError} />
+                <AIChatPanel sessionId={sessionId} plan={normalizedPlanKey} userId={user.id} onError={handleError} />
               </ErrorBoundary>
             </div>
           </div>
@@ -945,7 +957,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
               <div style={settingsStyles.sectionLabel}>About</div>
               <div style={settingsStyles.aboutRow}>
                 <span style={settingsStyles.rowDesc}>Vinexus Desktop</span>
-                <span style={settingsStyles.rowDesc}>v{appVersion || "1.0.50"}</span>
+                <span style={settingsStyles.rowDesc}>v{appVersion || "1.0.51"}</span>
               </div>
             </div>
           </div>
