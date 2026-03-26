@@ -90,6 +90,35 @@ export default function LoginScreen({ onLogin }: Props) {
         <h1 style={styles.heading}>Welcome back</h1>
         <p style={styles.sub}>Sign in to your Vinexus account</p>
 
+        {/* Sign in with Browser — works for any method (email, Google, GitHub) */}
+        <button
+          type="button"
+          style={{ ...styles.browserBtn, ...(oauthLoading ? styles.oauthBtnDisabled : null) }}
+          onClick={async () => {
+            setError("");
+            if (!ea?.app?.openExternal) { setError("Desktop browser bridge is unavailable. Please restart Vinexus."); return; }
+            setOauthLoading("google"); // reuse loading state
+            try {
+              await ea.app.openExternal(`${WEB_AUTH_ORIGIN}/login?desktop=1`);
+            } catch (err: any) {
+              setError(err.message || "Failed to open browser.");
+            } finally {
+              setOauthLoading(null);
+            }
+          }}
+          disabled={!!oauthLoading}
+        >
+          {oauthLoading === "google" ? (
+            <span style={styles.spinner} />
+          ) : (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          )}
+          Sign in with Browser
+        </button>
+
         <div style={styles.oauthGroup}>
           <button
             type="button"
@@ -238,6 +267,33 @@ const styles: Record<string, any> = {
     color: "var(--text-secondary, #8b949e)",
     margin: "0 0 28px",
     fontFamily: "var(--font-sans)",
+  },
+  browserBtn: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+    padding: "11px 14px",
+    background: "var(--accent, #4493f8)",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    fontFamily: "var(--font-sans)",
+    marginBottom: 12,
+    transition: "opacity 0.15s",
+  },
+  spinner: {
+    display: "inline-block",
+    width: 13,
+    height: 13,
+    border: "2px solid rgba(255,255,255,0.3)",
+    borderTopColor: "#fff",
+    borderRadius: "50%",
+    animation: "spin 0.7s linear infinite",
   },
   oauthGroup: {
     display: "flex",

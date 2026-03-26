@@ -67,10 +67,11 @@ function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    const callbackUrl = isDesktopFlow ? "/desktop-callback" : "/dashboard";
     const result = await signIn("credentials", {
       email,
       password,
-      callbackUrl: "/dashboard",
+      callbackUrl,
       redirect: false,
     });
     if (result?.error) {
@@ -78,7 +79,7 @@ function LoginPage() {
       setLoading(false);
     } else {
       await getSession();
-      router.replace(result?.url ?? "/dashboard");
+      router.replace(result?.url ?? callbackUrl);
       router.refresh();
     }
   };

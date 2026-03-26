@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     where: { id: session.user.id },
   });
 
-  if (currentUser?.role !== "admin") {
+  if (!["admin","owner"].includes(currentUser?.role ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

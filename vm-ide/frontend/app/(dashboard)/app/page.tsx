@@ -46,6 +46,9 @@ import LoginScreen from "@/components/LoginScreen";
 import SearchPanel from "@/components/SearchPanel";
 import GitPanel from "@/components/GitPanel";
 import BrandLogo from "@/components/BrandLogo";
+import DockerPanel from "@/components/DockerPanel";
+import InfraPanel from "@/components/InfraPanel";
+import VmLifecyclePanel from "@/components/VmLifecyclePanel";
 const TerminalPanel = dynamic(() => import("@/components/Terminal"), { ssr: false });
 
 interface OpenFile {
@@ -232,6 +235,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const [vmSessions, setVmSessions] = useState<VmSession[]>([]);
   const [activeVmSessionId, setActiveVmSessionId] = useState<string | null>(null);
   const [vmConnecting, setVmConnecting] = useState(false);
+  const lastConnectParamsRef = useRef<any>(null);
 
   useEffect(() => {
     if (!isElectron()) return;
@@ -265,6 +269,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
 
   const handleVmConnect = useCallback(async (params: any) => {
     if (!isElectron()) return;
+    lastConnectParamsRef.current = params;
     setVmConnecting(true);
     try {
       const result = await electronSsh.connect(params);
@@ -469,7 +474,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const [showCommands, setShowCommands] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [sidebarView, setSidebarView] = useState<"explorer" | "search" | "git">("explorer");
+  const [sidebarView, setSidebarView] = useState<"explorer" | "search" | "git" | "docker" | "infra" | "vm">("explorer");
 
   const runInTerminal = useCallback((cmd: string) => {
     setBottomTab("terminal");
@@ -676,6 +681,36 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
               <circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><line x1="6" y1="9" x2="6" y2="21" />
             </svg>
           </button>
+          <button
+            style={{ ...styles.actBtn, ...(sidebarView === "docker" ? styles.actBtnActive : {}) }}
+            title="Docker"
+            onClick={() => setSidebarView("docker")}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+              <line x1="6" y1="6" x2="6.01" y2="6" />
+              <line x1="6" y1="18" x2="6.01" y2="18" />
+            </svg>
+          </button>
+          <button
+            style={{ ...styles.actBtn, ...(sidebarView === "infra" ? styles.actBtnActive : {}) }}
+            title="Infrastructure"
+            onClick={() => setSidebarView("infra")}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          </button>
+          <button
+            style={{ ...styles.actBtn, ...(sidebarView === "vm" ? styles.actBtnActive : {}) }}
+            title="VM Controls"
+            onClick={() => setSidebarView("vm")}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" /><line x1="12" y1="2" x2="12" y2="12" />
+            </svg>
+          </button>
           <div style={{ flex: 1 }} />
           <button style={styles.actBtn} title="Settings" onClick={() => setSettingsOpen(true)}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -742,6 +777,21 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
           )}
           {sidebarView === "git" && (
             <GitPanel sessionId={sessionId} onError={handleError} onSuccess={handleSuccess} explorerRoot={explorerRoot} runInTerminal={runInTerminal} />
+          )}
+          {sidebarView === "docker" && (
+            <DockerPanel sessionId={sessionId} onRunInTerminal={(cmd) => { setBottomTab("terminal"); runInTerminal(cmd); }} />
+          )}
+          {sidebarView === "infra" && (
+            <InfraPanel sessionId={sessionId} />
+          )}
+          {sidebarView === "vm" && (
+            <VmLifecyclePanel
+              sessionId={sessionId}
+              connInfo={connInfo}
+              lastConnectParams={lastConnectParamsRef.current}
+              onConnect={handleVmConnect}
+              onDisconnect={async () => { if (activeVmSessionId) await handleVmDisconnect(activeVmSessionId); }}
+            />
           )}
         </div>
 
