@@ -91,9 +91,9 @@ const TIERS: Tier[] = [
     inheritLabel: "Everything in Max, plus",
     features: [
       "Infrastructure monitoring",
-      "Team collaboration",
+      "AI developer agent",
       "Token top-ups available",
-      "Advanced AI diagnostics",
+      "AI diagnostics & auto-fix",
     ],
     cta: "Get AI Pro",
   },
@@ -139,7 +139,7 @@ const COMPARISON: ComparisonRow[] = [
   { feature: "Docker management",        free: false,   premium: false,       max: true,          "ai-pro": true,          enterprise: true          },
   { feature: "Deployment pipelines",     free: false,   premium: false,       max: true,          "ai-pro": true,          enterprise: true          },
   { feature: "Infra monitoring",         free: false,   premium: false,       max: false,         "ai-pro": true,          enterprise: true          },
-  { feature: "Team collaboration",       free: false,   premium: false,       max: false,         "ai-pro": true,          enterprise: true          },
+  { feature: "AI developer agent",       free: false,   premium: false,       max: false,         "ai-pro": true,          enterprise: true          },
   { feature: "SSO & access controls",    free: false,   premium: false,       max: false,         "ai-pro": false,         enterprise: true          },
   { feature: "On-premise deployment",    free: false,   premium: false,       max: false,         "ai-pro": false,         enterprise: true          },
   { feature: "SLA guarantee",            free: false,   premium: false,       max: false,         "ai-pro": false,         enterprise: true          },
@@ -152,7 +152,7 @@ const FAQS = [
   { q: "What happens to my data if I cancel?",   a: "Your data lives entirely on your VM. Vinexus never stores files, code, or credentials. Cancel any time — your VM is unaffected." },
   { q: "What counts as a token?",                a: "Tokens are the unit of AI usage. Every message you send and receive consumes tokens. A typical AI coding interaction uses ~2 000–5 000 tokens. Unused tokens don't roll over." },
   { q: "Can I buy more tokens?",                 a: "Yes. On AI Pro you can purchase token top-ups at any time from your account settings without changing your plan." },
-  { q: "What is the difference between Max and AI Pro?", a: "Max gives you 10M tokens/month with Claude Sonnet — great for most development workflows. AI Pro gives you 30M tokens/month plus infrastructure monitoring, team collaboration, and advanced AI diagnostics." },
+  { q: "What is the difference between Max and AI Pro?", a: "Max gives you 10M tokens/month with Claude Sonnet — great for most development workflows. AI Pro gives you 30M tokens/month plus infrastructure monitoring, the AI developer agent, and AI diagnostics & auto-fix." },
 ];
 
 function FAQItem({ q, a }: { q: string; a: string }) {
