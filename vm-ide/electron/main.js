@@ -12,9 +12,9 @@
  *  - Persist window state (size/position) via electron-store
  */
 
-const { app, BrowserWindow, ipcMain, shell, protocol, session, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, protocol, session, dialog, utilityProcess } = require("electron");
 const path = require("path");
-const { fork, spawn } = require("child_process");
+const { spawn } = require("child_process");
 const log = require("electron-log");
 const { autoUpdater } = require("electron-updater");
 const Store = require("electron-store");
@@ -144,23 +144,21 @@ function startFrontend() {
     const serverPath = path.join(__dirname, "..", "frontend", ".next", "standalone", "server.js");
     log.info("Starting Next.js standalone server:", serverPath);
 
-    // Use -e to inject a dock-hide call before the server loads.
-    // When spawned with ELECTRON_RUN_AS_NODE=1 on macOS, the child process
-    // inherits the app bundle identity and would appear in the Dock as a
-    // separate icon. Calling app.dock.hide() immediately suppresses it.
-    const hideDock = `try{var _a=require('electron').app;if(_a&&_a.dock)_a.dock.hide();}catch(_e){}`;
-    frontendProcess = spawn(process.execPath, ["-e", `${hideDock}require(${JSON.stringify(serverPath)})`], {
+    // utilityProcess.fork() runs as an invisible background helper — it does
+    // NOT appear in the macOS Dock, unlike spawn(process.execPath, ...) which
+    // creates a visible app instance.
+    frontendProcess = utilityProcess.fork(serverPath, [], {
+      serviceName: "vinexus-frontend",
       env: {
         ...process.env,
-        ELECTRON_RUN_AS_NODE: "1", // run Electron binary as plain Node.js, not as an Electron app
         PORT: String(FRONTEND_PORT),
         NODE_ENV: "production",
         HOSTNAME: "127.0.0.1",
         NEXTAUTH_URL: `http://localhost:${FRONTEND_PORT}`,
         NEXT_PUBLIC_APP_URL: `http://localhost:${FRONTEND_PORT}`,
-        AUTH_TRUST_HOST: "1", // Auth.js v5 requires this for non-standard hosts like localhost
+        AUTH_TRUST_HOST: "1",
       },
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: "pipe",
     });
 
     frontendProcess.stdout.on("data", (data) => {
@@ -169,11 +167,6 @@ function startFrontend() {
 
     frontendProcess.stderr.on("data", (data) => {
       log.warn("[frontend stderr]", data.toString().trim());
-    });
-
-    frontendProcess.on("error", (err) => {
-      log.error("Frontend process error:", err);
-      reject(err);
     });
 
     frontendProcess.on("exit", (code) => {
@@ -200,16 +193,15 @@ function startBackend() {
     const serverPath = path.join(__dirname, "..", "backend", "dist", "server.js");
     log.info("Starting Express backend:", serverPath);
 
-    const hideDock = `try{var _a=require('electron').app;if(_a&&_a.dock)_a.dock.hide();}catch(_e){}`;
-    backendProcess = spawn(process.execPath, ["-e", `${hideDock}require(${JSON.stringify(serverPath)})`], {
+    backendProcess = utilityProcess.fork(serverPath, [], {
+      serviceName: "vinexus-backend",
       env: {
         ...process.env,
-        ELECTRON_RUN_AS_NODE: "1", // run Electron binary as plain Node.js, not as an Electron app
         PORT: String(BACKEND_PORT),
         NODE_ENV: "production",
         FRONTEND_ORIGIN: `http://localhost:${FRONTEND_PORT}`,
       },
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: "pipe",
     });
 
     backendProcess.stdout.on("data", (data) => {
@@ -218,11 +210,6 @@ function startBackend() {
 
     backendProcess.stderr.on("data", (data) => {
       log.warn("[backend stderr]", data.toString().trim());
-    });
-
-    backendProcess.on("error", (err) => {
-      log.error("Backend process error:", err);
-      reject(err);
     });
 
     backendProcess.on("exit", (code) => {
