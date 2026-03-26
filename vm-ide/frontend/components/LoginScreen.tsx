@@ -57,7 +57,8 @@ export default function LoginScreen({ onLogin }: Props) {
     }
     setOauthLoading(provider);
     try {
-      const url = `${WEB_AUTH_ORIGIN}/login?desktop=1&provider=${encodeURIComponent(provider)}`;
+      // The marketing site handles login; provider hint is informational only
+      const url = `${WEB_AUTH_ORIGIN}/login?desktop=1`;
       const result = await ea.app.openExternal(url);
       if (result?.error) {
         setError(result.error);

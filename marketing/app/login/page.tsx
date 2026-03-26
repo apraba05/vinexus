@@ -9,7 +9,8 @@ function LoginContent() {
   const { D } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/";
+  const isDesktop = searchParams.get("desktop") === "1";
+  const next = isDesktop ? "/desktop-callback" : (searchParams.get("next") || "/");
 
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
@@ -134,7 +135,7 @@ function LoginContent() {
         padding: "36px 32px",
       }}>
         {/* Logo / back link */}
-        <div style={{ marginBottom: 28, textAlign: "center" }}>
+        <div style={{ marginBottom: 20, textAlign: "center" }}>
           <Link href="/" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 10 }}>
             <Image src="/favicon.png" alt="Vinexus" width={24} height={24} unoptimized style={{ width: 24, height: 24, borderRadius: 6, display: "block" }} />
             <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.04em", color: D.inverseSurface }}>
@@ -142,6 +143,22 @@ function LoginContent() {
             </span>
           </Link>
         </div>
+        {isDesktop && (
+          <div style={{
+            marginBottom: 20,
+            padding: "10px 14px",
+            borderRadius: 8,
+            background: D.primaryContainer,
+            border: `1px solid ${D.primary}22`,
+            fontSize: 13,
+            color: D.onSurface,
+            textAlign: "center",
+            lineHeight: 1.5,
+          }}>
+            Sign in to continue to the <strong>Vinexus desktop app</strong>.
+            You'll be returned automatically after login.
+          </div>
+        )}
 
         {/* Tabs */}
         <div style={{
