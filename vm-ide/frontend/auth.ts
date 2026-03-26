@@ -76,6 +76,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Cache the role in the JWT so it's available without a DB lookup on every request
+        const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } });
+        if (dbUser) token.role = dbUser.role;
       }
       return token;
     },
@@ -107,7 +110,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
         }
 
-        (session as any).role = dbUser?.role || "user";
+        // Prefer the live DB role; fall back to what was cached in the JWT token
+        (session as any).role = dbUser?.role || (token.role as string) || "user";
         (session as any).emailVerified = dbUser?.emailVerified || null;
         (session as any).plan = planState.planKey;
         (session as any).features = planState.features;
