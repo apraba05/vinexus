@@ -12,7 +12,8 @@
  *  - Persist window state (size/position) via electron-store
  */
 
-const { app, BrowserWindow, ipcMain, shell, protocol, session, dialog, utilityProcess } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, protocol, session, dialog } = require("electron");
+const { Worker } = require("worker_threads");
 const path = require("path");
 const log = require("electron-log");
 const { autoUpdater } = require("electron-updater");
@@ -143,11 +144,10 @@ function startFrontend() {
     const serverPath = path.join(__dirname, "..", "frontend", ".next", "standalone", "server.js");
     log.info("Starting Next.js standalone server:", serverPath);
 
-    // utilityProcess.fork() runs as an invisible background helper — it does
-    // NOT appear in the macOS Dock, unlike spawn(process.execPath, ...) which
-    // creates a visible app instance.
-    frontendProcess = utilityProcess.fork(serverPath, [], {
-      serviceName: "vinexus-frontend",
+    // Worker threads run inside the main Electron process (same OS PID).
+    // They are threads, not processes — guaranteed to never appear in the Dock.
+    frontendProcess = new Worker(path.join(__dirname, "workers", "frontend-worker.js"), {
+      workerData: { serverPath },
       env: {
         ...process.env,
         PORT: String(FRONTEND_PORT),
@@ -157,20 +157,10 @@ function startFrontend() {
         NEXT_PUBLIC_APP_URL: `http://localhost:${FRONTEND_PORT}`,
         AUTH_TRUST_HOST: "1",
       },
-      stdio: "pipe",
     });
 
-    frontendProcess.stdout.on("data", (data) => {
-      log.info("[frontend]", data.toString().trim());
-    });
-
-    frontendProcess.stderr.on("data", (data) => {
-      log.warn("[frontend stderr]", data.toString().trim());
-    });
-
-    frontendProcess.on("exit", (code) => {
-      log.info("Frontend process exited with code:", code);
-    });
+    frontendProcess.on("error", (err) => log.error("[frontend worker error]", err));
+    frontendProcess.on("exit", (code) => log.info("[frontend worker] exited with code:", code));
 
     // Poll the server directly — more reliable than log parsing across Next.js versions.
     waitForUrl(`http://localhost:${FRONTEND_PORT}`, 30000).then(resolve).catch(reject);
@@ -192,28 +182,18 @@ function startBackend() {
     const serverPath = path.join(__dirname, "..", "backend", "dist", "server.js");
     log.info("Starting Express backend:", serverPath);
 
-    backendProcess = utilityProcess.fork(serverPath, [], {
-      serviceName: "vinexus-backend",
+    backendProcess = new Worker(path.join(__dirname, "workers", "backend-worker.js"), {
+      workerData: { serverPath },
       env: {
         ...process.env,
         PORT: String(BACKEND_PORT),
         NODE_ENV: "production",
         FRONTEND_ORIGIN: `http://localhost:${FRONTEND_PORT}`,
       },
-      stdio: "pipe",
     });
 
-    backendProcess.stdout.on("data", (data) => {
-      log.info("[backend]", data.toString().trim());
-    });
-
-    backendProcess.stderr.on("data", (data) => {
-      log.warn("[backend stderr]", data.toString().trim());
-    });
-
-    backendProcess.on("exit", (code) => {
-      log.info("Backend process exited with code:", code);
-    });
+    backendProcess.on("error", (err) => log.error("[backend worker error]", err));
+    backendProcess.on("exit", (code) => log.info("[backend worker] exited with code:", code));
 
     waitForUrl(`http://localhost:${BACKEND_PORT}/health`, 20000).then(resolve).catch(reject);
   });
@@ -246,6 +226,7 @@ function saveWindowState(win) {
 
 // ─── Main Window ──────────────────────────────────────────────────────────────
 let mainWindow = null;
+let isQuitting = false;
 
 function createWindow() {
   const state = getSavedWindowState();
@@ -289,10 +270,17 @@ function createWindow() {
     mainWindow.moveTop();
   });
 
-  // Persist window state on close
-  mainWindow.on("close", function () {
+  // On macOS: hide the window instead of destroying it so that clicking the
+  // Dock icon brings it back instantly with no black screen. The window and
+  // its renderer stay alive; servers keep running in worker threads.
+  // On Windows/Linux: close normally.
+  mainWindow.on("close", function (e) {
     saveWindowState(this);
     cleanupPty();
+    if (process.platform === "darwin" && !isQuitting) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
   });
 
   mainWindow.on("closed", () => {
@@ -520,9 +508,13 @@ app.on("open-url", (event, url) => {
 });
 
 app.on("activate", () => {
-  // macOS: re-create window if Dock icon clicked with no windows open
-  if (BrowserWindow.getAllWindows().length === 0) {
+  // macOS: show the existing hidden window, or recreate if it was destroyed
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  } else {
     createWindow();
+    mainWindow.loadURL(APP_URL).catch((err) => log.error("Activate loadURL failed:", err));
   }
 });
 
@@ -534,13 +526,14 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
-  log.info("App quitting — cleaning up child processes");
+  isQuitting = true;
+  log.info("App quitting — terminating worker threads");
   if (frontendProcess) {
-    frontendProcess.kill();
+    frontendProcess.terminate();
     frontendProcess = null;
   }
   if (backendProcess) {
-    backendProcess.kill();
+    backendProcess.terminate();
     backendProcess = null;
   }
   cleanupPty();
