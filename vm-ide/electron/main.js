@@ -144,7 +144,12 @@ function startFrontend() {
     const serverPath = path.join(__dirname, "..", "frontend", ".next", "standalone", "server.js");
     log.info("Starting Next.js standalone server:", serverPath);
 
-    frontendProcess = spawn(process.execPath, [serverPath], {
+    // Use -e to inject a dock-hide call before the server loads.
+    // When spawned with ELECTRON_RUN_AS_NODE=1 on macOS, the child process
+    // inherits the app bundle identity and would appear in the Dock as a
+    // separate icon. Calling app.dock.hide() immediately suppresses it.
+    const hideDock = `try{var _a=require('electron').app;if(_a&&_a.dock)_a.dock.hide();}catch(_e){}`;
+    frontendProcess = spawn(process.execPath, ["-e", `${hideDock}require(${JSON.stringify(serverPath)})`], {
       env: {
         ...process.env,
         ELECTRON_RUN_AS_NODE: "1", // run Electron binary as plain Node.js, not as an Electron app
@@ -195,7 +200,8 @@ function startBackend() {
     const serverPath = path.join(__dirname, "..", "backend", "dist", "server.js");
     log.info("Starting Express backend:", serverPath);
 
-    backendProcess = spawn(process.execPath, [serverPath], {
+    const hideDock = `try{var _a=require('electron').app;if(_a&&_a.dock)_a.dock.hide();}catch(_e){}`;
+    backendProcess = spawn(process.execPath, ["-e", `${hideDock}require(${JSON.stringify(serverPath)})`], {
       env: {
         ...process.env,
         ELECTRON_RUN_AS_NODE: "1", // run Electron binary as plain Node.js, not as an Electron app
