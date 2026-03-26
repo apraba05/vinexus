@@ -64,9 +64,17 @@ echo "  Removing macOS quarantine flag..."
 xattr -cr "${INSTALL_DIR}/${APP_NAME}.app" 2>/dev/null || true
 
 echo "  Applying ad-hoc code signature..."
-# Sign innermost frameworks first, then the outer app bundle
+# Must sign from innermost to outermost — helper .app bundles first,
+# then frameworks/dylibs, then the outer app. This ensures macOS treats
+# all Electron helper processes as part of the same app (no extra Dock icons).
+find "${INSTALL_DIR}/${APP_NAME}.app/Contents/Frameworks" \
+  -name "*.app" 2>/dev/null \
+  | sort -r \
+  | while read -r bundle; do
+      codesign --force --sign - "$bundle" 2>/dev/null || true
+    done
 find "${INSTALL_DIR}/${APP_NAME}.app" \
-  -name "*.framework" -o -name "*.dylib" -o -name "*.so" 2>/dev/null \
+  \( -name "*.dylib" -o -name "*.so" -o -name "*.node" \) 2>/dev/null \
   | sort -r \
   | xargs -I{} codesign --force --sign - {} 2>/dev/null || true
 codesign --force --sign - "${INSTALL_DIR}/${APP_NAME}.app" 2>/dev/null || true
