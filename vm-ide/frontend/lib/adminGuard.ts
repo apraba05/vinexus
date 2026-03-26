@@ -25,6 +25,11 @@ export function isOwnerEmail(email: string | null | undefined): boolean {
 type GuardOk   = { ok: true;  userId: string; email: string; role: string };
 type GuardFail = { ok: false; response: NextResponse };
 
+/** Type-safe helper — call when guard.ok is false to retrieve the response. */
+export function guardFailResponse(guard: GuardOk | GuardFail): NextResponse {
+  return (guard as GuardFail).response;
+}
+
 async function resolveUser(): Promise<
   { user: { id: string; email: string; role: string } } | { response: NextResponse }
 > {

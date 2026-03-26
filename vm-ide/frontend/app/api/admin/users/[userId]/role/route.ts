@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
-import { requireOwner, isOwnerEmail } from "@/lib/adminGuard";
+import { requireOwner, isOwnerEmail, guardFailResponse } from "@/lib/adminGuard";
 
 const ALLOWED_ROLES = ["user", "staff"];
 
@@ -10,7 +10,7 @@ export async function PATCH(
   { params }: { params: { userId: string } }
 ) {
   const guard = await requireOwner();
-  if (!guard.ok) return guard.response;
+  if (!guard.ok) return guardFailResponse(guard);
 
   const { userId } = params;
   const body = await req.json();

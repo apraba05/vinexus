@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/adminGuard";
+import { requireStaff, guardFailResponse } from "@/lib/adminGuard";
 
 // Cost per request in cents (matches aiService.ts estimates)
 const COST_PER_REQ: Record<string, number> = {
@@ -12,7 +12,7 @@ const COST_PER_REQ: Record<string, number> = {
 
 export async function GET(req: Request) {
   const guard = await requireStaff();
-  if (!guard.ok) return guard.response;
+  if (!guard.ok) return guardFailResponse(guard);
 
   const { searchParams } = new URL(req.url);
   const days = Math.min(parseInt(searchParams.get("days") ?? "30", 10), 90);
