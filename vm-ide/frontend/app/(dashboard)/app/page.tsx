@@ -180,6 +180,17 @@ export default function AppPage() {
     }
   }, []);
 
+  // Listen for browser-based login completing via deep link (IPC from main process)
+  useEffect(() => {
+    if (!electron) return;
+    const ea = (window as any).electronAPI;
+    if (!ea?.auth?.onUserLoggedIn) return;
+    const unsub = ea.auth.onUserLoggedIn((user: AppUser) => {
+      if (user) setUser(user);
+    });
+    return unsub;
+  }, [electron]);
+
   // Poll plan every 5 minutes while app is open
   useEffect(() => {
     if (!electron || !user) return;

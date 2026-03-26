@@ -428,7 +428,16 @@ async function handleDeepLink(url) {
         log.info("OAuth deep-link callback — exchanging desktop token", { origin });
         const user = await exchangeDesktopToken(token, origin);
         log.info("OAuth desktop token exchange succeeded:", user?.email);
-        mainWindow.loadURL(APP_URL).catch((err) => log.error("Failed to navigate after OAuth:", err));
+        // Notify the renderer directly so it updates auth state without a full reload.
+        // If the window isn't on /app yet, loadURL first and then send once it's ready.
+        const currentURL = mainWindow.webContents.getURL();
+        if (currentURL.includes("/app")) {
+          mainWindow.webContents.send("auth:user-logged-in", user);
+        } else {
+          mainWindow.loadURL(APP_URL)
+            .then(() => mainWindow.webContents.send("auth:user-logged-in", user))
+            .catch((err) => log.error("Failed to navigate after OAuth:", err));
+        }
         return;
       }
 

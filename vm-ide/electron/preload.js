@@ -41,6 +41,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     deleteVmCredentials: (id) => ipcRenderer.invoke("auth:deleteVmCredentials", id),
     /** Listen for OAuth deep-link callback */
     onDeepLink: (callback) => on("auth:deep-link", callback),
+    /** Called by main process after a successful browser-based login — carries the user object */
+    onUserLoggedIn: (callback) => on("auth:user-logged-in", callback),
     /** Authenticate with email + password (desktop-only) */
     login: (creds) => ipcRenderer.invoke("auth:desktopLogin", creds),
     /** Register a new account then auto-login (desktop-only) */
