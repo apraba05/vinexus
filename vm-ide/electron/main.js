@@ -33,6 +33,7 @@ const FRONTEND_PORT = 3000;
 const BACKEND_PORT = 4000;
 const DEV_MODE = !app.isPackaged;
 const APP_URL = `http://localhost:${FRONTEND_PORT}/app?desktop=1`;
+const STARTUP_URL = `${APP_URL}&forceLogin=1`;
 const DEEP_LINK_PROTOCOL = "vinexus";
 
 app.setName("Vinexus");
@@ -134,8 +135,8 @@ function startFrontend() {
     // A 20s per-request timeout keeps the loading screen visible during compilation
     // (Next.js holds the connection open until the page is built), then resolves
     // immediately so loadURL navigates to an already-compiled page.
-    log.info("Dev mode: waiting for Next.js to compile and serve", APP_URL);
-    return waitForUrl(APP_URL, 120000, 20000);
+    log.info("Dev mode: waiting for Next.js to compile and serve", STARTUP_URL);
+    return waitForUrl(STARTUP_URL, 120000, 20000);
   }
 
   return new Promise((resolve, reject) => {
@@ -473,7 +474,7 @@ app.whenReady().then(async () => {
 
   // Navigate to the app once servers are ready
   log.info("Servers ready — navigating to app");
-  mainWindow.loadURL(APP_URL).catch((err) => {
+  mainWindow.loadURL(STARTUP_URL).catch((err) => {
     if (isNavigationAbort(err)) {
       log.info("Initial navigation replaced a previous page load.");
       return;
@@ -515,7 +516,7 @@ app.on("activate", () => {
     mainWindow.focus();
   } else {
     createWindow();
-    mainWindow.loadURL(APP_URL).catch((err) => log.error("Activate loadURL failed:", err));
+    mainWindow.loadURL(STARTUP_URL).catch((err) => log.error("Activate loadURL failed:", err));
   }
 });
 

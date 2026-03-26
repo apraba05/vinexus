@@ -162,15 +162,20 @@ export default function AppPage() {
     setElectron(isEl);
     if (isEl) {
       const ea = (window as any).electronAPI;
+      const params = new URLSearchParams(window.location.search);
+      const forceLogin = params.get("forceLogin") === "1";
       // Timeout guard: if IPC never resolves (e.g. handler not registered), unblock after 3s
       const timer = setTimeout(() => setChecked(true), 3000);
       const finish = (res?: any) => {
         clearTimeout(timer);
-        if (res?.user) setUser(res.user);
+        if (!forceLogin && res?.user) setUser(res.user);
         setChecked(true);
       };
       try {
-        Promise.resolve(ea?.auth?.getSession?.())
+        const sessionPromise = forceLogin
+          ? Promise.resolve(ea?.auth?.logout?.()).then(() => ({ user: null }))
+          : Promise.resolve(ea?.auth?.getSession?.());
+        sessionPromise
           .then(finish)
           .catch(() => finish());
       } catch {
