@@ -242,11 +242,37 @@ export default function AppPage() {
 function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const { isDark, toggle } = useTheme();
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [appVersion, setAppVersion] = useState<string | null>(null);
 
   const [vmSessions, setVmSessions] = useState<VmSession[]>([]);
   const [activeVmSessionId, setActiveVmSessionId] = useState<string | null>(null);
   const [vmConnecting, setVmConnecting] = useState(false);
   const lastConnectParamsRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!isElectron()) return;
+    const ea = (window as any).electronAPI;
+    Promise.resolve(ea?.app?.getVersion?.())
+      .then((version) => {
+        if (typeof version === "string" && version) {
+          setAppVersion(version);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const normalizedPlanKey = (user.plan || "free").toLowerCase();
+  const isPaidPlan = normalizedPlanKey !== "free";
+  const displayPlanName =
+    normalizedPlanKey === "ai-pro"
+      ? "AI Pro"
+      : normalizedPlanKey === "max"
+        ? "Max"
+        : normalizedPlanKey === "premium"
+          ? "Premium"
+          : normalizedPlanKey === "enterprise"
+            ? "Enterprise"
+            : "Free";
 
   useEffect(() => {
     if (!isElectron()) return;
@@ -861,7 +887,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
         </div>
       </div>
 
-      <StatusBar sessionId={sessionId} host={connInfo?.host} username={connInfo?.username} activeFile={activeFile} openFileCount={openFiles.length} dirtyFileCount={dirtyFileCount} />
+      <StatusBar sessionId={sessionId} host={connInfo?.host} username={connInfo?.username} activeFile={activeFile} openFileCount={openFiles.length} dirtyFileCount={dirtyFileCount} appVersion={appVersion} />
       <AIInsightsPanel visible={aiPanelVisible} loading={aiLoading} explanation={aiExplanation} diagnosis={aiDiagnosis} filePath={aiFilePath} onClose={() => setAiPanelVisible(false)} usageCount={aiUsageCount} usageLimit={AI_DAILY_LIMIT} />
       {diffPreview && (<DiffView originalContent={diffPreview.originalContent} modifiedContent={diffPreview.modifiedContent} filePath={diffPreview.filePath} additions={diffPreview.additions} deletions={diffPreview.deletions} onConfirm={handleDiffConfirm} onCancel={handleDiffCancel} loading={diffSaving} />)}
       {settingsOpen && (
@@ -894,13 +920,24 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
             <div style={settingsStyles.section}>
               <div style={settingsStyles.sectionLabel}>Account</div>
               <div style={settingsStyles.planRow}>
-                <div style={settingsStyles.planBadge}>Free</div>
+                <div style={settingsStyles.planBadge}>{displayPlanName}</div>
                 <div>
-                  <div style={settingsStyles.rowLabel}>Free Plan</div>
-                  <div style={settingsStyles.rowDesc}>Upgrade for advanced deploy pipelines & team features</div>
+                  <div style={settingsStyles.rowLabel}>{displayPlanName} Plan</div>
+                  <div style={settingsStyles.rowDesc}>
+                    {isPaidPlan
+                      ? "Your desktop features are unlocked based on your current subscription."
+                      : "Upgrade for advanced deploy pipelines, AI tools, and team features."}
+                  </div>
                 </div>
               </div>
-              <button style={settingsStyles.upgradeBtn}>Upgrade to Pro</button>
+              {!isPaidPlan && (
+                <button
+                  style={settingsStyles.upgradeBtn}
+                  onClick={() => (window as any).electronAPI?.app?.openExternal?.("https://vinexus.space/pricing")}
+                >
+                  Upgrade to Pro
+                </button>
+              )}
               <button style={settingsStyles.signOutBtn} onClick={handleLogout}>Log Out</button>
             </div>
 
@@ -908,7 +945,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
               <div style={settingsStyles.sectionLabel}>About</div>
               <div style={settingsStyles.aboutRow}>
                 <span style={settingsStyles.rowDesc}>Vinexus Desktop</span>
-                <span style={settingsStyles.rowDesc}>v0.1.0</span>
+                <span style={settingsStyles.rowDesc}>v{appVersion || "1.0.50"}</span>
               </div>
             </div>
           </div>

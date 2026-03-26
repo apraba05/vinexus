@@ -7,13 +7,14 @@ export const metadata: Metadata = {
   description: "A native desktop IDE that connects directly to your virtual machines via SSH. Full Monaco editor, integrated terminal, and AI pair programming.",
   metadataBase: new URL("https://vinexus.space"),
   icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
   openGraph: {
     siteName: "Vinexus",
     type: "website",
-    images: [{ url: "/icon.png" }],
+    images: [{ url: "/favicon.png" }],
   },
 };
 

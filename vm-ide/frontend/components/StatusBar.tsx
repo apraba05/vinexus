@@ -8,6 +8,7 @@ interface Props {
   activeFile: string | null;
   openFileCount: number;
   dirtyFileCount: number;
+  appVersion?: string | null;
 }
 
 export default function StatusBar({
@@ -17,6 +18,7 @@ export default function StatusBar({
   activeFile,
   openFileCount,
   dirtyFileCount,
+  appVersion,
 }: Props) {
   return (
     <div style={styles.bar}>
@@ -56,6 +58,11 @@ export default function StatusBar({
 
       {/* Right: language + shortcuts */}
       <div style={styles.right}>
+        {appVersion && (
+          <span style={styles.versionBadge}>
+            v{appVersion}
+          </span>
+        )}
         {activeFile && (
           <span style={styles.langBadge}>
             {getLanguageLabel(activeFile)}
@@ -146,6 +153,17 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 10,
     fontWeight: 600,
     letterSpacing: "0.03em",
+  },
+  versionBadge: {
+    padding: "1px 7px",
+    background: "rgba(124, 58, 237, 0.12)",
+    color: "var(--accent)",
+    border: "1px solid rgba(124, 58, 237, 0.2)",
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.03em",
+    fontFamily: "var(--font-mono)",
   },
   shortcutsHint: {
     display: "flex",

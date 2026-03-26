@@ -12,6 +12,21 @@ function getSubscriptionPeriod(sub: any): { start: Date | null; end: Date | null
   };
 }
 
+async function resolvePlanForSubscription(subscription: any, explicitPlanKey?: string | null) {
+  const byName = explicitPlanKey
+    ? await prisma.plan.findUnique({ where: { name: explicitPlanKey } }).catch(() => null)
+    : null;
+  if (byName) return byName;
+
+  const stripePriceId = subscription?.items?.data?.[0]?.price?.id;
+  if (stripePriceId) {
+    const byPrice = await prisma.plan.findUnique({ where: { stripePriceId } }).catch(() => null);
+    if (byPrice) return byPrice;
+  }
+
+  return await prisma.plan.findUnique({ where: { name: "free" } }).catch(() => null);
+}
+
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = request.headers.get("stripe-signature")!;
@@ -41,16 +56,15 @@ export async function POST(request: Request) {
           session.subscription as string
         );
 
-        const proPlan = await prisma.plan.findUnique({
-          where: { name: "pro" },
-        });
-        if (!proPlan) break;
+        const plan = await resolvePlanForSubscription(subscription, session.metadata?.planKey);
+        if (!plan) break;
 
         const period = getSubscriptionPeriod(subscription);
 
         await prisma.subscription.upsert({
           where: { stripeSubscriptionId: subscription.id },
           update: {
+            planId: plan.id,
             status: subscription.status,
             stripePriceId: subscription.items.data[0]?.price.id,
             currentPeriodStart: period.start,
@@ -58,7 +72,7 @@ export async function POST(request: Request) {
           },
           create: {
             userId,
-            planId: proPlan.id,
+            planId: plan.id,
             stripeSubscriptionId: subscription.id,
             stripePriceId: subscription.items.data[0]?.price.id,
             status: subscription.status,
@@ -67,12 +81,13 @@ export async function POST(request: Request) {
           },
         });
 
-        if (session.customer) {
-          await prisma.user.update({
-            where: { id: userId },
-            data: { stripeCustomerId: session.customer as string },
-          });
-        }
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            plan: plan.name,
+            ...(session.customer ? { stripeCustomerId: session.customer as string } : {}),
+          },
+        }).catch(() => {});
         break;
       }
 
@@ -80,20 +95,35 @@ export async function POST(request: Request) {
         const subscription = event.data.object;
         const existing = await prisma.subscription.findUnique({
           where: { stripeSubscriptionId: subscription.id },
+          include: { user: true },
         });
         if (!existing) break;
 
         const period = getSubscriptionPeriod(subscription);
+        const plan = await resolvePlanForSubscription(subscription, existing.planId ? null : undefined);
 
         await prisma.subscription.update({
           where: { stripeSubscriptionId: subscription.id },
           data: {
+            ...(plan ? { planId: plan.id } : {}),
             status: subscription.status,
+            stripePriceId: subscription.items.data[0]?.price.id,
             currentPeriodStart: period.start,
             currentPeriodEnd: period.end,
             cancelAtPeriodEnd: subscription.cancel_at_period_end,
           },
         });
+
+        if (plan) {
+          const stillEntitled =
+            ["active", "trialing", "past_due"].includes(subscription.status) ||
+            (subscription.status === "canceled" && !!period.end && period.end > new Date());
+
+          await prisma.user.update({
+            where: { id: existing.userId },
+            data: { plan: stillEntitled ? plan.name : "free" },
+          }).catch(() => {});
+        }
         break;
       }
 
@@ -101,6 +131,7 @@ export async function POST(request: Request) {
         const subscription = event.data.object;
         const existing = await prisma.subscription.findUnique({
           where: { stripeSubscriptionId: subscription.id },
+          include: { user: true },
         });
         if (!existing) break;
 
@@ -111,6 +142,11 @@ export async function POST(request: Request) {
             canceledAt: new Date(),
           },
         });
+
+        await prisma.user.update({
+          where: { id: existing.userId },
+          data: { plan: "free" },
+        }).catch(() => {});
         break;
       }
 
