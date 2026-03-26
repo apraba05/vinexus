@@ -18,36 +18,10 @@ const WEB_AUTH_ORIGIN = process.env.NEXT_PUBLIC_DESKTOP_AUTH_ORIGIN || "https://
 
 export default function LoginScreen({ onLogin }: Props) {
   const { isDark, toggle } = useTheme();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<"google" | "github" | null>(null);
   const [error, setError] = useState("");
 
   const ea = typeof window !== "undefined" ? (window as any).electronAPI : null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    if (!ea?.auth) {
-      setError("Desktop auth bridge is unavailable. Please restart Vinexus.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const result = await ea.auth.login({ email, password });
-      if (result?.error) {
-        setError(result.error);
-      } else if (result?.user) {
-        onLogin(result.user);
-      }
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleOAuth = async (provider: "google" | "github") => {
     setError("");
@@ -57,8 +31,7 @@ export default function LoginScreen({ onLogin }: Props) {
     }
     setOauthLoading(provider);
     try {
-      // The marketing site handles login; provider hint is informational only
-      const url = `${WEB_AUTH_ORIGIN}/login?desktop=1`;
+      const url = `${WEB_AUTH_ORIGIN}/login?desktop=1&provider=${provider}`;
       const result = await ea.app.openExternal(url);
       if (result?.error) {
         setError(result.error);
@@ -82,15 +55,13 @@ export default function LoginScreen({ onLogin }: Props) {
         {isDark ? "Light mode" : "Dark mode"}
       </button>
       <div style={styles.card}>
-        {/* Logo */}
         <div style={styles.logoRow}>
           <BrandLogo iconSize={30} textSize={28} textColor="var(--text-bright, #f0f6fc)" />
         </div>
 
-        <h1 style={styles.heading}>Welcome back</h1>
-        <p style={styles.sub}>Sign in to continue to Vinexus</p>
+        <h1 style={styles.heading}>Welcome to Vinexus</h1>
+        <p style={styles.sub}>Sign in to continue to your IDE</p>
 
-        {/* Primary OAuth CTAs */}
         <div style={styles.oauthGroup}>
           <button
             type="button"
@@ -108,7 +79,7 @@ export default function LoginScreen({ onLogin }: Props) {
                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
               </svg>
             )}
-            {oauthLoading === "github" ? "Opening GitHub…" : "Continue with GitHub"}
+            {oauthLoading === "github" ? "Opening browser…" : "Continue with GitHub"}
           </button>
 
           <button
@@ -130,70 +101,15 @@ export default function LoginScreen({ onLogin }: Props) {
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
             )}
-            {oauthLoading === "google" ? "Opening Google…" : "Continue with Google"}
+            {oauthLoading === "google" ? "Opening browser…" : "Continue with Google"}
           </button>
         </div>
 
-        <div style={styles.divider}>
-          <span style={styles.dividerLine} />
-          <span style={styles.dividerText}>or sign in with email</span>
-          <span style={styles.dividerLine} />
-        </div>
+        {error && <div style={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              style={styles.input}
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <div style={styles.passwordWrap}>
-              <input
-                style={{ ...styles.input, paddingRight: 40 }}
-                type={showPassword ? "text" : "password"}
-                placeholder="Your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                style={styles.eyeBtn}
-                onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
-              >
-                {showPassword ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                    <line x1="1" y1="1" x2="23" y2="23"/>
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {error && <div style={styles.error}>{error}</div>}
-
-          <button type="submit" style={{ ...styles.submitBtn, opacity: loading ? 0.7 : 1 }} disabled={loading}>
-            {loading ? "Please wait…" : "Sign In"}
-          </button>
-        </form>
+        <p style={styles.hint}>
+          Your browser will open to complete sign-in securely.
+        </p>
       </div>
     </div>
   );
@@ -224,7 +140,7 @@ const styles: Record<string, any> = {
     WebkitAppRegion: "no-drag" as any,
   },
   card: {
-    width: 400,
+    width: 380,
     maxWidth: "calc(100vw - 48px)",
     padding: "40px 40px 32px",
     background: "var(--bg-elevated, #13191f)",
@@ -250,14 +166,14 @@ const styles: Record<string, any> = {
   sub: {
     fontSize: 13,
     color: "var(--text-secondary, #8b949e)",
-    margin: "0 0 24px",
+    margin: "0 0 28px",
     fontFamily: "var(--font-sans)",
   },
   oauthGroup: {
     display: "flex",
     flexDirection: "column" as const,
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   githubBtn: {
     width: "100%",
@@ -265,12 +181,12 @@ const styles: Record<string, any> = {
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
-    padding: "11px 14px",
+    padding: "12px 14px",
     background: "#24292e",
     color: "#ffffff",
     border: "1px solid rgba(255,255,255,0.12)",
     borderRadius: 8,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 600,
     cursor: "pointer",
     fontFamily: "var(--font-sans)",
@@ -282,12 +198,12 @@ const styles: Record<string, any> = {
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
-    padding: "11px 14px",
+    padding: "12px 14px",
     background: "#ffffff",
     color: "#3c4043",
     border: "1px solid rgba(0,0,0,0.12)",
     borderRadius: 8,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 600,
     cursor: "pointer",
     fontFamily: "var(--font-sans)",
@@ -306,73 +222,6 @@ const styles: Record<string, any> = {
     borderRadius: "50%",
     animation: "spin 0.7s linear infinite",
   },
-  divider: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    margin: "0 0 16px",
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    background: "var(--border, rgba(48,54,61,0.8))",
-  },
-  dividerText: {
-    fontSize: 10,
-    fontWeight: 600,
-    color: "var(--text-muted, #484f58)",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.08em",
-    fontFamily: "var(--font-sans)",
-    whiteSpace: "nowrap" as const,
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: 14,
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: 5,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: "var(--text-secondary, #8b949e)",
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.06em",
-    fontFamily: "var(--font-sans)",
-  },
-  input: {
-    padding: "10px 12px",
-    background: "var(--bg-primary, #0d1117)",
-    border: "1px solid var(--border, rgba(48,54,61,0.8))",
-    borderRadius: 8,
-    fontSize: 13,
-    color: "var(--text-primary, #c9d1d9)",
-    outline: "none",
-    fontFamily: "var(--font-sans)",
-    width: "100%",
-    boxSizing: "border-box" as const,
-    transition: "border-color 0.15s",
-  },
-  passwordWrap: {
-    position: "relative" as const,
-  },
-  eyeBtn: {
-    position: "absolute" as const,
-    right: 10,
-    top: "50%",
-    transform: "translateY(-50%)",
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    color: "var(--text-muted, #484f58)",
-    display: "flex",
-    alignItems: "center",
-    padding: 2,
-  },
   error: {
     padding: "8px 12px",
     background: "rgba(185,28,28,0.07)",
@@ -381,18 +230,13 @@ const styles: Record<string, any> = {
     fontSize: 12,
     color: "var(--danger, #f85149)",
     fontFamily: "var(--font-sans)",
+    marginBottom: 12,
   },
-  submitBtn: {
-    padding: "11px 0",
-    background: "var(--accent, #7C3AED)",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: 8,
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
+  hint: {
+    fontSize: 11,
+    color: "var(--text-muted, #484f58)",
+    textAlign: "center" as const,
+    margin: "8px 0 0",
     fontFamily: "var(--font-sans)",
-    marginTop: 4,
-    transition: "opacity 0.15s",
   },
 };
