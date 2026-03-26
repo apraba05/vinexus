@@ -22,7 +22,7 @@ interface GoogleUserInfo {
   email: string;
   name: string;
   picture: string;
-  email_verified: boolean;
+  verified_email: boolean;
 }
 
 export async function GET(request: NextRequest) {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     });
     const googleUser: GoogleUserInfo = await userRes.json();
 
-    if (!googleUser.email || !googleUser.email_verified) {
+    if (!googleUser.email || !googleUser.verified_email) {
       return NextResponse.redirect(`${origin}/login?error=no_email`);
     }
 
