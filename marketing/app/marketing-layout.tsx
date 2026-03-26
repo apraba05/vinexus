@@ -89,7 +89,7 @@ function Nav() {
           {authChecked && (
             authUser ? (
               <>
-                <span style={{ fontSize: 12, color: D.onSurfaceVariant, maxWidth: 180, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <span style={{ fontSize: 12, color: D.onSurfaceVariant, maxWidth: 140, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {authUser.name || authUser.email}
                 </span>
                 <Link href="/account" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
@@ -98,16 +98,27 @@ function Nav() {
                 <button onClick={handleSignOut} style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, background: "transparent", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}>
                   Sign Out
                 </button>
+                <a
+                  href="vinexus://open"
+                  style={{ padding: "6px 14px", fontSize: 13, fontWeight: 600, color: "#fff", textDecoration: "none", background: D.primary, borderRadius: 4, display: "inline-flex", alignItems: "center", gap: 6 }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                  </svg>
+                  Open App
+                </a>
               </>
             ) : (
-            <Link href="/login" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
-                Sign In
-            </Link>
+              <>
+                <Link href="/login" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 500, color: D.onSurfaceVariant, textDecoration: "none", borderRadius: 4 }}>
+                  Sign In
+                </Link>
+                <Link href="/download" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 600, color: "#fff", textDecoration: "none", background: D.primary, borderRadius: 4 }}>
+                  Download
+                </Link>
+              </>
             )
           )}
-          <Link href="/download" style={{ padding: "6px 14px", fontSize: 13, fontWeight: 600, color: "#fff", textDecoration: "none", background: D.primary, borderRadius: 4 }}>
-            Download
-          </Link>
         </div>
       </div>
     </nav>
