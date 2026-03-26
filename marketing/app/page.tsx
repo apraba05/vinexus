@@ -71,7 +71,7 @@ function IDEMockup({ D }: { D: Theme }) {
               padding: `4px 10px 4px ${10 + f.indent * 12}px`,
               display: "flex", alignItems: "center", gap: 5,
               background: f.active ? "rgba(0,83,219,0.15)" : "transparent",
-              borderLeft: f.active ? "2px solid #0053db" : "2px solid transparent",
+              borderLeft: f.active ? "2px solid #7C3AED" : "2px solid transparent",
               fontSize: 11, color: f.active ? "#e8f0ff" : D.termMuted,
             }}>
               <span style={{ fontSize: 10, opacity: 0.7 }}>{f.dir ? (f.open ? "▾" : "▸") : "◦"}</span>
@@ -113,7 +113,7 @@ function IDEMockup({ D }: { D: Theme }) {
             padding: "0 12px", height: "100%", display: "flex", alignItems: "center",
             fontSize: 11,
             color: i === 0 ? "rgba(255,255,255,0.85)" : D.termMuted,
-            borderBottom: i === 0 ? "2px solid #0053db" : "2px solid transparent",
+            borderBottom: i === 0 ? "2px solid #7C3AED" : "2px solid transparent",
           }}>
             {tab}
           </div>
@@ -144,32 +144,32 @@ const FEATURES = [
   {
     title: "Monaco Editor",
     desc: "Full VS Code engine with IntelliSense, syntax highlighting for 50+ languages, multi-file tabs, and diff view.",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0053db" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>,
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>,
   },
   {
     title: "Integrated Terminal",
     desc: "Real PTY session over SSH. Full terminal emulation with color support, tab completion, and scrollback.",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0053db" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>,
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>,
   },
   {
     title: "File Explorer",
     desc: "SFTP-backed file tree with live sync. Create, rename, delete, and navigate your VM's filesystem instantly.",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0053db" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
   },
   {
     title: "Git Source Control",
     desc: "Stage, commit, push, pull, and branch from within Vinexus. Visual diff and status indicators built in.",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0053db" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>,
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>,
   },
   {
     title: "Server Management",
     desc: "Run systemctl commands, view logs, manage services, and deploy — all with safety levels and real-time output.",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0053db" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>,
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>,
   },
   {
     title: "Claude AI Integration",
     desc: "Run any AI pair programming tool — Claude Code, Aider, Cursor, or any terminal-based assistant — directly from the Vinexus integrated terminal.",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0053db" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>,
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>,
   },
 ];
 

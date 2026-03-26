@@ -10,8 +10,8 @@ export const LIGHT = {
   onSurface:            "#19315d",
   onSurfaceVariant:     "#485f8d",
   outlineVariant:       "rgba(155,178,229,0.25)",
-  primary:              "#0053db",
-  primaryContainer:     "#dbe1ff",
+  primary:              "#7C3AED",
+  primaryContainer:     "#EDE9FE",
   inverseSurface:       "#070e1d",
   termBg:     "#0d1117",
   termHeader: "#161b22",
@@ -36,8 +36,8 @@ export const DARK = {
   onSurface:            "#c9d1d9",
   onSurfaceVariant:     "#8b949e",
   outlineVariant:       "rgba(48,54,61,0.8)",
-  primary:              "#4493f8",
-  primaryContainer:     "#0d2044",
+  primary:              "#7C3AED",
+  primaryContainer:     "#2D1869",
   inverseSurface:       "#f0f6fc",
   termBg:     "#010409",
   termHeader: "#0d1117",
@@ -70,13 +70,14 @@ const ThemeContext = createContext<ThemeCtx>({
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(false);
 
-  // Read localStorage + system preference on mount
   useEffect(() => {
     const stored = localStorage.getItem("vinexus-theme");
     if (stored === "dark") {
       setIsDark(true);
-    } else if (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setIsDark(true);
+    } else if (stored === "light") {
+      setIsDark(false);
+    } else {
+      setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
     }
   }, []);
 

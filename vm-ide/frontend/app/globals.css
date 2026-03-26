@@ -31,23 +31,23 @@
   --border-subtle: rgba(155, 178, 229, 0.18);
   --border-hover:  rgba(155, 178, 229, 0.55);
 
-  /* ─── Primary Brand (#0053db) ───────────────────────────── */
-  --accent:         #0053db;
-  --accent-hover:   #0047bc;
-  --accent-muted:   #c7d7f8;
-  --accent-surface: #e8f0fe;
-  --accent-glow:    rgba(0, 83, 219, 0.12);
+  /* ─── Primary Brand (#7C3AED) ───────────────────────────── */
+  --accent:         #7C3AED;
+  --accent-hover:   #6D28D9;
+  --accent-muted:   #EDE9FE;
+  --accent-surface: #F5F3FF;
+  --accent-glow:    rgba(124, 58, 237, 0.12);
 
   /* ─── Semantic ──────────────────────────────────────────── */
   --danger:  #b91c1c;
   --success: #15803d;
   --warning: #a16207;
-  --info:    #0053db;
+  --info:    #7C3AED;
 
   /* ─── Gradients ─────────────────────────────────────────── */
-  --gradient-brand:  linear-gradient(90deg, #0053db 0%, #4f8ef7 100%);
-  --gradient-subtle: linear-gradient(135deg, rgba(0, 83, 219, 0.06) 0%, rgba(79, 142, 247, 0.03) 100%);
-  --gradient-hero:   linear-gradient(135deg, #f9f9ff 0%, #eef2ff 60%, #e8f0fe 100%);
+  --gradient-brand:  linear-gradient(90deg, #7C3AED 0%, #A78BFA 100%);
+  --gradient-subtle: linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(167, 139, 250, 0.03) 100%);
+  --gradient-hero:   linear-gradient(135deg, #f9f9ff 0%, #f3f0ff 60%, #ede9fe 100%);
 
   /* ─── Misc ──────────────────────────────────────────────── */
   --scrollbar:  rgba(155, 178, 229, 0.3);
@@ -73,9 +73,9 @@
   --marketing-text-bright:#e8f0ff;
   --marketing-text-primary:#b8cef0;
   --marketing-text-muted: #5a7ab0;
-  --marketing-accent:     #0053db;
-  --marketing-accent-light:#3b82f6;
-  --marketing-teal:       #0ea5e9;
+  --marketing-accent:      #7C3AED;
+  --marketing-accent-light:#8B5CF6;
+  --marketing-teal:        #0ea5e9;
 }
 
 /* ─── Dark Mode Theme ────────────────────────────────────── */
@@ -96,16 +96,16 @@
   --border-subtle: rgba(48, 54, 61, 0.5);
   --border-hover:  rgba(99, 110, 123, 0.6);
 
-  --accent:         #4493f8;
-  --accent-hover:   #5aa3ff;
-  --accent-muted:   #1a3a6b;
-  --accent-surface: #1a2d4d;
-  --accent-glow:    rgba(68, 147, 248, 0.15);
+  --accent:         #7C3AED;
+  --accent-hover:   #8B5CF6;
+  --accent-muted:   #3B0D8A;
+  --accent-surface: #2D1869;
+  --accent-glow:    rgba(124, 58, 237, 0.15);
 
   --danger:  #f85149;
   --success: #3fb950;
   --warning: #d29922;
-  --info:    #4493f8;
+  --info:    #7C3AED;
 
   --scrollbar:  rgba(99, 110, 123, 0.3);
 }
@@ -182,7 +182,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px rgba(0, 83, 219, 0.15);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
 input::placeholder { color: var(--text-muted); }
@@ -194,7 +194,7 @@ input::placeholder { color: var(--text-muted); }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(155, 178, 229, 0.5); }
 
-::selection { background: rgba(0, 83, 219, 0.15); color: var(--text-bright); }
+::selection { background: rgba(124, 58, 237, 0.15); color: var(--text-bright); }
 
 /* ─── Keyframes ───────────────────────────────────────────── */
 
@@ -377,7 +377,7 @@ input::placeholder { color: var(--text-muted); }
 
 .auth-input:focus {
   border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px rgba(0, 83, 219, 0.12);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
 }
 
 .oauth-btn {
@@ -644,13 +644,13 @@ input::placeholder { color: var(--text-muted); }
 }
 
 .pricing-card-highlight {
-  border-color: rgba(0, 83, 219, 0.3);
-  background: linear-gradient(145deg, rgba(0, 83, 219, 0.03) 0%, var(--bg-elevated) 100%);
+  border-color: rgba(124, 58, 237, 0.3);
+  background: linear-gradient(145deg, rgba(124, 58, 237, 0.03) 0%, var(--bg-elevated) 100%);
 }
 
 .pricing-card-highlight:hover {
-  border-color: rgba(0, 83, 219, 0.5);
-  box-shadow: 0 8px 32px rgba(0, 83, 219, 0.08);
+  border-color: rgba(124, 58, 237, 0.5);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08);
 }
 
 /* ─── IDE Mockup (marketing hero) ───────────────────────── */
@@ -728,7 +728,7 @@ input::placeholder { color: var(--text-muted); }
 .c-fn      { color: #0369a1; }
 .c-str     { color: #15803d; }
 .c-num     { color: #b45309; }
-.c-key     { color: #0053db; }
+.c-key     { color: #7C3AED; }
 
 .ide-terminal {
   padding: 10px 14px;
