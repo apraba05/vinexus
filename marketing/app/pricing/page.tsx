@@ -4,6 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/ThemeContext";
 
+// ── Annual prices (roughly 2 months free) ───────────────────────────────────
+const ANNUAL: Record<string, { price: string; perMonth: string; savings: string }> = {
+  premium:    { price: "$190/yr", perMonth: "~$16/mo", savings: "Save $38/yr" },
+  max:        { price: "$490/yr", perMonth: "~$41/mo", savings: "Save $98/yr" },
+  "ai-pro":   { price: "$990/yr", perMonth: "~$83/mo", savings: "Save $198/yr" },
+};
+
 // ── Tier definitions ────────────────────────────────────────────────────────
 interface Tier {
   key: string;
@@ -174,8 +181,10 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 export default function PricingPage() {
   const { D } = useTheme();
   const router = useRouter();
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<string | null>(null);
+  const isAnnual = billing === "annual";
 
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(data => {
@@ -196,7 +205,7 @@ export default function PricingPage() {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planKey: tier.key, billing: "monthly" }),
+        body: JSON.stringify({ planKey: tier.key, billing }),
       });
       if (res.status === 401) { router.push(`/login?next=/pricing`); return; }
       const data = await res.json();
@@ -220,8 +229,31 @@ export default function PricingPage() {
         <h1 style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.04em", lineHeight: 1.1, margin: "0 0 16px" }}>
           A plan for every team
         </h1>
-        <p style={{ fontSize: 15, color: D.onSurfaceVariant, maxWidth: 440, margin: "0 auto", lineHeight: 1.65 }}>
+        <p style={{ fontSize: 15, color: D.onSurfaceVariant, maxWidth: 440, margin: "0 auto 28px", lineHeight: 1.65 }}>
           Start free. Upgrade as your AI usage grows. Cancel anytime.
+        </p>
+
+        {/* Billing toggle */}
+        <div style={{ display: "inline-flex", borderRadius: 6, background: D.surfaceContainerHigh, padding: 3, gap: 2 }}>
+          {(["monthly", "annual"] as const).map((b) => (
+            <button key={b} onClick={() => setBilling(b)} style={{
+              padding: "6px 18px", borderRadius: 4, border: "none",
+              fontSize: 13, fontWeight: 600, cursor: "pointer",
+              background: billing === b ? D.primary : "transparent",
+              color: billing === b ? "#fff" : D.onSurfaceVariant,
+              fontFamily: "inherit", transition: "background 0.15s, color 0.15s",
+            }}>
+              {b === "monthly" ? "Monthly" : "Annual"}
+              {b === "annual" && (
+                <span style={{ marginLeft: 6, fontSize: 10, background: "#15803d", color: "#fff", padding: "2px 6px", borderRadius: 3 }}>
+                  −17%
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        <p style={{ fontSize: 12, color: D.onSurfaceVariant, marginTop: 10 }}>
+          {isAnnual ? "Billed annually · ~2 months free" : "Billed monthly · Switch to annual to save"}
         </p>
       </section>
 
@@ -276,14 +308,28 @@ export default function PricingPage() {
                   </div>
 
                   {/* Price */}
-                  <div style={{ marginBottom: 4 }}>
-                    <span style={{ fontSize: 28, fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                      {tier.price}
-                    </span>
-                    {tier.period && (
-                      <span style={{ fontSize: 12, color: D.onSurfaceVariant, marginLeft: 4 }}>{tier.period}</span>
-                    )}
-                  </div>
+                  {(() => {
+                    const ann = ANNUAL[tier.key];
+                    const showAnnual = isAnnual && ann;
+                    return (
+                      <div style={{ marginBottom: 4 }}>
+                        <span style={{ fontSize: 28, fontWeight: 800, color: D.inverseSurface, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                          {showAnnual ? ann.price : tier.price}
+                        </span>
+                        {!showAnnual && tier.period && (
+                          <span style={{ fontSize: 12, color: D.onSurfaceVariant, marginLeft: 4 }}>{tier.period}</span>
+                        )}
+                        {showAnnual && (
+                          <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 11, color: D.onSurfaceVariant }}>{ann.perMonth}</span>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: "#15803d", background: "rgba(21,128,61,0.1)", padding: "1px 6px", borderRadius: 3 }}>
+                              {ann.savings}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Model + tokens subtitle */}
                   <div style={{ minHeight: 36, marginBottom: 16 }}>
