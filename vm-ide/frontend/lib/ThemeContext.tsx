@@ -68,7 +68,19 @@ const ThemeContext = createContext<ThemeCtx>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+
+    const rootTheme = document.documentElement.getAttribute("data-theme");
+    if (rootTheme === "dark") return true;
+    if (rootTheme === "light") return false;
+
+    const stored = localStorage.getItem("vinexus-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   useEffect(() => {
     const stored = localStorage.getItem("vinexus-theme");
@@ -85,11 +97,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute("data-theme", isDark ? "dark" : "light");
-    // Also update body background directly so no white flash on scroll
+    // Keep body colors in sync with the chosen theme without animating the shell.
     document.body.style.background = isDark ? "#0d1117" : "#f9f9ff";
     document.body.style.color      = isDark ? "#c9d1d9" : "#19315d";
-    // Smooth transition on mode switch
-    document.body.style.transition = "background 0.2s, color 0.2s";
   }, [isDark]);
 
   const toggle = () => {

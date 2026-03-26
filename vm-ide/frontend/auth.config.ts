@@ -8,6 +8,7 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const isDesktopShell = nextUrl.searchParams.get("desktop") === "1";
       const isProtected =
         nextUrl.pathname.startsWith("/app") ||
         nextUrl.pathname.startsWith("/account") ||
@@ -15,7 +16,9 @@ export const authConfig: NextAuthConfig = {
       const isAuthPage =
         nextUrl.pathname === "/login" || nextUrl.pathname === "/signup";
 
-      if (isProtected && !isLoggedIn) {
+      // The desktop app owns its own sign-in screen under /app, so allow
+      // unauthenticated access there when Electron opens the desktop shell.
+      if (isProtected && !isLoggedIn && !isDesktopShell) {
         return Response.redirect(new URL("/login", nextUrl));
       }
 

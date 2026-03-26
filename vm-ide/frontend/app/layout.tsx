@@ -18,8 +18,27 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  var stored = localStorage.getItem("vinexus-theme");
+                  var isDark = stored === "dark" || (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+                  var root = document.documentElement;
+                  var body = document.body;
+                  root.setAttribute("data-theme", isDark ? "dark" : "light");
+                  if (body) {
+                    body.style.background = isDark ? "#0d1117" : "#f9f9ff";
+                    body.style.color = isDark ? "#c9d1d9" : "#19315d";
+                  }
+                } catch {}
+              })();
+            `,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
