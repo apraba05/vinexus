@@ -18,12 +18,12 @@ const WEB_AUTH_ORIGIN = process.env.NEXT_PUBLIC_DESKTOP_AUTH_ORIGIN || "https://
 
 export default function LoginScreen({ onLogin }: Props) {
   const { isDark, toggle } = useTheme();
-  const [oauthLoading, setOauthLoading] = useState<"google" | "github" | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "github" | "browser" | null>(null);
   const [error, setError] = useState("");
 
   const ea = typeof window !== "undefined" ? (window as any).electronAPI : null;
 
-  const handleOAuth = async (provider: "google" | "github") => {
+  const handleOAuth = async (provider: "google" | "github" | "browser") => {
     setError("");
     if (!ea?.app?.openExternal) {
       setError("Desktop browser bridge is unavailable. Please restart Vinexus.");
@@ -31,7 +31,9 @@ export default function LoginScreen({ onLogin }: Props) {
     }
     setOauthLoading(provider);
     try {
-      const url = `${WEB_AUTH_ORIGIN}/login?desktop=1&provider=${provider}`;
+      const url = provider === "browser"
+        ? `${WEB_AUTH_ORIGIN}/login?desktop=1`
+        : `${WEB_AUTH_ORIGIN}/login?desktop=1&provider=${provider}`;
       const result = await ea.app.openExternal(url);
       if (result?.error) {
         setError(result.error);
@@ -104,6 +106,33 @@ export default function LoginScreen({ onLogin }: Props) {
             {oauthLoading === "google" ? "Opening browser…" : "Continue with Google"}
           </button>
         </div>
+
+        <div style={styles.divider}>
+          <span style={styles.dividerLine} />
+          <span style={styles.dividerText}>or</span>
+          <span style={styles.dividerLine} />
+        </div>
+
+        <button
+          type="button"
+          style={{
+            ...styles.browserBtn,
+            ...(oauthLoading ? styles.btnDisabled : null),
+          }}
+          onClick={() => handleOAuth("browser")}
+          disabled={!!oauthLoading}
+        >
+          {oauthLoading === "browser" ? (
+            <span style={{ ...styles.spinner, borderColor: "rgba(124,58,237,0.3)", borderTopColor: "#7C3AED" }} />
+          ) : (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          )}
+          {oauthLoading === "browser" ? "Opening browser…" : "Continue with Browser"}
+        </button>
 
         {error && <div style={styles.error}>{error}</div>}
 
@@ -232,11 +261,47 @@ const styles: Record<string, any> = {
     fontFamily: "var(--font-sans)",
     marginBottom: 12,
   },
+  divider: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    margin: "16px 0",
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    background: "var(--border, rgba(48,54,61,0.8))",
+  },
+  dividerText: {
+    fontSize: 10,
+    fontWeight: 600,
+    color: "var(--text-muted, #484f58)",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.08em",
+    fontFamily: "var(--font-sans)",
+  },
+  browserBtn: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+    padding: "12px 14px",
+    background: "transparent",
+    color: "var(--accent, #7C3AED)",
+    border: "1px solid var(--accent, #7C3AED)",
+    borderRadius: 8,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    fontFamily: "var(--font-sans)",
+    transition: "opacity 0.15s",
+  },
   hint: {
     fontSize: 11,
     color: "var(--text-muted, #484f58)",
     textAlign: "center" as const,
-    margin: "8px 0 0",
+    margin: "14px 0 0",
     fontFamily: "var(--font-sans)",
   },
 };
