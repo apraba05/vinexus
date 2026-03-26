@@ -106,7 +106,7 @@ const TIERS: Tier[] = [
     tokens: "Custom token allocation",
     inheritLabel: "Everything in AI Pro, plus",
     features: [
-      "Unlimited AI requests",
+      "Custom token allocation",
       "SSO & access controls",
       "On-premise deployment",
       "Custom integrations",

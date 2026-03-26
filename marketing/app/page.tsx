@@ -178,7 +178,7 @@ const PLANS = [
     name: "Free",
     price: "$0",
     period: "/month",
-    features: ["1 VM connection", "Monaco editor", "Terminal & SFTP", "Git source control"],
+    features: ["1 VM connection", "Monaco editor", "Integrated terminal & SFTP", "Git source control"],
     cta: "Download Free",
     href: "/download",
   },
@@ -186,7 +186,7 @@ const PLANS = [
     name: "Premium",
     price: "$19",
     period: "/month",
-    features: ["3 VM connections", "AI pair programming", "AI hints (50/day)", "Deploy automation"],
+    features: ["3 VM connections", "Claude Haiku AI (5M tokens/mo)", "Deploy automation", "AI file validation"],
     cta: "Get Premium",
     href: "/pricing",
   },
@@ -195,7 +195,7 @@ const PLANS = [
     price: "$49",
     period: "/month",
     badge: "Most Popular",
-    features: ["Unlimited VMs", "Claude Sonnet AI", "500 AI requests/day", "Priority support"],
+    features: ["Unlimited VM connections", "Claude Sonnet AI (10M tokens/mo)", "Docker container management", "Deployment pipelines"],
     cta: "Get Max",
     href: "/pricing",
     highlight: true,
@@ -204,7 +204,7 @@ const PLANS = [
     name: "Enterprise",
     price: "Contact",
     period: "",
-    features: ["Unlimited AI requests", "Custom integrations", "SSO & team mgmt", "Dedicated engineer"],
+    features: ["Custom token allocation", "SSO & access controls", "Custom integrations", "Dedicated support engineer"],
     cta: "Contact Us",
     href: "/contact",
   },
@@ -386,10 +386,10 @@ export default function LandingPage() {
               Any AI assistant,<br />directly in your terminal
             </h2>
             <p style={{ fontSize: 14, color: D.onSurfaceVariant, lineHeight: 1.75, margin: "0 0 14px" }}>
-              Run Claude Code, Aider, or any terminal-based AI tool directly on your VM from the Vinexus integrated terminal. Full AI pair programming — available on any plan.
+              Run Claude Code, Aider, or any terminal-based AI tool directly on your VM from the Vinexus integrated terminal. Works on every plan — no setup required.
             </p>
             <p style={{ fontSize: 14, color: D.onSurfaceVariant, lineHeight: 1.75, margin: "0 0 28px" }}>
-              Premium and Max plans also include built-in AI hints. Or bring your own API key and run any AI tool you prefer.
+              Premium and above include built-in Claude AI with a monthly token budget. Or bring your own API key and use any AI tool you prefer.
             </p>
             <div style={{ display: "flex", gap: 10 }}>
               <Btn href="/docs#claude-integration" primary D={D}>Read the Docs</Btn>
