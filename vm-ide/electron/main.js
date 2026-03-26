@@ -14,7 +14,6 @@
 
 const { app, BrowserWindow, ipcMain, shell, protocol, session, dialog, utilityProcess } = require("electron");
 const path = require("path");
-const { spawn } = require("child_process");
 const log = require("electron-log");
 const { autoUpdater } = require("electron-updater");
 const Store = require("electron-store");
