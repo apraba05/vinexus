@@ -102,17 +102,22 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    await prisma.account.upsert({
-      where: { provider_providerAccountId: { provider: "github", providerAccountId } },
-      update: { access_token: accessToken },
-      create: {
-        userId: user.id,
-        type: "oauth",
-        provider: "github",
-        providerAccountId,
-        access_token: accessToken,
-      },
-    });
+    // Link OAuth account — non-fatal if Account table missing in DB
+    try {
+      await prisma.account.upsert({
+        where: { provider_providerAccountId: { provider: "github", providerAccountId } },
+        update: { access_token: accessToken },
+        create: {
+          userId: user.id,
+          type: "oauth",
+          provider: "github",
+          providerAccountId,
+          access_token: accessToken,
+        },
+      });
+    } catch (accountErr) {
+      console.warn("GitHub OAuth: account upsert failed (non-fatal):", accountErr);
+    }
 
     const token = await signSession({ userId: user.id, email: user.email, name: user.name ?? "" });
     const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
@@ -124,6 +129,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (err) {
     console.error("GitHub OAuth callback error:", err);
-    return NextResponse.redirect(`${origin}/login?error=server_error`);
+    const msg = err instanceof Error ? encodeURIComponent(err.message.slice(0, 120)) : "unknown";
+    return NextResponse.redirect(`${origin}/login?error=server_error&detail=${msg}`);
   }
 }

@@ -90,17 +90,22 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    await prisma.account.upsert({
-      where: { provider_providerAccountId: { provider: "google", providerAccountId } },
-      update: { access_token: tokenData.access_token },
-      create: {
-        userId: user.id,
-        type: "oauth",
-        provider: "google",
-        providerAccountId,
-        access_token: tokenData.access_token,
-      },
-    });
+    // Link OAuth account — non-fatal if Account table missing in DB
+    try {
+      await prisma.account.upsert({
+        where: { provider_providerAccountId: { provider: "google", providerAccountId } },
+        update: { access_token: tokenData.access_token },
+        create: {
+          userId: user.id,
+          type: "oauth",
+          provider: "google",
+          providerAccountId,
+          access_token: tokenData.access_token,
+        },
+      });
+    } catch (accountErr) {
+      console.warn("Google OAuth: account upsert failed (non-fatal):", accountErr);
+    }
 
     const token = await signSession({ userId: user.id, email: user.email, name: user.name ?? "" });
     const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
@@ -112,6 +117,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (err) {
     console.error("Google OAuth callback error:", err);
-    return NextResponse.redirect(`${origin}/login?error=server_error`);
+    const msg = err instanceof Error ? encodeURIComponent(err.message.slice(0, 120)) : "unknown";
+    return NextResponse.redirect(`${origin}/login?error=server_error&detail=${msg}`);
   }
 }
