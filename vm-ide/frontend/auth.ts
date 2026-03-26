@@ -80,10 +80,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (token?.id) {
-        session.user.id = token.id as string;
+      // Backfill token.id for sessions created before the jwt callback set it.
+      // token.email is always present so we can resolve the user id from the DB.
+      let userId = token.id as string | undefined;
+      if (!userId && token.email) {
+        const found = await prisma.user.findUnique({
+          where: { email: token.email as string },
+          select: { id: true },
+        });
+        if (found) userId = found.id;
+      }
 
-        const planState = await getUserPlanState(token.id as string);
+      if (userId) {
+        session.user.id = userId;
+
+        const planState = await getUserPlanState(userId);
         let dbUser = planState.user;
 
         // Auto-promote the owner email to "owner" role if not already set
