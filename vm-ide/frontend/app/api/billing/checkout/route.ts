@@ -5,19 +5,19 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 // Maps planKey + billing to the env var that holds the Stripe price ID.
-// Add the corresponding env vars in Vercel for each plan.
+// Env var names match what is configured in Vercel (STRIPE_PRICE_<PLAN>_<PERIOD>).
 function getPriceId(planKey: string, billing: string): string | undefined {
   const annual = billing === "annual";
   const map: Record<string, string | undefined> = {
     premium: annual
-      ? process.env.STRIPE_PREMIUM_ANNUAL_PRICE_ID
-      : process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
+      ? process.env.STRIPE_PRICE_PREMIUM_ANNUAL
+      : process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
     max: annual
-      ? process.env.STRIPE_MAX_ANNUAL_PRICE_ID
-      : process.env.STRIPE_MAX_MONTHLY_PRICE_ID,
+      ? process.env.STRIPE_PRICE_MAX_ANNUAL
+      : process.env.STRIPE_PRICE_MAX_MONTHLY,
     "ai-pro": annual
-      ? process.env.STRIPE_AIPRO_ANNUAL_PRICE_ID
-      : process.env.STRIPE_AIPRO_MONTHLY_PRICE_ID,
+      ? process.env.STRIPE_PRICE_AI_PRO_ANNUAL
+      : process.env.STRIPE_PRICE_AI_PRO_MONTHLY,
   };
   return map[planKey];
 }

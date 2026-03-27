@@ -100,8 +100,10 @@ jobs:
         with:
           name: mac-build
           path: |
-            vm-ide/dist-electron/Vinexus-mac.dmg
+            vm-ide/dist-electron/*.dmg
+            vm-ide/dist-electron/*-mac.zip
             vm-ide/dist-electron/latest-mac.yml
+          if-no-files-found: error
           retention-days: 1
 
   # ── Windows ────────────────────────────────────────────────────────────────
@@ -318,13 +320,14 @@ jobs:
 
             **First time?** Create an account at [vinexus.space](https://vinexus.space) before launching the app.
           files: |
-            artifacts/Vinexus-mac.dmg
+            artifacts/*.dmg
+            artifacts/*-mac.zip
             artifacts/Vinexus-Setup-win.exe
             artifacts/Vinexus-linux.AppImage
             artifacts/Vinexus-linux.deb
             artifacts/latest-mac.yml
             artifacts/latest.yml
             artifacts/latest-linux.yml
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

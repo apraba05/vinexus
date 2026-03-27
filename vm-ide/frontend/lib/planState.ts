@@ -19,6 +19,7 @@ function normalizeDesktopFeatures(rawFeatures: any, planKey: string) {
     return normalized;
   }
 
+  // Legacy desktop feature shape
   if (
     "ide" in rawFeatures ||
     "terminal" in rawFeatures ||
@@ -34,6 +35,7 @@ function normalizeDesktopFeatures(rawFeatures: any, planKey: string) {
     };
   }
 
+  // Newer billing plan shape used by pricing/Stripe flows
   const paidPlan = planKey !== "free";
   return {
     ...normalized,

@@ -74,9 +74,9 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         applyDesktopUser(res?.user);
       } catch {
-        if (!cancelled) {
-          applyDesktopUser(null);
-        }
+        // Transient error (e.g. backend not yet ready) — leave desktopPlan
+        // unchanged so we don't flash "Upgrade to Pro" for paid users.
+        // The window-focus listener will retry automatically.
       } finally {
         if (!cancelled) {
           setDesktopLoaded(true);
@@ -112,7 +112,15 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const plan = desktopPlan || sessionPlan || "free";
   const features: PlanFeatures = desktopFeatures || sessionFeatures || defaultFeatures;
   const isPro = plan !== "free";
-  const isLoading = status === "loading" || !desktopLoaded;
+
+  // In Electron, desktopPlan===null after desktopLoaded means the first sync
+  // failed (transient). Keep isLoading true so we don't flash "Upgrade to Pro"
+  // before the window-focus retry resolves the real plan.
+  const isElectronEnv = typeof window !== "undefined" && "electronAPI" in (window as any);
+  const isLoading =
+    status === "loading" ||
+    !desktopLoaded ||
+    (isElectronEnv && desktopPlan === null);
 
   return (
     <PlanContext.Provider value={{ plan, features, isPro, isLoading }}>
