@@ -21,3 +21,5 @@ out/
 
 # OS
 Thumbs.db
+.vercel
+.env*.local

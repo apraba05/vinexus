@@ -6,18 +6,40 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://vinexus.space";
 
+function firstDefined(...values: Array<string | undefined>): string | undefined {
+  return values.find((value) => typeof value === "string" && value.length > 0);
+}
+
 function getPriceId(planKey: string, billing: string): string | undefined {
   const annual = billing === "annual";
   const map: Record<string, string | undefined> = {
     premium: annual
-      ? process.env.STRIPE_PREMIUM_ANNUAL_PRICE_ID
-      : process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
+      ? firstDefined(
+          process.env.STRIPE_PRICE_PREMIUM_ANNUAL,
+          process.env.STRIPE_PREMIUM_ANNUAL_PRICE_ID
+        )
+      : firstDefined(
+          process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
+          process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID
+        ),
     max: annual
-      ? process.env.STRIPE_MAX_ANNUAL_PRICE_ID
-      : process.env.STRIPE_MAX_MONTHLY_PRICE_ID,
+      ? firstDefined(
+          process.env.STRIPE_PRICE_MAX_ANNUAL,
+          process.env.STRIPE_MAX_ANNUAL_PRICE_ID
+        )
+      : firstDefined(
+          process.env.STRIPE_PRICE_MAX_MONTHLY,
+          process.env.STRIPE_MAX_MONTHLY_PRICE_ID
+        ),
     "ai-pro": annual
-      ? process.env.STRIPE_AIPRO_ANNUAL_PRICE_ID
-      : process.env.STRIPE_AIPRO_MONTHLY_PRICE_ID,
+      ? firstDefined(
+          process.env.STRIPE_PRICE_AI_PRO_ANNUAL,
+          process.env.STRIPE_AIPRO_ANNUAL_PRICE_ID
+        )
+      : firstDefined(
+          process.env.STRIPE_PRICE_AI_PRO_MONTHLY,
+          process.env.STRIPE_AIPRO_MONTHLY_PRICE_ID
+        ),
   };
   return map[planKey];
 }

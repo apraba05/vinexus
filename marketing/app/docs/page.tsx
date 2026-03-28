@@ -193,6 +193,17 @@ function InstallMacOS() {
       <Info>
         This command is safe and simply tells macOS that you explicitly trust this application. It is equivalent to clicking &quot;Open Anyway&quot; in System Settings.
       </Info>
+
+      <h3 style={S.h3}>Step 4: Keychain Access Prompt</h3>
+      <p style={S.para}>
+        On first launch, macOS will show a dialog: <strong style={S.strong}>&quot;Vinexus wants to access key &apos;Vinexus Safe Storage&apos; in your keychain.&quot;</strong>
+      </p>
+      <p style={S.para}>
+        Click <strong style={S.strong}>Always Allow</strong>. This allows Vinexus to securely store your credentials and settings using the macOS keychain. It only appears once.
+      </p>
+      <Info>
+        If you click <strong>Deny</strong> or dismiss this dialog, Vinexus may appear stuck on a black screen. If this happens, quit the app and reopen it — the prompt will appear again.
+      </Info>
     </>
   );
 }
@@ -896,6 +907,16 @@ function Troubleshooting() {
         <li>Or: System Settings → Privacy &amp; Security → Open Anyway</li>
         <li>Or: <code style={S.inlineCode}>xattr -dr com.apple.quarantine /Applications/Vinexus.app</code></li>
       </ol>
+
+      <h3 style={S.h3}>Black Screen on First Launch (macOS)</h3>
+      <p style={S.para}>
+        If Vinexus shows a black screen after installation, a macOS keychain prompt may have appeared behind the app window. The dialog reads: <strong style={S.strong}>&quot;Vinexus wants to access key &apos;Vinexus Safe Storage&apos; in your keychain.&quot;</strong>
+      </p>
+      <ul style={S.list}>
+        <li>Press <strong style={S.strong}>Cmd+Tab</strong> or click the Vinexus icon in the Dock to check for a dialog behind the main window.</li>
+        <li>Click <strong style={S.strong}>Always Allow</strong> on the keychain dialog. The app will load immediately.</li>
+        <li>If no dialog is visible, quit Vinexus (<strong style={S.strong}>Cmd+Q</strong>) and reopen it — the prompt will appear again.</li>
+      </ul>
 
       <h3 style={S.h3}>Linux: App won&apos;t start</h3>
       <ul style={S.list}>

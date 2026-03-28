@@ -4,6 +4,10 @@ const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "apraba05@gmail.com";
 
+function firstDefined(...values: Array<string | undefined>): string | null {
+  return values.find((value) => typeof value === "string" && value.length > 0) ?? null;
+}
+
 async function main() {
   // Ensure Plan rows exist (needed by FK constraints and desktop plan lookup)
   const plans = [
@@ -25,7 +29,11 @@ async function main() {
     {
       name: "premium",
       displayName: "Premium",
-      stripePriceId: process.env.STRIPE_PRICE_PREMIUM || null,
+      stripePriceId: firstDefined(
+        process.env.STRIPE_PRICE_PREMIUM,
+        process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
+        process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID
+      ),
       price: 1900,
       interval: "month",
       features: {
@@ -40,7 +48,11 @@ async function main() {
     {
       name: "max",
       displayName: "Max",
-      stripePriceId: process.env.STRIPE_PRICE_MAX || null,
+      stripePriceId: firstDefined(
+        process.env.STRIPE_PRICE_MAX,
+        process.env.STRIPE_PRICE_MAX_MONTHLY,
+        process.env.STRIPE_MAX_MONTHLY_PRICE_ID
+      ),
       price: 4900,
       interval: "month",
       features: {
@@ -55,7 +67,11 @@ async function main() {
     {
       name: "ai-pro",
       displayName: "AI Pro",
-      stripePriceId: process.env.STRIPE_PRICE_AI_PRO || null,
+      stripePriceId: firstDefined(
+        process.env.STRIPE_PRICE_AI_PRO,
+        process.env.STRIPE_PRICE_AI_PRO_MONTHLY,
+        process.env.STRIPE_AIPRO_MONTHLY_PRICE_ID
+      ),
       price: 9900,
       interval: "month",
       features: {
