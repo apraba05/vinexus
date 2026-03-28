@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { PLAN_FEATURES, type Plan } from "./plans";
 
 export const DEFAULT_FEATURES = {
   ide: true,
@@ -10,14 +11,47 @@ export const DEFAULT_FEATURES = {
   agentDev: false,
 };
 
-function normalizeDesktopFeatures(rawFeatures: any, planKey: string) {
-  const normalized = {
-    ...DEFAULT_FEATURES,
-  };
-
-  if (!rawFeatures || typeof rawFeatures !== "object") {
-    return normalized;
+function normalizePlanKey(planKey: string): Plan | null {
+  if (planKey === "free" || planKey === "premium" || planKey === "max" || planKey === "ai-pro" || planKey === "enterprise") {
+    return planKey;
   }
+
+  if (planKey === "pro") {
+    return "ai-pro";
+  }
+
+  return null;
+}
+
+function getFallbackDesktopFeatures(planKey: string) {
+  const normalizedPlanKey = normalizePlanKey(planKey);
+  const planFeatures = normalizedPlanKey ? PLAN_FEATURES[normalizedPlanKey] : null;
+  const paidPlan = normalizedPlanKey !== null && normalizedPlanKey !== "free";
+
+  if (!planFeatures) {
+    return {
+      ...DEFAULT_FEATURES,
+    };
+  }
+
+  return {
+    ...DEFAULT_FEATURES,
+    ide: true,
+    terminal: true,
+    files: true,
+    deploy: Boolean(planFeatures.deployAutomation),
+    commands: paidPlan,
+    ai: Boolean(planFeatures.aiEnabled),
+    agentDev: normalizedPlanKey === "ai-pro" || normalizedPlanKey === "enterprise",
+  };
+}
+
+function normalizeDesktopFeatures(rawFeatures: any, planKey: string) {
+  if (!rawFeatures || typeof rawFeatures !== "object") {
+    return getFallbackDesktopFeatures(planKey);
+  }
+
+  const normalized = getFallbackDesktopFeatures(planKey);
 
   // Legacy desktop feature shape
   if (
@@ -37,6 +71,7 @@ function normalizeDesktopFeatures(rawFeatures: any, planKey: string) {
 
   // Newer billing plan shape used by pricing/Stripe flows
   const paidPlan = planKey !== "free";
+  const normalizedPlanKey = normalizePlanKey(planKey);
   return {
     ...normalized,
     ide: true,
@@ -45,7 +80,10 @@ function normalizeDesktopFeatures(rawFeatures: any, planKey: string) {
     deploy: Boolean(rawFeatures.deployAutomation),
     commands: paidPlan,
     ai: Boolean(rawFeatures.aiEnabled),
-    agentDev: Boolean(rawFeatures.agentDev),
+    agentDev:
+      Boolean(rawFeatures.agentDev) ||
+      normalizedPlanKey === "ai-pro" ||
+      normalizedPlanKey === "enterprise",
   };
 }
 

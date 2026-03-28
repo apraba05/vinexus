@@ -27,6 +27,14 @@ export async function POST(req: NextRequest) {
   const body2 = body as { userId: string; plan?: string };
   const planName = body2.plan ?? "ai-pro";
 
+  const plan = await prisma.plan.findUnique({
+    where: { name: planName },
+  });
+
+  if (!plan) {
+    return NextResponse.json({ error: `Unknown plan: ${planName}` }, { status: 400 });
+  }
+
   const updated = await prisma.user.update({
     where: { id: userId },
     data: { plan: planName } as any,
@@ -34,6 +42,42 @@ export async function POST(req: NextRequest) {
 
   if (!updated) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const existingSubscription = await prisma.subscription.findFirst({
+    where: { userId },
+    orderBy: [
+      { currentPeriodEnd: "desc" },
+      { createdAt: "desc" },
+    ],
+  });
+
+  const entitlementDates = {
+    currentPeriodStart: new Date(),
+    currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+  };
+
+  if (existingSubscription) {
+    await prisma.subscription.update({
+      where: { id: existingSubscription.id },
+      data: {
+        planId: plan.id,
+        status: "active",
+        canceledAt: null,
+        cancelAtPeriodEnd: false,
+        ...entitlementDates,
+      },
+    });
+  } else {
+    await prisma.subscription.create({
+      data: {
+        userId,
+        planId: plan.id,
+        status: "active",
+        cancelAtPeriodEnd: false,
+        ...entitlementDates,
+      },
+    });
   }
 
   return NextResponse.json({ ok: true, plan: planName });

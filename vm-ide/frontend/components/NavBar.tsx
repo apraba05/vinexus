@@ -30,7 +30,7 @@ export default function NavBar() {
   const [scrolled, setScrolled] = useState(false);
 
   const plan = (session as any)?.plan || "free";
-  const isPro = plan === "pro" || plan === "max" || plan === "premium" || plan === "enterprise" || plan === "ai-pro";
+  const isPro = plan !== "free";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);

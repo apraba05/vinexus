@@ -35,6 +35,7 @@ const DEV_MODE = !app.isPackaged;
 const APP_URL = `http://localhost:${FRONTEND_PORT}/app?desktop=1`;
 const STARTUP_URL = `${APP_URL}&forceLogin=1`;
 const DEEP_LINK_PROTOCOL = "vinexus";
+const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 app.setName("Vinexus");
 
@@ -94,6 +95,43 @@ if (process.defaultApp) {
 // ─── Child Process Handles ────────────────────────────────────────────────────
 let frontendProcess = null;
 let backendProcess = null;
+let updateCheckTimer = null;
+let updateCheckInFlight = false;
+
+function checkForAppUpdates(reason = "manual") {
+  if (DEV_MODE) return Promise.resolve(null);
+  if (updateCheckInFlight) {
+    log.info(`Skipping update check (${reason}) because another check is already running`);
+    return Promise.resolve(null);
+  }
+
+  updateCheckInFlight = true;
+  log.info(`Checking for app updates (${reason})`);
+
+  return autoUpdater.checkForUpdates()
+    .catch((err) => {
+      log.warn(`Update check failed (${reason}):`, err?.message || err);
+      return null;
+    })
+    .finally(() => {
+      updateCheckInFlight = false;
+    });
+}
+
+function setupAutoUpdater() {
+  if (DEV_MODE) return;
+
+  autoUpdater.logger = log;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  checkForAppUpdates("startup");
+
+  if (updateCheckTimer) clearInterval(updateCheckTimer);
+  updateCheckTimer = setInterval(() => {
+    checkForAppUpdates("interval");
+  }, UPDATE_CHECK_INTERVAL_MS);
+}
 
 /**
  * Poll a URL until it returns any HTTP response or the timeout elapses.
@@ -487,8 +525,7 @@ app.whenReady().then(async () => {
 
   // Auto-updater (only in production)
   if (!DEV_MODE) {
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
+    setupAutoUpdater();
   }
 });
 
@@ -518,6 +555,8 @@ app.on("activate", () => {
     createWindow();
     mainWindow.loadURL(STARTUP_URL).catch((err) => log.error("Activate loadURL failed:", err));
   }
+
+  checkForAppUpdates("activate");
 });
 
 app.on("window-all-closed", () => {
@@ -538,6 +577,10 @@ app.on("before-quit", () => {
     backendProcess.kill();
     backendProcess = null;
   }
+  if (updateCheckTimer) {
+    clearInterval(updateCheckTimer);
+    updateCheckTimer = null;
+  }
   cleanupPty();
 });
 
@@ -549,11 +592,19 @@ autoUpdater.on("update-available", (info) => {
   }
 });
 
+autoUpdater.on("update-not-available", (info) => {
+  log.info("No update available:", info?.version || app.getVersion());
+});
+
 autoUpdater.on("update-downloaded", (info) => {
   log.info("Update downloaded:", info.version);
   if (mainWindow) {
     mainWindow.webContents.send("updater:update-downloaded", info);
   }
+});
+
+autoUpdater.on("error", (err) => {
+  log.error("Auto-updater error:", err?.message || err);
 });
 
 ipcMain.handle("updater:install-and-restart", () => {

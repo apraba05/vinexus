@@ -59,16 +59,17 @@ export async function POST(req: NextRequest) {
         name: name || null,
         passwordHash,
         role,
+        plan: assignPro ? "ai-pro" : "free",
       },
     });
 
     if (assignPro) {
-      const proPlan = await prisma.plan.findUnique({ where: { name: "pro" } });
-      if (proPlan) {
+      const paidPlan = await prisma.plan.findUnique({ where: { name: "ai-pro" } });
+      if (paidPlan) {
         await prisma.subscription.create({
           data: {
             userId: user.id,
-            planId: proPlan.id,
+            planId: paidPlan.id,
             status: "active",
             currentPeriodStart: new Date(),
             currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),

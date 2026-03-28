@@ -3,96 +3,159 @@ import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || "";
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "changeme123!";
+
+const plans = [
+  {
+    name: "free",
+    displayName: "Free",
+    stripePriceId: null,
+    price: 0,
+    interval: null,
+    features: {
+      maxVmConnections: 1,
+      aiEnabled: false,
+      aiModel: null,
+      aiRequestsPerDay: 0,
+      deployAutomation: false,
+      prioritySupport: false,
+    },
+  },
+  {
+    name: "premium",
+    displayName: "Premium",
+    stripePriceId: process.env.STRIPE_PRICE_PREMIUM || null,
+    price: 1900,
+    interval: "month",
+    features: {
+      maxVmConnections: 3,
+      aiEnabled: true,
+      aiModel: "claude-haiku-4-5-20251001",
+      aiRequestsPerDay: 50,
+      deployAutomation: true,
+      prioritySupport: false,
+    },
+  },
+  {
+    name: "max",
+    displayName: "Max",
+    stripePriceId: process.env.STRIPE_PRICE_MAX || null,
+    price: 4900,
+    interval: "month",
+    features: {
+      maxVmConnections: -1,
+      aiEnabled: true,
+      aiModel: "claude-sonnet-4-6",
+      aiRequestsPerDay: 500,
+      deployAutomation: true,
+      prioritySupport: true,
+    },
+  },
+  {
+    name: "ai-pro",
+    displayName: "AI Pro",
+    stripePriceId: process.env.STRIPE_PRICE_AI_PRO || null,
+    price: 9900,
+    interval: "month",
+    features: {
+      maxVmConnections: -1,
+      aiEnabled: true,
+      aiModel: "claude-opus-4-6",
+      aiRequestsPerDay: 50,
+      deployAutomation: true,
+      prioritySupport: true,
+      agentDev: true,
+    },
+  },
+  {
+    name: "enterprise",
+    displayName: "Enterprise",
+    stripePriceId: null,
+    price: 0,
+    interval: null,
+    features: {
+      maxVmConnections: -1,
+      aiEnabled: true,
+      aiModel: "claude-opus-4-6",
+      aiRequestsPerDay: -1,
+      deployAutomation: true,
+      prioritySupport: true,
+      agentDev: true,
+    },
+  },
+];
+
 async function main() {
-  // Free plan — only IDE, terminal, files
-  await prisma.plan.upsert({
-    where: { name: "free" },
-    update: {
-      features: {
-        ide: true,
-        terminal: true,
-        files: true,
-        deploy: false,
-        commands: false,
-        ai: false,
+  console.log("Seeding plans...");
+  for (const plan of plans) {
+    await prisma.plan.upsert({
+      where: { name: plan.name },
+      update: {
+        displayName: plan.displayName,
+        price: plan.price,
+        interval: plan.interval,
+        features: plan.features,
+        ...(plan.stripePriceId ? { stripePriceId: plan.stripePriceId } : {}),
       },
-    },
-    create: {
-      name: "free",
-      displayName: "Free",
-      price: 0,
-      features: {
-        ide: true,
-        terminal: true,
-        files: true,
-        deploy: false,
-        commands: false,
-        ai: false,
-      },
-    },
-  });
-
-  // Pro plan
-  await prisma.plan.upsert({
-    where: { name: "pro" },
-    update: {},
-    create: {
-      name: "pro",
-      displayName: "Pro",
-      stripePriceId: process.env.STRIPE_PRO_PRICE_ID || null,
-      price: 1900,
-      interval: "month",
-      features: {
-        ide: true,
-        terminal: true,
-        files: true,
-        deploy: true,
-        commands: true,
-        ai: true,
-      },
-    },
-  });
-
-  // Admin account
-  const adminEmail = process.env.SEED_ADMIN_EMAIL || "";
-  if (!adminEmail) { console.log("No SEED_ADMIN_EMAIL set, skipping admin user."); return; }
-  const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
-  if (!existing) {
-    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "changeme123!";
-    const passwordHash = await bcrypt.hash(adminPassword, 12);
-    const admin = await prisma.user.create({
-      data: {
-        email: adminEmail,
-        name: "Ashan",
-        passwordHash,
-        role: "admin",
-      },
+      create: plan,
     });
+    console.log(`  ✓ ${plan.displayName}`);
+  }
 
-    // Give admin a Pro subscription
-    const proPlan = await prisma.plan.findUnique({ where: { name: "pro" } });
-    if (proPlan) {
+  if (!ADMIN_EMAIL) {
+    console.log("No SEED_ADMIN_EMAIL set, skipping admin user.");
+    console.log("Done.");
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
+  const admin = await prisma.user.upsert({
+    where: { email: ADMIN_EMAIL },
+    update: { role: "owner", plan: "ai-pro", passwordHash },
+    create: {
+      email: ADMIN_EMAIL,
+      name: "Admin",
+      role: "owner",
+      plan: "ai-pro",
+      passwordHash,
+    },
+  });
+
+  const aiProPlan = await prisma.plan.findUnique({ where: { name: "ai-pro" } });
+  if (aiProPlan) {
+    const existing = await prisma.subscription.findFirst({
+      where: { userId: admin.id },
+      orderBy: { createdAt: "desc" },
+    });
+    const entitlementDates = {
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    };
+
+    if (existing) {
+      await prisma.subscription.update({
+        where: { id: existing.id },
+        data: {
+          planId: aiProPlan.id,
+          status: "active",
+          ...entitlementDates,
+        },
+      });
+    } else {
       await prisma.subscription.create({
         data: {
           userId: admin.id,
-          planId: proPlan.id,
+          planId: aiProPlan.id,
           status: "active",
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          ...entitlementDates,
         },
       });
     }
-    console.log("Created admin account:", adminEmail);
-  } else {
-    // Ensure existing user is admin with Pro
-    await prisma.user.update({
-      where: { email: adminEmail },
-      data: { role: "admin" },
-    });
-    console.log("Admin account already exists, ensured admin role");
   }
 
-  console.log("Seeded Free and Pro plans");
+  console.log(`  ✓ Admin: ${admin.email}`);
+  console.log("Done.");
 }
 
 main()

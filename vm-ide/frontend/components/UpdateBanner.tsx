@@ -45,7 +45,7 @@ export default function UpdateBanner() {
       {state === "ready" && (
         <>
           <span style={styles.text}>
-            Vinexus {version} is ready to install.
+            Vinexus {version} is ready. It will install automatically when you quit, or you can restart now.
           </span>
           <button
             style={styles.button}

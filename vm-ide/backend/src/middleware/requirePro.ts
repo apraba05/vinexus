@@ -1,8 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma";
 
+const ENTITLED_STATUSES = ["active", "trialing", "past_due"] as const;
+
+function isPaidPlan(planName: string | null | undefined): boolean {
+  return typeof planName === "string" && planName.trim() !== "" && planName !== "free";
+}
+
 /**
- * Middleware that checks if the authenticated user has an active Pro subscription.
+ * Middleware that checks if the authenticated user has an active paid subscription.
  * Must be used AFTER requireUser middleware.
  * Returns 402 Payment Required if the user is on the Free plan.
  */
@@ -18,18 +24,34 @@ export async function requirePro(req: Request, res: Response, next: NextFunction
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: user.id,
-        status: { in: ["active", "trialing"] },
+        OR: [
+          { status: { in: [...ENTITLED_STATUSES] } },
+          {
+            status: "canceled",
+            currentPeriodEnd: { gt: new Date() },
+          },
+        ],
       },
+      orderBy: [
+        { currentPeriodEnd: "desc" },
+        { createdAt: "desc" },
+      ],
       include: { plan: true },
     });
 
-    if (subscription && subscription.plan.name === "pro") {
+    if (isPaidPlan(subscription?.plan?.name)) {
       (req as any).subscription = subscription;
       return next();
     }
 
+    // Fall back to the synced user plan so desktop auth and backend gating agree
+    // even if the subscription row is temporarily stale or still migrating.
+    if (isPaidPlan(user.plan)) {
+      return next();
+    }
+
     res.status(402).json({
-      error: "Pro subscription required",
+      error: "Paid subscription required",
       upgradeUrl: `${process.env.FRONTEND_ORIGIN || "http://localhost:3000"}/pricing`,
     });
   } catch (error) {

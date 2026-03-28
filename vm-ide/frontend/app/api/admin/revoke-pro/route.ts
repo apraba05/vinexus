@@ -29,5 +29,25 @@ export async function POST(req: NextRequest) {
     data: { plan: "free" } as any,
   });
 
+  const existingSubscription = await prisma.subscription.findFirst({
+    where: { userId },
+    orderBy: [
+      { currentPeriodEnd: "desc" },
+      { createdAt: "desc" },
+    ],
+  });
+
+  if (existingSubscription) {
+    await prisma.subscription.update({
+      where: { id: existingSubscription.id },
+      data: {
+        status: "canceled",
+        canceledAt: new Date(),
+        cancelAtPeriodEnd: false,
+        currentPeriodEnd: new Date(),
+      },
+    });
+  }
+
   return NextResponse.json({ ok: true });
 }
