@@ -20,6 +20,7 @@ import StatusBar from "@/components/StatusBar";
 import UpgradeBanner from "@/components/UpgradeBanner";
 import UpdateBanner from "@/components/UpdateBanner";
 import ProFeature from "@/components/ProFeature";
+import TokenLimitModal from "@/components/TokenLimitModal";
 import { usePlan } from "@/contexts/PlanContext";
 import { useToast } from "@/lib/useToast";
 import { useCommands } from "@/hooks/useCommands";
@@ -402,6 +403,7 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
   const [aiExplanation, setAiExplanation] = useState<AIExplanation | null>(null);
   const [aiDiagnosis, setAiDiagnosis] = useState<AIAnalysis | null>(null);
   const [aiFilePath, setAiFilePath] = useState<string | null>(null);
+  const [tokenLimitModal, setTokenLimitModal] = useState<{ isDailyLimit: boolean } | null>(null);
 
   const AI_DAILY_LIMIT = 15;
   const getAiUsageToday = useCallback(() => {
@@ -566,19 +568,28 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
     runInTerminal("sudo journalctl -xe --no-pager | tail -100");
   }, [runInTerminal]);
 
+  const handleAILimitError = useCallback((err: any) => {
+    const msg: string = err?.message ?? "";
+    if (msg.includes("daily") || msg.includes("Daily")) {
+      setTokenLimitModal({ isDailyLimit: true });
+    } else if (msg.includes("limit") || msg.includes("token") || err?.status === 429) {
+      setTokenLimitModal({ isDailyLimit: false });
+    } else {
+      addToast(`AI request failed: ${msg}`, "error");
+    }
+  }, [addToast]);
+
   const handleExplain = useCallback(async (filePath: string, content: string) => {
     if (!sessionId) return;
-    if (getAiUsageToday() >= AI_DAILY_LIMIT) { addToast(`Daily AI limit reached (${AI_DAILY_LIMIT}/day).`, "error"); return; }
     setAiExplanation(null); setAiDiagnosis(null); setAiFilePath(filePath); setAiLoading(true); setAiPanelVisible(true);
-    try { const result = await explainFile(sessionId, filePath, content); setAiExplanation(result); incrementAiUsage(); setAiUsageCount(getAiUsageToday()); } catch (err: any) { addToast(`AI analysis failed: ${err.message}`, "error"); } finally { setAiLoading(false); }
-  }, [sessionId, addToast, getAiUsageToday, incrementAiUsage]);
+    try { const result = await explainFile(sessionId, filePath, content); setAiExplanation(result); incrementAiUsage(); setAiUsageCount(getAiUsageToday()); } catch (err: any) { handleAILimitError(err); } finally { setAiLoading(false); }
+  }, [sessionId, handleAILimitError, getAiUsageToday, incrementAiUsage]);
 
   const handleDiagnose = useCallback(async (service: string, logText: string) => {
     if (!sessionId) return;
-    if (getAiUsageToday() >= AI_DAILY_LIMIT) { addToast(`Daily AI limit reached (${AI_DAILY_LIMIT}/day).`, "error"); return; }
     setAiExplanation(null); setAiDiagnosis(null); setAiFilePath(null); setAiLoading(true); setAiPanelVisible(true);
-    try { const result = await diagnoseFailure(sessionId, service, logText); setAiDiagnosis(result); incrementAiUsage(); setAiUsageCount(getAiUsageToday()); } catch (err: any) { addToast(`AI diagnosis failed: ${err.message}`, "error"); } finally { setAiLoading(false); }
-  }, [sessionId, addToast, getAiUsageToday, incrementAiUsage]);
+    try { const result = await diagnoseFailure(sessionId, service, logText); setAiDiagnosis(result); incrementAiUsage(); setAiUsageCount(getAiUsageToday()); } catch (err: any) { handleAILimitError(err); } finally { setAiLoading(false); }
+  }, [sessionId, handleAILimitError, getAiUsageToday, incrementAiUsage]);
 
   const handleValidate = useCallback(async () => {
     if (!sessionId || !activeFile) return;
@@ -661,6 +672,16 @@ function IDEView({ user, onLogout }: { user: AppUser; onLogout: () => void }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Token limit modal */}
+      {tokenLimitModal && (
+        <TokenLimitModal
+          open
+          onClose={() => setTokenLimitModal(null)}
+          currentPlan={(normalizedPlanKey as any) || "free"}
+          isDailyLimit={tokenLimitModal.isDailyLimit}
+        />
       )}
 
       {/* Title Bar */}

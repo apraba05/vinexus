@@ -513,6 +513,18 @@ export async function validateFile(
   });
 }
 
+export interface AIUsageStats {
+  tokensUsed: number;
+  tokenLimit: number;   // -1 = unlimited
+  dailyRequests: number;
+  dailyLimit: number;   // -1 = unlimited
+  resetAt: string;      // YYYY-MM-DD
+}
+
+export async function getAIUsage(): Promise<AIUsageStats> {
+  return request("/api/ai/usage");
+}
+
 export async function getProjectConfig(
   sessionId: string,
   rootPath?: string

@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { AIExplanation, AIAnalysis } from "@/lib/api";
+import TokenUsageMeter from "./TokenUsageMeter";
 
 interface Props {
   visible: boolean;
@@ -52,6 +53,11 @@ export default function AIInsightsPanel({
               </svg>
             </button>
           </div>
+        </div>
+
+        {/* Token usage meter */}
+        <div style={{ padding: "8px 12px 0" }}>
+          <TokenUsageMeter />
         </div>
 
         {/* Content */}

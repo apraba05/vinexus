@@ -3,6 +3,12 @@ import { getSession } from "../sessionStore";
 import { aiService } from "../services/aiService";
 import { validationEngine } from "../services/validationEngine";
 import { sftpReadFile } from "../types";
+import {
+  getMonthlyTokenUsage,
+  getDailyRequestUsage,
+  PLAN_TOKEN_LIMITS,
+  PLAN_DAILY_REQUEST_LIMITS,
+} from "../services/tokenQuota";
 
 const router = Router();
 
@@ -125,6 +131,36 @@ router.post("/validate", async (req: Request, res: Response) => {
  */
 router.get("/validators", (_req: Request, res: Response) => {
   res.json({ validators: validationEngine.getValidators() });
+});
+
+/**
+ * GET /api/ai/usage
+ * Return current user's token usage and daily request count.
+ */
+router.get("/usage", async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const plan = (user.plan ?? "free").toLowerCase();
+
+    const [tokensUsed, dailyRequests] = await Promise.all([
+      getMonthlyTokenUsage(user.id),
+      getDailyRequestUsage(user.id),
+    ]);
+
+    const tokenLimit = PLAN_TOKEN_LIMITS[plan] ?? 0;
+    const dailyLimit = PLAN_DAILY_REQUEST_LIMITS[plan] ?? -1;
+
+    // First day of next month as reset date
+    const now = new Date();
+    const resetAt = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+      .toISOString()
+      .split("T")[0];
+
+    res.json({ tokensUsed, tokenLimit, dailyRequests, dailyLimit, resetAt });
+  } catch (err: any) {
+    console.error("[ai] usage error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

@@ -5,6 +5,7 @@ export interface PlanFeatures {
   aiEnabled: boolean;
   aiModel: string | null;
   aiRequestsPerDay: number;
+  monthlyTokenLimit: number; // -1 = unlimited
   deployAutomation: boolean;
   prioritySupport: boolean;
 }
@@ -12,9 +13,10 @@ export interface PlanFeatures {
 export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
   free: {
     maxVmConnections: 1,
-    aiEnabled: false,
-    aiModel: null,
-    aiRequestsPerDay: 0,
+    aiEnabled: true,
+    aiModel: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+    aiRequestsPerDay: 20,
+    monthlyTokenLimit: 500_000,
     deployAutomation: false,
     prioritySupport: false,
   },
@@ -22,7 +24,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     maxVmConnections: 3,
     aiEnabled: true,
     aiModel: 'claude-haiku-4-5-20251001',
-    aiRequestsPerDay: 50,
+    aiRequestsPerDay: -1, // unlimited
+    monthlyTokenLimit: 3_000_000,
     deployAutomation: true,
     prioritySupport: false,
   },
@@ -30,15 +33,17 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     maxVmConnections: -1, // unlimited
     aiEnabled: true,
     aiModel: 'claude-sonnet-4-6',
-    aiRequestsPerDay: 500,
+    aiRequestsPerDay: -1,
+    monthlyTokenLimit: 8_000_000,
     deployAutomation: true,
     prioritySupport: true,
   },
   'ai-pro': {
-    maxVmConnections: -1, // unlimited
+    maxVmConnections: -1,
     aiEnabled: true,
-    aiModel: 'claude-opus-4-6',
-    aiRequestsPerDay: 50,
+    aiModel: 'claude-sonnet-4-6',
+    aiRequestsPerDay: -1,
+    monthlyTokenLimit: 20_000_000,
     deployAutomation: true,
     prioritySupport: true,
   },
@@ -46,7 +51,8 @@ export const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     maxVmConnections: -1,
     aiEnabled: true,
     aiModel: 'claude-opus-4-6',
-    aiRequestsPerDay: -1, // unlimited
+    aiRequestsPerDay: -1,
+    monthlyTokenLimit: -1,
     deployAutomation: true,
     prioritySupport: true,
   },

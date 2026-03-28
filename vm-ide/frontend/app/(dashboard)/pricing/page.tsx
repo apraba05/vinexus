@@ -30,8 +30,8 @@ const TIERS: Tier[] = [
     label: "Free",
     price: "$0",
     period: "forever",
-    model: null,
-    tokens: null,
+    model: "Llama 3.1 8B",
+    tokens: "500K tokens / month · 20 req/day",
     inheritLabel: null,
     features: [
       "1 VM connection",
@@ -40,9 +40,10 @@ const TIERS: Tier[] = [
       "File explorer & SFTP",
       "Git source control",
       "Server management (systemctl, logs)",
+      "AI assistant (Llama 3.1 8B)",
       "Community support",
     ],
-    cta: "Download free",
+    cta: "Get started free",
     ctaHref: "/dashboard",
   },
   {
@@ -51,7 +52,7 @@ const TIERS: Tier[] = [
     price: "$19",
     period: "/ month",
     model: "Claude Haiku",
-    tokens: "5M tokens / month",
+    tokens: "3M tokens / month",
     inheritLabel: "Everything in Free, plus",
     features: [
       "3 VM connections",
@@ -68,7 +69,7 @@ const TIERS: Tier[] = [
     price: "$49",
     period: "/ month",
     model: "Claude Sonnet",
-    tokens: "10M tokens / month",
+    tokens: "8M tokens / month",
     inheritLabel: "Everything in Premium, plus",
     features: [
       "Unlimited VM connections",
@@ -86,7 +87,7 @@ const TIERS: Tier[] = [
     price: "$99",
     period: "/ month",
     model: "Claude Sonnet",
-    tokens: "30M tokens / month",
+    tokens: "20M tokens / month",
     inheritLabel: "Everything in Max, plus",
     features: [
       "Infrastructure monitoring",
@@ -318,7 +319,7 @@ function TierCard({ tier, isCurrent, loading, onCta, D }: {
           </div>
         )}
         {!tier.model && !tier.tokens && (
-          <div style={{ fontSize: 11, color: D.onSurfaceVariant }}>No AI included</div>
+          <div style={{ fontSize: 11, color: D.onSurfaceVariant }}>Core IDE features</div>
         )}
       </div>
 

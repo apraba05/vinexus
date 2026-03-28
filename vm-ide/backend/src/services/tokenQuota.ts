@@ -1,20 +1,31 @@
 import { prisma } from "../lib/prisma";
 
-// Monthly token limits per plan — all Sonnet ($3/M input, $15/M output)
-// Worst case (all output at $15/M) is still profitable at each price point:
-//   Premium  ($19/mo): 1M tokens → $15 cost → $4 profit
-//   Max      ($49/mo): 3M tokens → $45 cost → $4 profit
-//   AI Pro   ($99/mo): 6M tokens → $90 cost → $9 profit
+// Monthly token limits per plan. -1 = unlimited.
 export const PLAN_TOKEN_LIMITS: Record<string, number> = {
-  premium:  1_000_000,
-  max:      3_000_000,
-  "ai-pro": 6_000_000,
-  free:     0,
+  free:       500_000,
+  premium:  3_000_000,
+  max:      8_000_000,
+  "ai-pro": 20_000_000,
+  enterprise: -1,
+};
+
+// Daily request limits per plan. -1 = unlimited.
+export const PLAN_DAILY_REQUEST_LIMITS: Record<string, number> = {
+  free:       20,
+  premium:    -1,
+  max:        -1,
+  "ai-pro":   -1,
+  enterprise: -1,
 };
 
 function currentMonth(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function todayDate(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
 /**
@@ -36,16 +47,67 @@ export async function checkTokenQuota(userId: string, planName: string): Promise
   const plan = planName?.toLowerCase() ?? "free";
   const limit = PLAN_TOKEN_LIMITS[plan] ?? 0;
 
+  // -1 = unlimited (enterprise)
+  if (limit === -1) return;
+
   if (limit === 0) {
-    throw new Error("AI features require a paid subscription.");
+    throw new Error("AI features require a subscription.");
   }
 
   const used = await getMonthlyTokenUsage(userId);
   if (used >= limit) {
-    const limitM = (limit / 1_000_000).toFixed(0);
+    const limitLabel = limit >= 1_000_000
+      ? `${(limit / 1_000_000).toFixed(0)}M`
+      : `${(limit / 1_000).toFixed(0)}K`;
     throw new Error(
-      `Monthly AI token limit reached (${limitM}M tokens). Your limit resets at the start of next month.`
+      `Monthly AI token limit reached (${limitLabel} tokens). Your limit resets at the start of next month.`
     );
+  }
+}
+
+/**
+ * Return today's AI request count for the user.
+ */
+export async function getDailyRequestUsage(userId: string): Promise<number> {
+  const date = todayDate();
+  const row = await prisma.dailyAiRequests.findUnique({
+    where: { userId_date: { userId, date } },
+    select: { count: true },
+  });
+  return row?.count ?? 0;
+}
+
+/**
+ * Throw if the user has hit their daily request quota (free tier only).
+ */
+export async function checkDailyRequestQuota(userId: string, planName: string): Promise<void> {
+  const plan = planName?.toLowerCase() ?? "free";
+  const limit = PLAN_DAILY_REQUEST_LIMITS[plan] ?? -1;
+
+  if (limit === -1) return; // unlimited
+
+  const used = await getDailyRequestUsage(userId);
+  if (used >= limit) {
+    throw new Error(
+      `Daily AI request limit reached (${limit} requests/day). Your limit resets at midnight UTC.`
+    );
+  }
+}
+
+/**
+ * Increment today's request count for the user. Fire-and-forget safe.
+ */
+export async function recordDailyRequest(userId: string): Promise<void> {
+  if (!userId) return;
+  const date = todayDate();
+  try {
+    await prisma.dailyAiRequests.upsert({
+      where: { userId_date: { userId, date } },
+      update: { count: { increment: 1 } },
+      create: { userId, date, count: 1 },
+    });
+  } catch (err: any) {
+    console.error("[tokenQuota] Failed to record daily request:", err.message);
   }
 }
 

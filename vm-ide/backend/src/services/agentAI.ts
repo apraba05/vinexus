@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { redactSecrets } from "./agentTools";
 import { checkTokenQuota, recordTokenUsage } from "./tokenQuota";
+import { getAIClientConfig } from "./aiClientFactory";
 
 // ─── Tool Definitions ────────────────────────────────────────────
 
@@ -134,12 +135,14 @@ export class AgentAI {
     private userId: string;
     private planName: string;
 
-    constructor(userId: string = "", planName: string = "free") {
+    constructor(userId: string = "", planName: string = "premium") {
+        const config = getAIClientConfig(planName);
         this.client = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY,
+            apiKey: config.provider === "anthropic" ? config.apiKey : process.env.ANTHROPIC_API_KEY,
         });
-        this.modelId =
-            process.env.ANTHROPIC_AGENT_MODEL_ID || "claude-sonnet-4-6";
+        this.modelId = config.provider === "anthropic"
+            ? config.modelId
+            : (process.env.ANTHROPIC_AGENT_MODEL_ID || "claude-sonnet-4-6");
         this.userId = userId;
         this.planName = planName;
     }

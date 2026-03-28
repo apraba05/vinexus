@@ -9,6 +9,7 @@ import {
 } from "../types";
 import { AgentTools, checkToolPermission } from "./agentTools";
 import { AgentAI, EventEmitter } from "./agentAI";
+import { AgentAITogetherAI } from "./agentAITogetherAI";
 import { getSession } from "../sessionStore";
 import { sftpReadFile, sftpStat } from "../types";
 import { sshExecutor } from "./sshExecutor";
@@ -24,7 +25,7 @@ const MAX_RETRIES = 3;
 // ─── Session Store ───────────────────────────────────────────────
 
 const agentSessions = new Map<string, AgentSession>();
-const agentAIs = new Map<string, AgentAI>();
+const agentAIs = new Map<string, AgentAI | AgentAITogetherAI>();
 const agentToolInstances = new Map<string, AgentTools>();
 
 // ─── Orchestrator ────────────────────────────────────────────────
@@ -103,9 +104,11 @@ export class AgentOrchestrator {
 
         agentSessions.set(sessionId, session);
 
-        // Create tool and AI instances
+        // Create tool and AI instances — free tier uses Together AI, paid tiers use Anthropic
         const tools = new AgentTools(sshSessionId, context.workspaceRoot);
-        const ai = new AgentAI(options.userId, options.planName);
+        const ai = (options.planName === "free")
+            ? new AgentAITogetherAI(options.userId, options.planName)
+            : new AgentAI(options.userId, options.planName);
         agentToolInstances.set(sessionId, tools);
         agentAIs.set(sessionId, ai);
 
@@ -248,10 +251,14 @@ export class AgentOrchestrator {
     }
 
     /**
-     * Generate plan only (for free users).
+     * Generate plan only (no tool execution). Uses Together AI for free users.
      */
-    async planOnly(sshSessionId: string, prompt: string, context: AgentContext): Promise<string> {
+    async planOnly(sshSessionId: string, prompt: string, context: AgentContext, planName: string = "free"): Promise<string> {
         const contextInfo = await this.buildContextInfo(sshSessionId, context);
+        if (planName === "free") {
+            const ai = new AgentAITogetherAI();
+            return ai.planOnly(prompt, contextInfo);
+        }
         const ai = new AgentAI();
         return ai.planOnly(prompt, contextInfo);
     }
