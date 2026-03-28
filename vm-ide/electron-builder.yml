@@ -25,6 +25,10 @@ asar: false
 files:
   - electron/**/*
   - frontend/.next/standalone/**/*
+  # public/ is NOT included in Next.js standalone output — copy it next to
+  # server.js so the standalone server finds it after process.chdir(__dirname).
+  - from: frontend/public
+    to: frontend/.next/standalone/public
   - backend/dist/**/*
   - backend/node_modules/**/*
   - node_modules/**/*
@@ -95,7 +99,7 @@ linux:
       arch: [x64]
     - target: deb
       arch: [x64]
-  icon: electron/assets/icon.png
+  icon: frontend/public/icon.png
   category: Development
   protocols:
     - name: Vinexus
