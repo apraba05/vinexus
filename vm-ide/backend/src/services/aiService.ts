@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { AIExplanation, AIAnalysis } from "../types";
+import { checkTokenQuota, recordTokenUsage } from "./tokenQuota";
 
 // Secrets pattern to strip before sending to AI
 const SECRET_PATTERNS = [
@@ -19,7 +20,7 @@ export class AIService {
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
     this.modelId =
-      process.env.ANTHROPIC_MODEL_ID || "claude-haiku-4-5-20251001";
+      process.env.ANTHROPIC_MODEL_ID || "claude-sonnet-4-6";
   }
 
   /**
@@ -27,11 +28,14 @@ export class AIService {
    */
   async explainFile(
     filePath: string,
-    content: string
+    content: string,
+    userId: string,
+    planName: string
   ): Promise<AIExplanation> {
+    await checkTokenQuota(userId, planName);
     const sanitized = this.sanitize(content);
 
-    const response = await this.chat(
+    const { text, tokens } = await this.chat(
       `You are a senior DevOps/SRE engineer. Analyze the following file and provide a JSON response.
 
 File: ${filePath}
@@ -52,7 +56,9 @@ Respond with ONLY valid JSON in this exact format:
 Keep lineNotes to the 5 most important lines. If everything looks good, return empty arrays for risks/misconfigurations.`
     );
 
-    return this.parseJSON<AIExplanation>(response, {
+    await recordTokenUsage(userId, this.modelId, tokens);
+
+    return this.parseJSON<AIExplanation>(text, {
       summary: "Unable to analyze file",
       risks: [],
       misconfigurations: [],
@@ -67,8 +73,11 @@ Keep lineNotes to the 5 most important lines. If everything looks good, return e
   async diagnoseFailure(
     serviceName: string,
     logs: string,
-    configContent?: string
+    configContent: string | undefined,
+    userId: string,
+    planName: string
   ): Promise<AIAnalysis> {
+    await checkTokenQuota(userId, planName);
     const sanitizedLogs = this.sanitize(logs).slice(0, 6000);
     const sanitizedConfig = configContent
       ? this.sanitize(configContent).slice(0, 4000)
@@ -95,9 +104,10 @@ ${sanitizedLogs}
   "severity": "low|medium|high|critical"
 }`;
 
-    const response = await this.chat(prompt);
+    const { text, tokens } = await this.chat(prompt);
+    await recordTokenUsage(userId, this.modelId, tokens);
 
-    return this.parseJSON<AIAnalysis>(response, {
+    return this.parseJSON<AIAnalysis>(text, {
       rootCause: "Unable to determine root cause",
       explanation: "Analysis unavailable",
       suggestedFixes: [],
@@ -111,11 +121,14 @@ ${sanitizedLogs}
   async explainValidationError(
     filePath: string,
     validationOutput: string,
-    fileContent: string
+    fileContent: string,
+    userId: string,
+    planName: string
   ): Promise<{ explanation: string; suggestions: string[] }> {
+    await checkTokenQuota(userId, planName);
     const sanitized = this.sanitize(fileContent).slice(0, 6000);
 
-    const response = await this.chat(
+    const { text, tokens } = await this.chat(
       `You are a senior DevOps engineer. A validation check failed for a file.
 
 File: ${filePath}
@@ -137,7 +150,9 @@ Respond with ONLY valid JSON:
 }`
     );
 
-    return this.parseJSON(response, {
+    await recordTokenUsage(userId, this.modelId, tokens);
+
+    return this.parseJSON(text, {
       explanation: "Unable to analyze validation error",
       suggestions: [],
     });
@@ -145,7 +160,7 @@ Respond with ONLY valid JSON:
 
   // ─── Internal ──────────────────────────────────────────────────
 
-  private async chat(userMessage: string): Promise<string> {
+  private async chat(userMessage: string): Promise<{ text: string; tokens: number }> {
     const response = await this.client.messages.create({
       model: this.modelId,
       max_tokens: 2048,
@@ -160,7 +175,8 @@ Respond with ONLY valid JSON:
       throw new Error("No text in AI response");
     }
 
-    return textBlock.text;
+    const tokens = (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0);
+    return { text: textBlock.text, tokens };
   }
 
   private sanitize(content: string): string {

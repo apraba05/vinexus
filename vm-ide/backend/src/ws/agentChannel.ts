@@ -58,6 +58,8 @@ export class AgentChannel {
         prompt: string;
         context: AgentContext;
         options?: Partial<AgentOptions>;
+        userId?: string;
+        planName?: string;
     }): Promise<void> {
         const emit = (type: string, data: any) => {
             this.sendMessage({
@@ -101,7 +103,11 @@ export class AgentChannel {
                 this.session.id,
                 payload.prompt,
                 payload.context,
-                payload.options || {},
+                {
+                    ...(payload.options || {}),
+                    userId: payload.userId,
+                    planName: payload.planName,
+                },
                 emit,
             );
 

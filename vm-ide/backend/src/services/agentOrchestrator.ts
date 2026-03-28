@@ -12,6 +12,7 @@ import { AgentAI, EventEmitter } from "./agentAI";
 import { getSession } from "../sessionStore";
 import { sftpReadFile, sftpStat } from "../types";
 import { sshExecutor } from "./sshExecutor";
+import { checkTokenQuota } from "./tokenQuota";
 
 // ─── Constants ───────────────────────────────────────────────────
 
@@ -75,6 +76,11 @@ export class AgentOrchestrator {
             throw new Error(`Pro daily limit reached. You can run up to ${MAX_DAILY_SESSIONS_PRO} Agent sessions per 24 hours.`);
         }
 
+        // Check monthly token quota before starting a new session
+        if (options.userId && options.planName) {
+            await checkTokenQuota(options.userId, options.planName);
+        }
+
         const sessionId = uuidv4();
         const session: AgentSession = {
             id: sessionId,
@@ -99,7 +105,7 @@ export class AgentOrchestrator {
 
         // Create tool and AI instances
         const tools = new AgentTools(sshSessionId, context.workspaceRoot);
-        const ai = new AgentAI();
+        const ai = new AgentAI(options.userId, options.planName);
         agentToolInstances.set(sessionId, tools);
         agentAIs.set(sessionId, ai);
 

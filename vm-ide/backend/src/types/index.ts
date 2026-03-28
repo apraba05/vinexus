@@ -263,6 +263,8 @@ export interface AgentOptions {
   autoFixFailures: boolean;
   autoInstallDeps: boolean;
   isPro?: boolean;
+  userId?: string;
+  planName?: string;
 }
 
 export interface AgentEvent {

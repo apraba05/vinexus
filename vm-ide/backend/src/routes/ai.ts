@@ -17,6 +17,8 @@ router.post("/explain", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "sessionId and filePath required" });
     }
 
+    const user = (req as any).user;
+
     // Use provided content or read from VM
     let fileContent = content;
     if (!fileContent) {
@@ -26,11 +28,12 @@ router.post("/explain", async (req: Request, res: Response) => {
       fileContent = buf.toString("utf-8");
     }
 
-    const explanation = await aiService.explainFile(filePath, fileContent);
+    const explanation = await aiService.explainFile(filePath, fileContent, user.id, user.plan);
     res.json(explanation);
   } catch (err: any) {
     console.error("[ai] explain error:", err.message);
-    res.status(500).json({ error: err.message });
+    const status = err.message?.includes("limit") ? 429 : 500;
+    res.status(status).json({ error: err.message });
   }
 });
 
@@ -45,6 +48,8 @@ router.post("/diagnose", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "service and logs required" });
     }
 
+    const user = (req as any).user;
+
     let configContent: string | undefined;
     if (configPath && sessionId) {
       try {
@@ -58,11 +63,12 @@ router.post("/diagnose", async (req: Request, res: Response) => {
       }
     }
 
-    const analysis = await aiService.diagnoseFailure(service, logs, configContent);
+    const analysis = await aiService.diagnoseFailure(service, logs, configContent, user.id, user.plan);
     res.json(analysis);
   } catch (err: any) {
     console.error("[ai] diagnose error:", err.message);
-    res.status(500).json({ error: err.message });
+    const status = err.message?.includes("limit") ? 429 : 500;
+    res.status(status).json({ error: err.message });
   }
 });
 
@@ -77,6 +83,7 @@ router.post("/validate", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "sessionId and filePath required" });
     }
 
+    const user = (req as any).user;
     const session = getSession(sessionId);
     if (!session) return res.status(404).json({ error: "Session not found" });
 
@@ -95,11 +102,13 @@ router.post("/validate", async (req: Request, res: Response) => {
         const aiResult = await aiService.explainValidationError(
           filePath,
           errors,
-          fileContent
+          fileContent,
+          user.id,
+          user.plan
         );
         return res.json({ ...report, aiExplanation: aiResult });
       } catch {
-        // AI explanation is optional
+        // AI explanation is optional — quota errors silently fall through
       }
     }
 

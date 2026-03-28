@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { redactSecrets } from "./agentTools";
+import { checkTokenQuota, recordTokenUsage } from "./tokenQuota";
 
 // ─── Tool Definitions ────────────────────────────────────────────
 
@@ -130,13 +131,17 @@ export class AgentAI {
     private modelId: string;
     private messages: Anthropic.MessageParam[] = [];
     private aborted = false;
+    private userId: string;
+    private planName: string;
 
-    constructor() {
+    constructor(userId: string = "", planName: string = "free") {
         this.client = new Anthropic({
             apiKey: process.env.ANTHROPIC_API_KEY,
         });
         this.modelId =
             process.env.ANTHROPIC_AGENT_MODEL_ID || "claude-sonnet-4-6";
+        this.userId = userId;
+        this.planName = planName;
     }
 
     abort(): void {
@@ -160,6 +165,11 @@ export class AgentAI {
     ): Promise<{ summary: string; success: boolean }> {
         this.aborted = false;
 
+        // Check quota before starting
+        if (this.userId) {
+            await checkTokenQuota(this.userId, this.planName);
+        }
+
         if (!isContinuation) {
             const userMessage = contextInfo
                 ? `${prompt}\n\n--- Context ---\n${redactSecrets(contextInfo)}`
@@ -181,6 +191,12 @@ export class AgentAI {
             iterations++;
 
             const response = await this.converse();
+
+            // Record token usage for this turn
+            const turnTokens = (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0);
+            if (this.userId && turnTokens > 0) {
+                recordTokenUsage(this.userId, this.modelId, turnTokens);
+            }
 
             // Add assistant response to history
             this.messages.push({ role: "assistant", content: response.content });
@@ -278,6 +294,11 @@ SECURITY RULES:
                 messages: [{ role: "user", content: userMessage }],
             })
         );
+
+        const planTokens = (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0);
+        if (this.userId && planTokens > 0) {
+            recordTokenUsage(this.userId, this.modelId, planTokens);
+        }
 
         const textBlock = response.content.find((b) => b.type === "text");
         return (textBlock && textBlock.type === "text") ? textBlock.text : "Unable to generate plan.";
