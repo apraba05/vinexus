@@ -21,24 +21,24 @@ const C = {
   success:     "#15803d",
 };
 
-type Plan = "free" | "premium" | "max" | "enterprise";
+type Plan = "free" | "premium" | "max" | "ai-pro" | "enterprise";
 
 const PLANS: { key: Plan; name: string; price: string; desc: string; features: string[]; highlight: boolean }[] = [
   {
     key: "free",
     name: "Free",
     price: "$0/month",
-    desc: "Core IDE for 1 VM",
+    desc: "Core IDE + AI included",
     highlight: false,
-    features: ["1 VM connection", "Monaco editor", "Terminal & SFTP", "Git source control"],
+    features: ["1 VM connection", "Llama 3.1 8B AI", "500K tokens/month", "20 req/day"],
   },
   {
     key: "premium",
     name: "Premium",
     price: "$19/month",
-    desc: "Multi-VM + AI hints",
+    desc: "Multi-VM + Claude Haiku",
     highlight: false,
-    features: ["3 VM connections", "Claude Haiku AI", "50 AI requests/day", "Deploy automation"],
+    features: ["3 VM connections", "Claude Haiku AI", "3M tokens/month", "Deploy automation"],
   },
   {
     key: "max",
@@ -46,7 +46,15 @@ const PLANS: { key: Plan; name: string; price: string; desc: string; features: s
     price: "$49/month",
     desc: "Full AI, unlimited VMs",
     highlight: true,
-    features: ["Unlimited VMs", "Claude Sonnet AI", "500 AI requests/day", "Priority support"],
+    features: ["Unlimited VMs", "Claude Sonnet AI", "8M tokens/month", "Priority support"],
+  },
+  {
+    key: "ai-pro",
+    name: "AI Pro",
+    price: "$99/month",
+    desc: "Heavy AI workloads",
+    highlight: false,
+    features: ["Unlimited VMs", "Claude Sonnet AI", "20M tokens/month", "AI developer agent"],
   },
   {
     key: "enterprise",
@@ -54,7 +62,7 @@ const PLANS: { key: Plan; name: string; price: string; desc: string; features: s
     price: "Contact us",
     desc: "Teams & custom needs",
     highlight: false,
-    features: ["Unlimited AI", "SSO & team mgmt", "Dedicated support", "SLA guarantee"],
+    features: ["Unlimited AI", "Claude Opus AI", "SSO & team mgmt", "SLA guarantee"],
   },
 ];
 

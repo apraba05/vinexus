@@ -32,8 +32,8 @@ const TIERS: Tier[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    model: null,
-    tokens: null,
+    model: "Llama 3.1 8B",
+    tokens: "500K tokens / month · 20 req/day",
     inheritLabel: null,
     features: [
       "1 VM connection",
@@ -42,9 +42,10 @@ const TIERS: Tier[] = [
       "File explorer & SFTP",
       "Git source control",
       "Server management (systemctl, logs)",
+      "AI assistant (Llama 3.1 8B)",
       "Community support",
     ],
-    cta: "Download free",
+    cta: "Get started free",
   },
   {
     key: "premium",
@@ -52,7 +53,7 @@ const TIERS: Tier[] = [
     price: "$19",
     period: "/ month",
     model: "Claude Haiku",
-    tokens: "5M tokens / month",
+    tokens: "3M tokens / month",
     inheritLabel: "Everything in Free, plus",
     features: [
       "3 VM connections",
@@ -69,7 +70,7 @@ const TIERS: Tier[] = [
     price: "$49",
     period: "/ month",
     model: "Claude Sonnet",
-    tokens: "10M tokens / month",
+    tokens: "8M tokens / month",
     inheritLabel: "Everything in Premium, plus",
     features: [
       "Unlimited VM connections",
@@ -87,7 +88,7 @@ const TIERS: Tier[] = [
     price: "$99",
     period: "/ month",
     model: "Claude Sonnet",
-    tokens: "30M tokens / month",
+    tokens: "20M tokens / month",
     inheritLabel: "Everything in Max, plus",
     features: [
       "Infrastructure monitoring",
@@ -127,8 +128,9 @@ interface ComparisonRow {
 
 const COMPARISON: ComparisonRow[] = [
   { feature: "VM connections",           free: "1",     premium: "3",         max: "Unlimited",   "ai-pro": "Unlimited",   enterprise: "Unlimited"   },
-  { feature: "AI model",                 free: "None",  premium: "Haiku",     max: "Sonnet",      "ai-pro": "Sonnet",      enterprise: "Opus"        },
-  { feature: "Token budget / month",     free: "—",     premium: "5M",        max: "10M",         "ai-pro": "30M",         enterprise: "Custom"      },
+  { feature: "AI model",                 free: "Llama 3.1 8B", premium: "Haiku", max: "Sonnet",      "ai-pro": "Sonnet",      enterprise: "Opus"        },
+  { feature: "Token budget / month",     free: "500K",  premium: "3M",        max: "8M",          "ai-pro": "20M",         enterprise: "Custom"      },
+  { feature: "Daily AI requests",        free: "20/day",premium: "Unlimited", max: "Unlimited",   "ai-pro": "Unlimited",   enterprise: "Unlimited"   },
   { feature: "Terminal",                 free: true,    premium: true,        max: true,          "ai-pro": true,          enterprise: true          },
   { feature: "Monaco editor",           free: true,    premium: true,        max: true,          "ai-pro": true,          enterprise: true          },
   { feature: "File explorer / SFTP",     free: true,    premium: true,        max: true,          "ai-pro": true,          enterprise: true          },
@@ -152,7 +154,7 @@ const FAQS = [
   { q: "What happens to my data if I cancel?",   a: "Your data lives entirely on your VM. Vinexus never stores files, code, or credentials. Cancel any time — your VM is unaffected." },
   { q: "What counts as a token?",                a: "Tokens are the unit of AI usage. Every message you send and receive consumes tokens. A typical AI coding interaction uses ~2 000–5 000 tokens. Unused tokens don't roll over." },
   { q: "Can I buy more tokens?",                 a: "Yes. On AI Pro you can purchase token top-ups at any time from your account settings without changing your plan." },
-  { q: "What is the difference between Max and AI Pro?", a: "Max gives you 10M tokens/month with Claude Sonnet — great for most development workflows. AI Pro gives you 30M tokens/month plus infrastructure monitoring, the AI developer agent, and AI diagnostics & auto-fix." },
+  { q: "What is the difference between Max and AI Pro?", a: "Max gives you 8M tokens/month with Claude Sonnet — great for most development workflows. AI Pro gives you 20M tokens/month plus infrastructure monitoring, the AI developer agent, and AI diagnostics & auto-fix." },
 ];
 
 function FAQItem({ q, a }: { q: string; a: string }) {
@@ -340,7 +342,7 @@ export default function PricingPage() {
                         {tier.model}
                       </div>
                     ) : (
-                      <div style={{ fontSize: 11, color: D.onSurfaceVariant }}>No AI included</div>
+                      <div style={{ fontSize: 11, color: D.onSurfaceVariant }}>Core IDE features</div>
                     )}
                   </div>
 
